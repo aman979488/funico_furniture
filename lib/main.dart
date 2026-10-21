@@ -1,9 +1,13 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'core/theme/app_theme.dart';
-import 'features/onboarding/views/splash_screen.dart';
 
-void main() {
+import 'core/router/app_router.dart';
+import 'core/theme/app_theme.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Firebase jodte waqt yahan add karna:
+  // await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const ProviderScope(child: FunicaApp()));
 }
 
@@ -12,11 +16,13 @@ class FunicaApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       title: 'Funica',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.dark,
-      home: const SplashScreen(),
+      darkTheme: AppTheme.dark,
+      themeMode: ThemeMode.dark,
+      routerConfig: appRouter,
     );
   }
 }
