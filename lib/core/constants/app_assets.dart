@@ -9,10 +9,10 @@ class AppAssets {
   static const logoMark = '$_images/logo_mark.png';
 
   // Onboarding
-  static const welcomeBg = '$_images/welcome_bg.jpg';
-  static const onboarding1 = '$_images/onboarding_1.jpg';
-  static const onboarding2 = '$_images/onboarding_2.jpg';
-  static const onboarding3 = '$_images/onboarding_3.jpg';
+  static const welcomeBg = '$_images/wlc.jpeg';
+  static const onboarding1 = '$_images/onboarding1.jpeg';
+  static const onboarding2 = '$_images/onboarding2.jpeg';
+  static const onboarding3 = '$_images/onboarding3.jpeg';
 
   // Products (placeholder names, apni files isi naam se rakho)
   static const sofa = '$_images/sofa.png';

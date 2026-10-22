@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "655147824865",
+    "project_id": "funica-9a16a",
+    "storage_bucket": "funica-9a16a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:655147824865:android:c8c396341dbdfa8096a9a0",
+        "android_client_info": {
+          "package_name": "com.funica.funica"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBXCyecm0GyRU5WacDo3KG_JERvHUigps4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

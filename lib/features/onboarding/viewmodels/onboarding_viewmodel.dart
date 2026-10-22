@@ -1,23 +1,17 @@
-﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
+﻿import 'package:flutter/foundation.dart';
 
-class OnboardingState {
-  const OnboardingState({this.isLoading = false, this.error});
+import '../../../core/services/storage_service.dart';
 
-  final bool isLoading;
-  final String? error;
+class OnboardingViewModel extends ChangeNotifier {
+  OnboardingViewModel({StorageService? storage})
+      : _storage = storage ?? StorageService();
 
-  OnboardingState copyWith({bool? isLoading, String? error}) {
-    return OnboardingState(
-      isLoading: isLoading ?? this.isLoading,
-      error: error,
-    );
+  final StorageService _storage;
+
+  Future<bool> isOnboardingSeen() => _storage.isOnboardingSeen();
+
+  Future<void> completeOnboarding() async {
+    await _storage.setOnboardingSeen();
+    notifyListeners();
   }
 }
-
-class OnboardingViewModel extends Notifier<OnboardingState> {
-  @override
-  OnboardingState build() => const OnboardingState();
-}
-
-final onboardingViewModelProvider =
-    NotifierProvider<OnboardingViewModel, OnboardingState>(OnboardingViewModel.new);

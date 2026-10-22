@@ -119,13 +119,13 @@ class ProductCard extends StatelessWidget {
       return Image.network(
         product.image,
         fit: BoxFit.contain,
-        errorBuilder: (_, __, ___) => fallback,
+        errorBuilder: (_, _, _) => fallback,
       );
     }
     return Image.asset(
       product.image,
       fit: BoxFit.contain,
-      errorBuilder: (_, __, ___) => fallback,
+      errorBuilder: (_, _, _) => fallback,
     );
   }
 }
