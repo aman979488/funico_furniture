@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/models/product.dart';
+import '../../../shared/widgets/product_card.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   const ProductDetailScreen({required this.product, super.key});
@@ -171,6 +174,37 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             ),
                           )
                           .toList(),
+                    ),
+                  ],
+                  if (product.category.toLowerCase() == 'sofa') ...[
+                    const SizedBox(height: 28),
+                    Text(
+                      'Sofa options',
+                      style: Theme.of(context).textTheme.titleLarge
+                          ?.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 14),
+                    SizedBox(
+                      height: 270,
+                      child: ListView.separated(
+                        key: const ValueKey('sofa-options-list'),
+                        scrollDirection: Axis.horizontal,
+                        itemCount: Product.sofaOptions.length,
+                        separatorBuilder: (_, _) => const SizedBox(width: 14),
+                        itemBuilder: (context, index) {
+                          final option = Product.sofaOptions[index];
+                          return SizedBox(
+                            width: 170,
+                            child: ProductCard(
+                              product: option,
+                              onTap: () => context.push(
+                                AppRoutes.productDetails,
+                                extra: option,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   ],
                 ],

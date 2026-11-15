@@ -57,6 +57,75 @@ class Product {
     };
   }
 
+  static const sofaOptions = <Product>[
+    Product(
+      id: 'sofa-2-seater',
+      name: '2 Seater Sofa',
+      category: 'Sofa',
+      price: 399,
+      image: AppAssets.twoSeaterSofa,
+      images: [AppAssets.sofaAlternateView],
+      description: 'Small families ke liye',
+    ),
+    Product(
+      id: 'sofa-3-seater',
+      name: '3 Seater Sofa',
+      category: 'Sofa',
+      price: 599,
+      image: AppAssets.threeSeaterSofa,
+      images: [AppAssets.neutralSofaRoom],
+      description: 'Medium living room',
+    ),
+    Product(
+      id: 'sofa-l-shaped',
+      name: 'L-Shaped Sofa',
+      category: 'Sofa',
+      price: 999,
+      image: AppAssets.lShapedSofa,
+      description: 'Large living room',
+    ),
+    Product(
+      id: 'sofa-sectional',
+      name: 'Sectional Sofa',
+      category: 'Sofa',
+      price: 1299,
+      image: AppAssets.recliningSectionalSofa,
+      description: 'Multiple seating sections',
+    ),
+    Product(
+      id: 'sofa-recliner',
+      name: 'Recliner Sofa',
+      category: 'Sofa',
+      price: 799,
+      image: AppAssets.recliningSectionalSofa,
+      description: 'Relaxation ke liye',
+    ),
+    Product(
+      id: 'sofa-cum-bed',
+      name: 'Sofa Cum Bed',
+      category: 'Sofa',
+      price: 699,
+      image: AppAssets.sleeperSofa,
+      description: 'Sofa + Bed',
+    ),
+    Product(
+      id: 'sofa-chesterfield',
+      name: 'Chesterfield Sofa',
+      category: 'Sofa',
+      price: 1199,
+      image: AppAssets.chesterfieldSofa,
+      description: 'Premium luxury look',
+    ),
+    Product(
+      id: 'sofa-loveseat',
+      name: 'Loveseat Sofa',
+      category: 'Sofa',
+      price: 349,
+      image: AppAssets.loveseatSofa,
+      description: 'Compact seating',
+    ),
+  ];
+
   /// UI banate waqt dummy data (Firebase jodne se pehle).
   static const sampleProducts = <Product>[
     Product(
@@ -118,7 +187,8 @@ class Product {
       image: AppAssets.bedroomImage,
       rating: 4.9,
       soldCount: 2150,
-      description: 'Warm and comfortable wooden bed setup with ambient lighting.',
+      description:
+          'Warm and comfortable wooden bed setup with ambient lighting.',
       colors: [0xFFA0624A, 0xFF8DB4FF],
     ),
   ];
