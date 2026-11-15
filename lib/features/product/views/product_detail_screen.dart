@@ -154,12 +154,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           ?.copyWith(fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(height: 14),
-                    ListView.separated(
+                    GridView.builder(
                       key: const ValueKey('sofa-options-list'),
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: Product.sofaOptions.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 18),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 18,
+                            childAspectRatio: 0.68,
+                          ),
                       itemBuilder: (context, index) {
                         final option = Product.sofaOptions[index];
                         return ProductCard(

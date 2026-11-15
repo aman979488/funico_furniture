@@ -22,10 +22,15 @@ void main() {
     expect(find.text('2 Seater Sofa'), findsOneWidget);
     expect(
       tester
-          .widget<ListView>(find.byKey(const ValueKey('sofa-options-list')))
-          .scrollDirection,
-      Axis.vertical,
+          .widget<GridView>(find.byKey(const ValueKey('sofa-options-list')))
+          .gridDelegate,
+      isA<SliverGridDelegateWithFixedCrossAxisCount>().having(
+        (delegate) => delegate.crossAxisCount,
+        'crossAxisCount',
+        2,
+      ),
     );
+    expect(find.text('3 Seater Sofa'), findsOneWidget);
     expect(find.text('Loveseat Sofa'), findsOneWidget);
   });
 }
