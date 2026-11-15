@@ -1,4 +1,4 @@
-﻿// TODO: product.dart
+// TODO: product.dart
 import '../../core/constants/app_assets.dart';
 
 class Product {
@@ -8,6 +8,7 @@ class Product {
     required this.category,
     required this.price,
     required this.image,
+    this.images = const [],
     this.rating = 0,
     this.soldCount = 0,
     this.description = '',
@@ -19,6 +20,7 @@ class Product {
   final String category;
   final double price;
   final String image; // asset path ya network URL
+  final List<String> images;
   final double rating;
   final int soldCount;
   final String description;
@@ -32,6 +34,7 @@ class Product {
       category: map['category'] as String? ?? '',
       price: (map['price'] as num?)?.toDouble() ?? 0,
       image: map['image'] as String? ?? '',
+      images: List<String>.from(map['images'] as List? ?? const []),
       rating: (map['rating'] as num?)?.toDouble() ?? 0,
       soldCount: (map['soldCount'] as num?)?.toInt() ?? 0,
       description: map['description'] as String? ?? '',
@@ -46,6 +49,7 @@ class Product {
       'category': category,
       'price': price,
       'image': image,
+      'images': images,
       'rating': rating,
       'soldCount': soldCount,
       'description': description,
@@ -61,6 +65,13 @@ class Product {
       category: 'Sofa',
       price: 280.00,
       image: AppAssets.sofa,
+      images: [
+        AppAssets.midCenturySofa1,
+        AppAssets.midCenturySofa2,
+        AppAssets.midCenturySofa3,
+        AppAssets.midCenturySofa4,
+        AppAssets.midCenturySofa5,
+      ],
       rating: 4.8,
       soldCount: 8374,
       description: 'Comfortable mid century style sofa for your living room.',
@@ -98,6 +109,17 @@ class Product {
       soldCount: 3920,
       description: 'Copper finish pendant lamp.',
       colors: [0xFFA0624A, 0xFFB026FF, 0xFF808080],
+    ),
+    Product(
+      id: '5',
+      name: 'Cozy Master Bed',
+      category: 'Bed',
+      price: 490.00,
+      image: AppAssets.bedroomImage,
+      rating: 4.9,
+      soldCount: 2150,
+      description: 'Warm and comfortable wooden bed setup with ambient lighting.',
+      colors: [0xFFA0624A, 0xFF8DB4FF],
     ),
   ];
 }

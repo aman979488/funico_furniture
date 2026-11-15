@@ -24,7 +24,8 @@ class AppTheme {
         surface: AppColors.surface,
         error: AppColors.error,
       ),
-      textTheme: GoogleFonts.urbanistTextTheme(base.textTheme).apply(
+      textTheme: base.textTheme.apply(
+        fontFamily: GoogleFonts.urbanist().fontFamily,
         bodyColor: AppColors.textPrimary,
         displayColor: AppColors.textPrimary,
       ),

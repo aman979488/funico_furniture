@@ -1,4 +1,4 @@
-﻿// TODO: product_card.dart
+// TODO: product_card.dart
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -31,11 +31,11 @@ class ProductCard extends StatelessWidget {
               children: [
                 Positioned.fill(
                   child: Container(
-                    padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       color: AppColors.card,
                       borderRadius: BorderRadius.circular(24),
                     ),
+                    clipBehavior: Clip.antiAlias,
                     child: _buildImage(),
                   ),
                 ),
@@ -45,15 +45,15 @@ class ProductCard extends StatelessWidget {
                   child: GestureDetector(
                     onTap: onFavoriteTap,
                     child: Container(
-                      width: 30,
-                      height: 30,
+                      width: 32,
+                      height: 32,
                       decoration: const BoxDecoration(
                         color: Color(0x66000000),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
                         isFavorite ? Icons.favorite : Icons.favorite_border,
-                        size: 17,
+                        size: 18,
                         color: Colors.white,
                       ),
                     ),
@@ -62,70 +62,106 @@ class ProductCard extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Text(
             product.name,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              const Icon(Icons.star_half_rounded, size: 16, color: Colors.white),
-              const SizedBox(width: 4),
-              Text(
-                product.rating.toStringAsFixed(1),
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  '${product.soldCount} sold',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
+          const SizedBox(height: 4),
+          if (product.rating > 0 || product.soldCount > 0) ...[
+            Row(
+              children: [
+                if (product.rating > 0) ...[
+                  const Icon(
+                    Icons.star_half_rounded,
+                    size: 16,
+                    color: Colors.amber,
                   ),
-                ),
+                  const SizedBox(width: 4),
+                  Text(
+                    product.rating.toStringAsFixed(1),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+                if (product.rating > 0 && product.soldCount > 0)
+                  const SizedBox(width: 8),
+                if (product.soldCount > 0)
+                  Flexible(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        '${product.soldCount} sold',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ],
+          if (product.price > 0) ...[
+            const SizedBox(height: 4),
+            Text(
+              '\$${product.price.toStringAsFixed(2)}',
+              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+            ),
+          ],
+          if (product.description.isNotEmpty &&
+              product.rating == 0 &&
+              product.soldCount == 0 &&
+              product.price == 0) ...[
+            const SizedBox(height: 4),
+            Text(
+              product.description,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppColors.textSecondary,
               ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            '\$${product.price.toStringAsFixed(2)}',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
+            ),
+          ],
         ],
       ),
     );
   }
 
   Widget _buildImage() {
-    const fallback = Icon(
-      Icons.chair_outlined,
-      size: 40,
-      color: AppColors.textHint,
+    const fallback = Center(
+      child: Icon(
+        Icons.chair_outlined,
+        size: 40,
+        color: AppColors.textHint,
+      ),
     );
+    if (product.image.isEmpty) return fallback;
     if (product.image.startsWith('http')) {
       return Image.network(
         product.image,
-        fit: BoxFit.contain,
-        errorBuilder: (_, __, ___) => fallback,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => fallback,
       );
     }
     return Image.asset(
       product.image,
-      fit: BoxFit.contain,
-      errorBuilder: (_, __, ___) => fallback,
+      fit: BoxFit.cover,
+      errorBuilder: (_, _, _) => fallback,
     );
   }
 }

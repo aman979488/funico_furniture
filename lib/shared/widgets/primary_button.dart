@@ -11,24 +11,32 @@ class PrimaryButton extends StatelessWidget {
     required this.onPressed,
     this.isLoading = false,
     this.icon,
+    this.height = 56,
+    this.backgroundColor,
+    this.foregroundColor,
+    this.fontSize = 16,
   });
 
   final String text;
   final VoidCallback? onPressed;
   final bool isLoading;
   final IconData? icon;
+  final double height;
+  final Color? backgroundColor;
+  final Color? foregroundColor;
+  final double fontSize;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      height: 56,
+      height: height,
       child: ElevatedButton(
         // Loading mein button white rehta hai par tap kaam nahi karta.
         onPressed: onPressed == null ? null : (isLoading ? () {} : onPressed),
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: AppColors.onPrimary,
+          backgroundColor: backgroundColor ?? AppColors.primary,
+          foregroundColor: foregroundColor ?? AppColors.onPrimary,
           disabledBackgroundColor: AppColors.disabled,
           disabledForegroundColor: AppColors.textSecondary,
           shape: const StadiumBorder(),
@@ -50,7 +58,7 @@ class PrimaryButton extends StatelessWidget {
                     Icon(icon, size: 20),
                     const SizedBox(width: 8),
                   ],
-                  Text(text),
+                  Text(text, style: TextStyle(fontSize: fontSize)),
                 ],
               ),
       ),
