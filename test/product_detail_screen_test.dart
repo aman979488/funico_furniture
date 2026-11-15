@@ -14,18 +14,18 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.text('Available colors'), findsNothing);
     await tester.ensureVisible(find.text('Sofa options'));
     await tester.pumpAndSettle();
 
     expect(find.text('Sofa options'), findsOneWidget);
     expect(find.text('2 Seater Sofa'), findsOneWidget);
-
-    await tester.drag(
-      find.byKey(const ValueKey('sofa-options-list')),
-      const Offset(-1000, 0),
+    expect(
+      tester
+          .widget<ListView>(find.byKey(const ValueKey('sofa-options-list')))
+          .scrollDirection,
+      Axis.vertical,
     );
-    await tester.pumpAndSettle();
-
     expect(find.text('Loveseat Sofa'), findsOneWidget);
   });
 }

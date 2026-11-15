@@ -146,36 +146,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       height: 1.5,
                     ),
                   ),
-                  if (product.colors.isNotEmpty) ...[
-                    const SizedBox(height: 24),
-                    const Text(
-                      'Available colors',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 12,
-                      children: product.colors
-                          .map(
-                            (color) => Container(
-                              width: 34,
-                              height: 34,
-                              decoration: BoxDecoration(
-                                color: Color(color),
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.6),
-                                  width: 2,
-                                ),
-                              ),
-                            ),
-                          )
-                          .toList(),
-                    ),
-                  ],
                   if (product.category.toLowerCase() == 'sofa') ...[
                     const SizedBox(height: 28),
                     Text(
@@ -184,27 +154,22 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           ?.copyWith(fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(height: 14),
-                    SizedBox(
-                      height: 270,
-                      child: ListView.separated(
-                        key: const ValueKey('sofa-options-list'),
-                        scrollDirection: Axis.horizontal,
-                        itemCount: Product.sofaOptions.length,
-                        separatorBuilder: (_, _) => const SizedBox(width: 14),
-                        itemBuilder: (context, index) {
-                          final option = Product.sofaOptions[index];
-                          return SizedBox(
-                            width: 170,
-                            child: ProductCard(
-                              product: option,
-                              onTap: () => context.push(
-                                AppRoutes.productDetails,
-                                extra: option,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
+                    ListView.separated(
+                      key: const ValueKey('sofa-options-list'),
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: Product.sofaOptions.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 18),
+                      itemBuilder: (context, index) {
+                        final option = Product.sofaOptions[index];
+                        return ProductCard(
+                          product: option,
+                          onTap: () => context.push(
+                            AppRoutes.productDetails,
+                            extra: option,
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ],
