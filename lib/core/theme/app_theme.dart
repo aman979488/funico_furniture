@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors.dart';
@@ -47,8 +47,10 @@ class AppTheme {
           color: AppColors.textHint,
           fontSize: 14,
         ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 18,
+        ),
         border: border(Colors.transparent),
         enabledBorder: border(Colors.transparent),
         focusedBorder: border(Colors.white, 1.2),

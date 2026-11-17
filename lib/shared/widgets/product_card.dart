@@ -144,11 +144,7 @@ class ProductCard extends StatelessWidget {
 
   Widget _buildImage() {
     const fallback = Center(
-      child: Icon(
-        Icons.chair_outlined,
-        size: 40,
-        color: AppColors.textHint,
-      ),
+      child: Icon(Icons.chair_outlined, size: 40, color: AppColors.textHint),
     );
     if (product.image.isEmpty) return fallback;
     if (product.image.startsWith('http')) {

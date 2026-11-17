@@ -4,7 +4,8 @@ class PaymentCard {
   final String cardNumber;
   final String expiryDate; // MM/YY
   final String cvv;
-  final String cardType; // 'mastercard', 'visa', 'paypal', 'apple_pay', 'google_pay', 'cod'
+  final String
+  cardType; // 'mastercard', 'visa', 'paypal', 'apple_pay', 'google_pay', 'cod'
   final bool isDefault;
 
   const PaymentCard({

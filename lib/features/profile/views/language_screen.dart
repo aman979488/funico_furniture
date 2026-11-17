@@ -9,10 +9,7 @@ import '../viewmodels/profile_viewmodel.dart';
 class LanguageScreen extends ConsumerWidget {
   const LanguageScreen({super.key});
 
-  static const _suggested = [
-    'English (US)',
-    'English (UK)',
-  ];
+  static const _suggested = ['English (US)', 'English (UK)'];
 
   static const _languages = [
     'Hindi (हिन्दी)',

@@ -1,4 +1,4 @@
-﻿// TODO: app_text_field.dart
+// TODO: app_text_field.dart
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -70,10 +70,7 @@ class _AppTextFieldState extends State<AppTextField> {
       readOnly: widget.readOnly,
       onTap: widget.onTap,
       maxLines: widget.isPassword ? 1 : widget.maxLines,
-      style: TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.w500,
-      ),
+      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
       cursorColor: Colors.white,
       decoration: InputDecoration(
         isDense: widget.isCompact,

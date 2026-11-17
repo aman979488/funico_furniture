@@ -1,11 +1,11 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 class AppColors {
   // Backgrounds
   static const background = Color(0xFF181A20); // screen ka main dark background
-  static const surface = Color(0xFF1F222A);    // cards, input fields
-  static const card = Color(0xFF35383F);       // product image ke piche ka grey box
-  static const border = Color(0xFF35383F);     // input aur card border
+  static const surface = Color(0xFF1F222A); // cards, input fields
+  static const card = Color(0xFF35383F); // product image ke piche ka grey box
+  static const border = Color(0xFF35383F); // input aur card border
 
   // Text
   static const textPrimary = Colors.white;
@@ -13,9 +13,9 @@ class AppColors {
   static const textHint = Color(0xFF757575);
 
   // Buttons
-  static const primary = Colors.white;         // white pill button
-  static const onPrimary = Colors.black;       // button ke andar ka text
-  static const disabled = Color(0xFF35383F);   // grey disabled button
+  static const primary = Colors.white; // white pill button
+  static const onPrimary = Colors.black; // button ke andar ka text
+  static const disabled = Color(0xFF35383F); // grey disabled button
 
   // Status
   static const success = Color(0xFF07BD74);

@@ -120,6 +120,20 @@ firebase login
 flutterfire configure
 ```
 
+### Google Sign-In
+
+Enable Google as a sign-in provider in Firebase Authentication and configure
+the app's Android/iOS OAuth settings. Pass the Google OAuth web client ID to
+Flutter at build or run time so Firebase can receive an ID token:
+
+```powershell
+flutter run --dart-define=GOOGLE_WEB_CLIENT_ID=your-web-client-id.apps.googleusercontent.com
+```
+
+Use the same define for release builds. Android also requires the app's signing
+SHA fingerprints in Firebase; iOS requires the URL scheme from
+`GoogleService-Info.plist`.
+
 Firebase console mein enable karo:
 
 1. Authentication: Email/Password, Google, Phone

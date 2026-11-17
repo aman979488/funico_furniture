@@ -375,7 +375,8 @@ class _FillProfileScreenState extends ConsumerState<FillProfileScreen> {
             Icons.arrow_back_ios_new_rounded,
             color: Colors.white,
           ),
-          onPressed: () => context.canPop() ? context.pop() : context.go(AppRoutes.signup),
+          onPressed: () =>
+              context.canPop() ? context.pop() : context.go(AppRoutes.signup),
         ),
       ),
       body: SafeArea(

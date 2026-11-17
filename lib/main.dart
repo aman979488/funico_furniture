@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 import 'core/router/app_router.dart';
 import 'core/services/pin_session.dart';
@@ -15,6 +16,14 @@ Future<void> main() async {
       defaultTargetPlatform == TargetPlatform.iOS) {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
+    );
+    const googleClientId = String.fromEnvironment(
+      'GOOGLE_WEB_CLIENT_ID',
+      defaultValue: '655147824865-a7grii2oo0ra9ia0q7ef2glq0tpl1h7q.apps.googleusercontent.com',
+    );
+    await GoogleSignIn.instance.initialize(
+      clientId: kIsWeb && googleClientId.isNotEmpty ? googleClientId : null,
+      serverClientId: googleClientId.isNotEmpty ? googleClientId : null,
     );
   }
   runApp(const ProviderScope(child: FunicaApp()));

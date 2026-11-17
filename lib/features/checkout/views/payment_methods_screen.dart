@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class PaymentMethodsScreen extends ConsumerWidget {
@@ -6,8 +6,6 @@ class PaymentMethodsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return const Scaffold(
-      body: Center(child: Text('PaymentMethodsScreen')),
-    );
+    return const Scaffold(body: Center(child: Text('PaymentMethodsScreen')));
   }
 }

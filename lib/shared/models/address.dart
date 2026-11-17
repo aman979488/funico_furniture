@@ -22,9 +22,13 @@ class Address {
   });
 
   String get fullAddress {
-    final parts = [details, city, state, postalCode, country]
-        .where((s) => s.trim().isNotEmpty)
-        .toList();
+    final parts = [
+      details,
+      city,
+      state,
+      postalCode,
+      country,
+    ].where((s) => s.trim().isNotEmpty).toList();
     return parts.join(', ');
   }
 

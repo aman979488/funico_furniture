@@ -36,7 +36,10 @@ class AddressListScreen extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Colors.white70),
+            ),
           ),
           TextButton(
             onPressed: () async {
@@ -301,7 +304,10 @@ class _AddressCard extends StatelessWidget {
                       ),
                       onPressed: onEdit,
                       tooltip: 'Edit Address',
-                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                      constraints: const BoxConstraints(
+                        minWidth: 32,
+                        minHeight: 32,
+                      ),
                       padding: EdgeInsets.zero,
                     ),
                     const SizedBox(width: 8),
@@ -313,7 +319,10 @@ class _AddressCard extends StatelessWidget {
                       ),
                       onPressed: onDelete,
                       tooltip: 'Delete Address',
-                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                      constraints: const BoxConstraints(
+                        minWidth: 32,
+                        minHeight: 32,
+                      ),
                       padding: EdgeInsets.zero,
                     ),
                   ],

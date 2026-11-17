@@ -1,4 +1,4 @@
-﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class WishlistState {
   const WishlistState({this.isLoading = false, this.error});
@@ -7,10 +7,7 @@ class WishlistState {
   final String? error;
 
   WishlistState copyWith({bool? isLoading, String? error}) {
-    return WishlistState(
-      isLoading: isLoading ?? this.isLoading,
-      error: error,
-    );
+    return WishlistState(isLoading: isLoading ?? this.isLoading, error: error);
   }
 }
 

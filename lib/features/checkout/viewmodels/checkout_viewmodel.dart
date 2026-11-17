@@ -1,4 +1,4 @@
-﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class CheckoutState {
   const CheckoutState({this.isLoading = false, this.error});
@@ -7,10 +7,7 @@ class CheckoutState {
   final String? error;
 
   CheckoutState copyWith({bool? isLoading, String? error}) {
-    return CheckoutState(
-      isLoading: isLoading ?? this.isLoading,
-      error: error,
-    );
+    return CheckoutState(isLoading: isLoading ?? this.isLoading, error: error);
   }
 }
 

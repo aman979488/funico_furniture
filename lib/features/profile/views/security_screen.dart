@@ -144,14 +144,19 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Colors.white70),
+            ),
           ),
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
               if (email != null && email.isNotEmpty) {
                 try {
-                  await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+                  await FirebaseAuth.instance.sendPasswordResetEmail(
+                    email: email,
+                  );
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
@@ -162,14 +167,16 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                   }
                 } catch (e) {
                   if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error: $e')),
-                    );
+                    ScaffoldMessenger.of(context)
+                        .showSnackBar(SnackBar(content: Text('Error: $e')));
                   }
                 }
               }
             },
-            child: const Text('Send Link', style: TextStyle(color: Colors.white)),
+            child: const Text(
+              'Send Link',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),

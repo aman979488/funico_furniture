@@ -1,15 +1,19 @@
-﻿import 'dart:math' as math;
+import 'dart:math' as math;
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_assets.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/services/pin_session.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../shared/widgets/social_button.dart';
+import '../viewmodels/auth_viewmodel.dart';
 
 /// Reference design ke measurements ek jagah. Kuch adjust karna ho toh
 /// sirf yahan badlo.
@@ -36,11 +40,57 @@ class _Dim {
   static const double minContentHeight = 720;
 }
 
-class LetsYouInScreen extends StatelessWidget {
+class LetsYouInScreen extends ConsumerStatefulWidget {
   const LetsYouInScreen({super.key});
 
   @override
+  ConsumerState<LetsYouInScreen> createState() => _LetsYouInScreenState();
+}
+
+class _LetsYouInScreenState extends ConsumerState<LetsYouInScreen> {
+  Future<void> _google() async {
+    final signedIn = await ref
+        .read(authViewModelProvider.notifier)
+        .signInWithGoogle();
+    if (!mounted) return;
+
+    final authState = ref.read(authViewModelProvider);
+    if (!signedIn) {
+      final message = authState.error;
+      if (message != null && message.isNotEmpty) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(content: Text(message), backgroundColor: AppColors.error),
+          );
+      }
+      return;
+    }
+
+    if (authState.isNewGoogleUser) {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not complete Google sign-in.'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+        return;
+      }
+      context.go(
+        AppRoutes.fillProfile,
+        extra: {'name': user.displayName ?? '', 'email': user.email ?? ''},
+      );
+    } else {
+      PinSession.lock();
+      context.go(AppRoutes.enterPin);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final isLoading = ref.watch(authViewModelProvider).isLoading;
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -50,12 +100,15 @@ class LetsYouInScreen extends StatelessWidget {
               builder: (context, constraints) {
                 // Column ko definite height milti hai, isliye Spacer
                 // hamesha bachi hui jagah bharta hai
-                final height =
-                    math.max(constraints.maxHeight, _Dim.minContentHeight);
+                final height = math.max(
+                  constraints.maxHeight,
+                  _Dim.minContentHeight,
+                );
 
                 return SingleChildScrollView(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: _Dim.sideMargin),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: _Dim.sideMargin,
+                  ),
                   child: SizedBox(
                     height: height,
                     child: Column(
@@ -108,9 +161,7 @@ class LetsYouInScreen extends StatelessWidget {
                               color: Color(0xFFEA4335),
                             ),
                             label: AppStrings.continueWithGoogle,
-                            onPressed: () {
-                              // TODO: Firebase Google sign-in baad mein
-                            },
+                            onPressed: isLoading ? null : _google,
                           ),
                         ),
                         const SizedBox(height: _Dim.socialGap),

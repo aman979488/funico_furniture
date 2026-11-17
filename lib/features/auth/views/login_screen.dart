@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
@@ -80,6 +81,47 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _google() async {
+    FocusScope.of(context).unfocus();
+    final signedIn = await ref
+        .read(authViewModelProvider.notifier)
+        .signInWithGoogle();
+    if (!mounted) return;
+
+    final authState = ref.read(authViewModelProvider);
+    if (!signedIn) {
+      final message = authState.error;
+      if (message != null && message.isNotEmpty) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(content: Text(message), backgroundColor: AppColors.error),
+          );
+      }
+      return;
+    }
+
+    if (authState.isNewGoogleUser) {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not complete Google sign-in.'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+        return;
+      }
+      context.go(
+        AppRoutes.fillProfile,
+        extra: {'name': user.displayName ?? '', 'email': user.email ?? ''},
+      );
+    } else {
+      PinSession.lock();
+      context.go(AppRoutes.enterPin);
+    }
   }
 
   @override
@@ -266,9 +308,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             size: 26,
                             color: Color(0xFFEA4335),
                           ),
-                          onTap: () {
-                            // TODO: Google sign-in
-                          },
+                          onTap: authState.isLoading ? null : _google,
                         ),
                         const SizedBox(width: 16),
                         _SocialSquare(
@@ -346,7 +386,7 @@ class _SocialSquare extends StatelessWidget {
   const _SocialSquare({required this.icon, required this.onTap});
 
   final Widget icon;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {

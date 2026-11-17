@@ -16,46 +16,14 @@ class _InviteFriendsScreenState extends State<InviteFriendsScreen> {
   static const _referralCode = 'FUNICA2026';
 
   final List<Map<String, dynamic>> _contacts = [
-    {
-      'name': 'Darlene Robertson',
-      'phone': '+91 98765 12345',
-      'invited': false,
-    },
-    {
-      'name': 'Floyd Miles',
-      'phone': '+91 98765 23456',
-      'invited': true,
-    },
-    {
-      'name': 'Ronald Richards',
-      'phone': '+91 98765 34567',
-      'invited': false,
-    },
-    {
-      'name': 'Theresa Webb',
-      'phone': '+91 98765 45678',
-      'invited': false,
-    },
-    {
-      'name': 'Guy Hawkins',
-      'phone': '+91 98765 56789',
-      'invited': true,
-    },
-    {
-      'name': 'Kristin Watson',
-      'phone': '+91 98765 67890',
-      'invited': false,
-    },
-    {
-      'name': 'Savannah Nguyen',
-      'phone': '+91 98765 78901',
-      'invited': false,
-    },
-    {
-      'name': 'Eleanor Pena',
-      'phone': '+91 98765 89012',
-      'invited': false,
-    },
+    {'name': 'Darlene Robertson', 'phone': '+91 98765 12345', 'invited': false},
+    {'name': 'Floyd Miles', 'phone': '+91 98765 23456', 'invited': true},
+    {'name': 'Ronald Richards', 'phone': '+91 98765 34567', 'invited': false},
+    {'name': 'Theresa Webb', 'phone': '+91 98765 45678', 'invited': false},
+    {'name': 'Guy Hawkins', 'phone': '+91 98765 56789', 'invited': true},
+    {'name': 'Kristin Watson', 'phone': '+91 98765 67890', 'invited': false},
+    {'name': 'Savannah Nguyen', 'phone': '+91 98765 78901', 'invited': false},
+    {'name': 'Eleanor Pena', 'phone': '+91 98765 89012', 'invited': false},
   ];
 
   void _copyCode() {
@@ -267,10 +235,8 @@ class _ContactTile extends StatelessWidget {
           ElevatedButton(
             onPressed: onToggle,
             style: ElevatedButton.styleFrom(
-              backgroundColor:
-                  isInvited ? Colors.transparent : Colors.white,
-              foregroundColor:
-                  isInvited ? Colors.white70 : Colors.black,
+              backgroundColor: isInvited ? Colors.transparent : Colors.white,
+              foregroundColor: isInvited ? Colors.white70 : Colors.black,
               side: isInvited ? const BorderSide(color: Colors.white24) : null,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               shape: const StadiumBorder(),

@@ -1,4 +1,4 @@
-﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class NotificationsState {
   const NotificationsState({this.isLoading = false, this.error});
@@ -20,4 +20,6 @@ class NotificationsViewModel extends Notifier<NotificationsState> {
 }
 
 final notificationsViewModelProvider =
-    NotifierProvider<NotificationsViewModel, NotificationsState>(NotificationsViewModel.new);
+    NotifierProvider<NotificationsViewModel, NotificationsState>(
+      NotificationsViewModel.new,
+    );

@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
@@ -30,11 +31,7 @@ class ProfileScreen extends ConsumerWidget {
       'Edit Profile',
       route: AppRoutes.editProfile,
     ),
-    _MenuItem(
-      Icons.location_on_outlined,
-      'Address',
-      route: AppRoutes.address,
-    ),
+    _MenuItem(Icons.location_on_outlined, 'Address', route: AppRoutes.address),
     _MenuItem(
       Icons.notifications_none_rounded,
       'Notification',
@@ -45,16 +42,8 @@ class ProfileScreen extends ConsumerWidget {
       'Payment',
       route: AppRoutes.paymentSettings,
     ),
-    _MenuItem(
-      Icons.shield_outlined,
-      'Security',
-      route: AppRoutes.security,
-    ),
-    _MenuItem(
-      Icons.language_rounded,
-      'Language',
-      route: AppRoutes.language,
-    ),
+    _MenuItem(Icons.shield_outlined, 'Security', route: AppRoutes.security),
+    _MenuItem(Icons.language_rounded, 'Language', route: AppRoutes.language),
     _MenuItem(
       Icons.lock_outline_rounded,
       'Privacy Policy',
@@ -183,11 +172,7 @@ class ProfileScreen extends ConsumerWidget {
                 color: Colors.white70,
               ),
             )
-          : const Icon(
-              Icons.person_rounded,
-              size: 64,
-              color: Colors.white70,
-            ),
+          : const Icon(Icons.person_rounded, size: 64, color: Colors.white70),
     );
   }
 
@@ -270,9 +255,7 @@ class ProfileScreen extends ConsumerWidget {
                     height: 120,
                     child: Stack(
                       children: [
-                        Positioned.fill(
-                          child: _buildAvatar(photoUrl),
-                        ),
+                        Positioned.fill(child: _buildAvatar(photoUrl)),
                         Positioned(
                           right: 2,
                           bottom: 2,

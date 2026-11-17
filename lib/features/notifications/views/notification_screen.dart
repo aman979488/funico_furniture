@@ -16,8 +16,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
     {
       'id': '1',
       'title': '35% Special Discount!',
-      'description':
-          'Special promotion only valid for today. Upgrade your living room with modern luxury sofas.',
+      'description': 'Special promotion only valid for today. Upgrade your living room with modern luxury sofas.',
       'time': 'Just now',
       'section': 'Today',
       'icon': Icons.local_offer_rounded,
@@ -26,8 +25,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
     {
       'id': '2',
       'title': 'Order Placed Successfully',
-      'description':
-          'Your order #FN-9821 for Nordic Minimalist Sofa has been placed and is being packed.',
+      'description': 'Your order #FN-9821 for Nordic Minimalist Sofa has been placed and is being packed.',
       'time': '2 hours ago',
       'section': 'Today',
       'icon': Icons.shopping_bag_rounded,
@@ -36,8 +34,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
     {
       'id': '3',
       'title': 'Payment Confirmed',
-      'description':
-          'Payment of \$420.00 via MasterCard has been verified and processed securely.',
+      'description': 'Payment of \$420.00 via MasterCard has been verified and processed securely.',
       'time': 'Yesterday, 18:30',
       'section': 'Yesterday',
       'icon': Icons.payment_rounded,
@@ -46,8 +43,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
     {
       'id': '4',
       'title': 'New Collection Released',
-      'description':
-          'Explore 30+ new Scandinavian dining tables and designer pendant lights in stock.',
+      'description': 'Explore 30+ new Scandinavian dining tables and designer pendant lights in stock.',
       'time': 'Yesterday, 11:15',
       'section': 'Yesterday',
       'icon': Icons.chair_rounded,
@@ -56,8 +52,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
     {
       'id': '5',
       'title': 'Welcome to Funica!',
-      'description':
-          'Your account profile is ready. Browse high-end furniture designed for modern comfort.',
+      'description': 'Your account profile is ready. Browse high-end furniture designed for modern comfort.',
       'time': '3 days ago',
       'section': 'Earlier',
       'icon': Icons.celebration_rounded,
@@ -78,9 +73,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   void _clearAll() {
     setState(() => _notifications.clear());
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('All notifications cleared')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('All notifications cleared')));
   }
 
   @override
@@ -182,7 +177,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
                     itemCount: _notifications.length,
                     itemBuilder: (context, index) {
                       final item = _notifications[index];
-                      final isFirstInSection = index == 0 ||
+                      final isFirstInSection =
+                          index == 0 ||
                           _notifications[index - 1]['section'] !=
                               item['section'];
 
@@ -235,7 +231,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Row(
                                         mainAxisAlignment:

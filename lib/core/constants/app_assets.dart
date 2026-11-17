@@ -18,16 +18,11 @@ class AppAssets {
   // Discount images
   static const sofaimg = '$_images/homeimg/special_discount.jpg';
   static const twoSeaterSofa = '$_images/sofaImg/2Seater.webp';
-  static const midCenturySofa1 =
-      '$_images/sofaImg/mid centruy sofa/sofa1.jpg';
-  static const midCenturySofa2 =
-      '$_images/sofaImg/mid centruy sofa/sofa2.jpg';
-  static const midCenturySofa3 =
-      '$_images/sofaImg/mid centruy sofa/sofa3.jpg';
-  static const midCenturySofa4 =
-      '$_images/sofaImg/mid centruy sofa/sofa4.jpg';
-  static const midCenturySofa5 =
-      '$_images/sofaImg/mid centruy sofa/sofa5.jpg';
+  static const midCenturySofa1 = '$_images/sofaImg/mid centruy sofa/sofa1.jpg';
+  static const midCenturySofa2 = '$_images/sofaImg/mid centruy sofa/sofa2.jpg';
+  static const midCenturySofa3 = '$_images/sofaImg/mid centruy sofa/sofa3.jpg';
+  static const midCenturySofa4 = '$_images/sofaImg/mid centruy sofa/sofa4.jpg';
+  static const midCenturySofa5 = '$_images/sofaImg/mid centruy sofa/sofa5.jpg';
   static const threeSeaterSofa = '$_images/sofaImg/3Seater.webp';
   static const sleeperSofa =
       '$_images/sofaImg/3 Seater Sofa Cum Bed in Beige _ Space-Saving Guest Room and Living Room Idea.webp';

@@ -191,5 +191,28 @@ class Product {
           'Warm and comfortable wooden bed setup with ambient lighting.',
       colors: [0xFFA0624A, 0xFF8DB4FF],
     ),
+    Product(
+      id: '6',
+      name: 'Mini Bookshelf',
+      category: 'Cupboard',
+      price: 165.00,
+      image: AppAssets.cupboard,
+      images: [
+        AppAssets.cupboard,
+        AppAssets.table,
+      ],
+      rating: 4.7,
+      soldCount: 1520,
+      description:
+          'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
+      colors: [
+        0xFFA0624A,
+        0xFF5C6F84,
+        0xFF9C27B0,
+        0xFF0FB5A6,
+        0xFF4A148C,
+        0xFF2962FF,
+      ],
+    ),
   ];
 }

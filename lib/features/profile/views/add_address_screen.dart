@@ -42,12 +42,13 @@ class _AddAddressScreenState extends ConsumerState<AddAddressScreen> {
     _detailsController = TextEditingController(text: address?.details ?? '');
     _cityController = TextEditingController(text: address?.city ?? '');
     _stateController = TextEditingController(text: address?.state ?? '');
-    _postalCodeController =
-        TextEditingController(text: address?.postalCode ?? '');
-    _countryController =
-        TextEditingController(text: address?.country ?? 'India');
-    _phoneController =
-        TextEditingController(text: address?.phoneNumber ?? '');
+    _postalCodeController = TextEditingController(
+      text: address?.postalCode ?? '',
+    );
+    _countryController = TextEditingController(
+      text: address?.country ?? 'India',
+    );
+    _phoneController = TextEditingController(text: address?.phoneNumber ?? '');
     _isDefault = address?.isDefault ?? false;
   }
 
@@ -70,7 +71,8 @@ class _AddAddressScreenState extends ConsumerState<AddAddressScreen> {
     try {
       final isEdit = widget.existingAddress != null;
       final newAddress = Address(
-        id: widget.existingAddress?.id ??
+        id:
+            widget.existingAddress?.id ??
             'addr_${DateTime.now().millisecondsSinceEpoch}',
         name: _nameController.text.trim(),
         details: _detailsController.text.trim(),
@@ -82,9 +84,7 @@ class _AddAddressScreenState extends ConsumerState<AddAddressScreen> {
         isDefault: _isDefault,
       );
 
-      await ref
-          .read(profileViewModelProvider.notifier)
-          .saveAddress(newAddress);
+      await ref.read(profileViewModelProvider.notifier).saveAddress(newAddress);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -141,7 +141,10 @@ class _AddAddressScreenState extends ConsumerState<AddAddressScreen> {
             child: Form(
               key: _formKey,
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
                 children: [
                   // Address Label Quick Chips
                   Text(
@@ -171,8 +174,9 @@ class _AddAddressScreenState extends ConsumerState<AddAddressScreen> {
                         backgroundColor: AppColors.surface,
                         labelStyle: TextStyle(
                           color: isSelected ? Colors.black : Colors.white,
-                          fontWeight:
-                              isSelected ? FontWeight.w700 : FontWeight.w500,
+                          fontWeight: isSelected
+                              ? FontWeight.w700
+                              : FontWeight.w500,
                         ),
                         side: BorderSide(
                           color: isSelected ? Colors.white : AppColors.border,

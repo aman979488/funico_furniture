@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/router/app_router.dart';
@@ -21,11 +21,7 @@ class MainShellScreen extends StatelessWidget {
       route: AppRoutes.wishlist,
       icon: Icons.favorite_border_rounded,
     ),
-    (
-      label: 'Cart',
-      route: AppRoutes.cart,
-      icon: Icons.shopping_cart_outlined,
-    ),
+    (label: 'Cart', route: AppRoutes.cart, icon: Icons.shopping_cart_outlined),
     (
       label: 'Orders',
       route: AppRoutes.orders,
@@ -116,7 +112,9 @@ class _NavigationTab extends StatelessWidget {
                 width: 22,
                 height: 3,
                 decoration: BoxDecoration(
-                  color: selected ? const Color(0xFF3B82F6) : Colors.transparent,
+                  color: selected
+                      ? const Color(0xFF3B82F6)
+                      : Colors.transparent,
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),

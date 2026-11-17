@@ -23,44 +23,37 @@ class _HelpCenterScreenState extends State<HelpCenterScreen>
     {
       'category': 'General',
       'question': 'How do I track my furniture order?',
-      'answer':
-          'You can track your order status live under Orders > Track Order or by clicking on the notification updates sent to your phone and email.',
+      'answer': 'You can track your order status live under Orders > Track Order or by clicking on the notification updates sent to your phone and email.',
     },
     {
       'category': 'General',
       'question': 'Can I change my delivery address after placing an order?',
-      'answer':
-          'Yes, you can edit your shipping address within 2 hours of placing the order via the Orders page or by contacting Customer Service.',
+      'answer': 'Yes, you can edit your shipping address within 2 hours of placing the order via the Orders page or by contacting Customer Service.',
     },
     {
       'category': 'Order',
       'question': 'What is Funica’s return and refund policy?',
-      'answer':
-          'We offer a 30-day hassle-free return window for all standard furniture items in original condition. Refunds are credited to your original payment method within 3-5 business days.',
+      'answer': 'We offer a 30-day hassle-free return window for all standard furniture items in original condition. Refunds are credited to your original payment method within 3-5 business days.',
     },
     {
       'category': 'Order',
       'question': 'How does doorstep assembly work?',
-      'answer':
-          'Our certified Funica technician arrives on the day of delivery to assemble and install your furniture completely free of cost.',
+      'answer': 'Our certified Funica technician arrives on the day of delivery to assemble and install your furniture completely free of cost.',
     },
     {
       'category': 'Payment',
       'question': 'What payment methods do you accept?',
-      'answer':
-          'We accept Credit/Debit cards (Visa, MasterCard, RuPay), Net Banking, UPI (Google Pay, PhonePe, Paytm), and Cash on Delivery.',
+      'answer': 'We accept Credit/Debit cards (Visa, MasterCard, RuPay), Net Banking, UPI (Google Pay, PhonePe, Paytm), and Cash on Delivery.',
     },
     {
       'category': 'Payment',
       'question': 'Is my payment information secure?',
-      'answer':
-          'Yes, all payments are processed through PCI-DSS Level 1 certified gateways with end-to-end 256-bit encryption.',
+      'answer': 'Yes, all payments are processed through PCI-DSS Level 1 certified gateways with end-to-end 256-bit encryption.',
     },
     {
       'category': 'Services',
       'question': 'Do you offer custom furniture design?',
-      'answer':
-          'Yes, reach out through Customer Service to connect with a Funica interior designer for personalized material and sizing customization.',
+      'answer': 'Yes, reach out through Customer Service to connect with a Funica interior designer for personalized material and sizing customization.',
     },
   ];
 
@@ -81,9 +74,11 @@ class _HelpCenterScreenState extends State<HelpCenterScreen>
   Widget build(BuildContext context) {
     final query = _searchController.text.trim().toLowerCase();
     final filteredFaqs = _faqs.where((f) {
-      final matchesCategory = _selectedFaqCategory == 'General' ||
+      final matchesCategory =
+          _selectedFaqCategory == 'General' ||
           f['category'] == _selectedFaqCategory;
-      final matchesQuery = query.isEmpty ||
+      final matchesQuery =
+          query.isEmpty ||
           f['question']!.toLowerCase().contains(query) ||
           f['answer']!.toLowerCase().contains(query);
       return matchesCategory && matchesQuery;
@@ -129,7 +124,10 @@ class _HelpCenterScreenState extends State<HelpCenterScreen>
               children: [
                 // FAQ Tab
                 ListView(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 16,
+                  ),
                   children: [
                     TextField(
                       controller: _searchController,
@@ -157,7 +155,9 @@ class _HelpCenterScreenState extends State<HelpCenterScreen>
                               label: Text(cat),
                               selected: isSelected,
                               onSelected: (val) {
-                                if (val) setState(() => _selectedFaqCategory = cat);
+                                if (val) {
+                                  setState(() => _selectedFaqCategory = cat);
+                                }
                               },
                               selectedColor: Colors.white,
                               backgroundColor: AppColors.surface,
@@ -187,9 +187,8 @@ class _HelpCenterScreenState extends State<HelpCenterScreen>
                           border: Border.all(color: AppColors.border),
                         ),
                         child: Theme(
-                          data: Theme.of(context).copyWith(
-                            dividerColor: Colors.transparent,
-                          ),
+                          data: Theme.of(context)
+                              .copyWith(dividerColor: Colors.transparent),
                           child: ExpansionTile(
                             iconColor: Colors.white,
                             collapsedIconColor: Colors.white70,
@@ -203,7 +202,12 @@ class _HelpCenterScreenState extends State<HelpCenterScreen>
                             ),
                             children: [
                               Padding(
-                                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                                padding: const EdgeInsets.fromLTRB(
+                                  16,
+                                  0,
+                                  16,
+                                  16,
+                                ),
                                 child: Text(
                                   faq['answer']!,
                                   style: const TextStyle(
@@ -222,7 +226,10 @@ class _HelpCenterScreenState extends State<HelpCenterScreen>
 
                 // Contact Us Tab
                 ListView(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 16,
+                  ),
                   children: [
                     _ContactOption(
                       icon: Icons.headset_mic_rounded,
@@ -329,7 +336,10 @@ class _ContactOption extends StatelessWidget {
           subtitle,
           style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
         ),
-        trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textHint),
+        trailing: const Icon(
+          Icons.chevron_right_rounded,
+          color: AppColors.textHint,
+        ),
       ),
     );
   }

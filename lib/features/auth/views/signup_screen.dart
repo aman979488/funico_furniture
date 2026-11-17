@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/app_assets.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/services/pin_session.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/auth_input_field.dart';
 import '../viewmodels/auth_viewmodel.dart';
@@ -97,6 +99,46 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _google() async {
+    final signedIn = await ref
+        .read(authViewModelProvider.notifier)
+        .signInWithGoogle();
+    if (!mounted) return;
+
+    final authState = ref.read(authViewModelProvider);
+    if (!signedIn) {
+      final message = authState.error;
+      if (message != null && message.isNotEmpty) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(content: Text(message), backgroundColor: AppColors.error),
+          );
+      }
+      return;
+    }
+
+    if (authState.isNewGoogleUser) {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not complete Google sign-in.'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+        return;
+      }
+      context.go(
+        AppRoutes.fillProfile,
+        extra: {'name': user.displayName ?? '', 'email': user.email ?? ''},
+      );
+    } else {
+      PinSession.lock();
+      context.go(AppRoutes.enterPin);
+    }
   }
 
   @override
@@ -272,9 +314,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                               size: 26,
                               color: Color(0xFFEA4335),
                             ),
-                            onTap: () {
-                              // TODO: Google sign-in
-                            },
+                            onTap: authState.isLoading ? null : _google,
                           ),
                           const SizedBox(width: 16),
                           _SocialSquare(
@@ -353,7 +393,7 @@ class _SocialSquare extends StatelessWidget {
   const _SocialSquare({required this.icon, required this.onTap});
 
   final Widget icon;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {

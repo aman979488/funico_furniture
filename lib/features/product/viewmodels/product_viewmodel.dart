@@ -1,4 +1,4 @@
-﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ProductState {
   const ProductState({this.isLoading = false, this.error});
@@ -7,10 +7,7 @@ class ProductState {
   final String? error;
 
   ProductState copyWith({bool? isLoading, String? error}) {
-    return ProductState(
-      isLoading: isLoading ?? this.isLoading,
-      error: error,
-    );
+    return ProductState(isLoading: isLoading ?? this.isLoading, error: error);
   }
 }
 

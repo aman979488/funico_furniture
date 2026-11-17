@@ -1,4 +1,4 @@
-﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class HomeState {
   const HomeState({this.isLoading = false, this.error});
@@ -7,10 +7,7 @@ class HomeState {
   final String? error;
 
   HomeState copyWith({bool? isLoading, String? error}) {
-    return HomeState(
-      isLoading: isLoading ?? this.isLoading,
-      error: error,
-    );
+    return HomeState(isLoading: isLoading ?? this.isLoading, error: error);
   }
 }
 
@@ -19,5 +16,6 @@ class HomeViewModel extends Notifier<HomeState> {
   HomeState build() => const HomeState();
 }
 
-final homeViewModelProvider =
-    NotifierProvider<HomeViewModel, HomeState>(HomeViewModel.new);
+final homeViewModelProvider = NotifierProvider<HomeViewModel, HomeState>(
+  HomeViewModel.new,
+);

@@ -1,4 +1,4 @@
-﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class SearchState {
   const SearchState({this.isLoading = false, this.error});
@@ -7,10 +7,7 @@ class SearchState {
   final String? error;
 
   SearchState copyWith({bool? isLoading, String? error}) {
-    return SearchState(
-      isLoading: isLoading ?? this.isLoading,
-      error: error,
-    );
+    return SearchState(isLoading: isLoading ?? this.isLoading, error: error);
   }
 }
 
@@ -19,5 +16,6 @@ class SearchViewModel extends Notifier<SearchState> {
   SearchState build() => const SearchState();
 }
 
-final searchViewModelProvider =
-    NotifierProvider<SearchViewModel, SearchState>(SearchViewModel.new);
+final searchViewModelProvider = NotifierProvider<SearchViewModel, SearchState>(
+  SearchViewModel.new,
+);

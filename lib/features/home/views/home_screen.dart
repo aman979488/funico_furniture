@@ -530,10 +530,7 @@ class _HeaderActionIcon extends StatelessWidget {
 }
 
 class _CategoryShortcut extends StatelessWidget {
-  const _CategoryShortcut({
-    required this.category,
-    required this.onTap,
-  });
+  const _CategoryShortcut({required this.category, required this.onTap});
 
   final _HomeCategory category;
   final VoidCallback onTap;

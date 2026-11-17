@@ -1,4 +1,4 @@
-﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class WalletState {
   const WalletState({this.isLoading = false, this.error});
@@ -7,10 +7,7 @@ class WalletState {
   final String? error;
 
   WalletState copyWith({bool? isLoading, String? error}) {
-    return WalletState(
-      isLoading: isLoading ?? this.isLoading,
-      error: error,
-    );
+    return WalletState(isLoading: isLoading ?? this.isLoading, error: error);
   }
 }
 
@@ -19,5 +16,6 @@ class WalletViewModel extends Notifier<WalletState> {
   WalletState build() => const WalletState();
 }
 
-final walletViewModelProvider =
-    NotifierProvider<WalletViewModel, WalletState>(WalletViewModel.new);
+final walletViewModelProvider = NotifierProvider<WalletViewModel, WalletState>(
+  WalletViewModel.new,
+);

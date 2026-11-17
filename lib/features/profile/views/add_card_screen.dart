@@ -121,7 +121,10 @@ class _AddCardScreenState extends ConsumerState<AddCardScreen> {
             child: Form(
               key: _formKey,
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
                 children: [
                   // Visual Card Preview
                   Container(
@@ -181,7 +184,9 @@ class _AddCardScreenState extends ConsumerState<AddCardScreen> {
                                       width: 18,
                                       height: 18,
                                       decoration: BoxDecoration(
-                                        color: Colors.amber.withValues(alpha: 0.9),
+                                        color: Colors.amber.withValues(
+                                          alpha: 0.9,
+                                        ),
                                         shape: BoxShape.circle,
                                       ),
                                     ),
@@ -335,7 +340,9 @@ class _AddCardScreenState extends ConsumerState<AddCardScreen> {
                             }
                           },
                           validator: (v) {
-                            if (v == null || !v.contains('/') || v.length != 5) {
+                            if (v == null ||
+                                !v.contains('/') ||
+                                v.length != 5) {
                               return 'Invalid MM/YY';
                             }
                             return null;

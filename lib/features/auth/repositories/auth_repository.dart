@@ -2,9 +2,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 abstract class AuthRepository {
   Future<void> signIn({required String email, required String password});
+
+  Future<UserCredential> signInWithGoogle();
 
   Future<void> sendPasswordResetEmail({required String email});
 
@@ -16,6 +19,39 @@ abstract class AuthRepository {
 }
 
 class AuthRepositoryImpl implements AuthRepository {
+  @override
+  Future<UserCredential> signInWithGoogle() async {
+    if (Firebase.apps.isEmpty) {
+      throw FirebaseAuthException(
+        code: 'not-initialized',
+        message: 'Firebase is not configured for this platform.',
+      );
+    }
+
+    final account = await GoogleSignIn.instance.authenticate();
+    final idToken = account.authentication.idToken;
+    if (idToken == null) {
+      throw FirebaseAuthException(
+        code: 'invalid-credential',
+        message: 'Google did not return an ID token. Configure the Google web client ID.',
+      );
+    }
+
+    final credential = await FirebaseAuth.instance.signInWithCredential(
+      GoogleAuthProvider.credential(idToken: idToken),
+    );
+    final user = credential.user;
+    if (user == null) {
+      throw FirebaseAuthException(
+        code: 'user-not-found',
+        message: 'Firebase did not return the signed-in user.',
+      );
+    }
+
+    await _ensureUserProfile(user);
+    return credential;
+  }
+
   @override
   Future<void> signIn({required String email, required String password}) async {
     if (Firebase.apps.isEmpty) {
@@ -98,6 +134,8 @@ class AuthRepositoryImpl implements AuthRepository {
         'uid': user.uid,
         'name': user.displayName ?? '',
         'email': user.email,
+        'phoneNumber': user.phoneNumber ?? '',
+        'photoUrl': user.photoURL,
         'createdAt': FieldValue.serverTimestamp(),
       });
     }

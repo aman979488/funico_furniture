@@ -21,7 +21,8 @@ class _SearchScreenState extends State<SearchScreen> {
     final query = _query.trim().toLowerCase();
     if (query.isEmpty) return const [];
 
-    return Product.sampleProducts.where((product) {
+    final products = [...Product.sofaOptions, ...Product.sampleProducts];
+    return products.where((product) {
       return product.name.toLowerCase().contains(query) ||
           product.category.toLowerCase().contains(query);
     }).toList();
@@ -99,26 +100,44 @@ class _SearchScreenState extends State<SearchScreen> {
                             ? 3
                             : 2;
 
-                        return GridView.builder(
-                          padding: const EdgeInsets.fromLTRB(22, 0, 22, 22),
-                          itemCount: results.length,
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: crossAxisCount,
-                                crossAxisSpacing: 16,
-                                mainAxisSpacing: 22,
-                                childAspectRatio: 0.60,
+                        return Column(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(22, 0, 22, 12),
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: Text('${results.length} products found'),
                               ),
-                          itemBuilder: (context, index) {
-                            final product = results[index];
-                            return ProductCard(
-                              product: product,
-                              onTap: () => context.push(
-                                AppRoutes.productDetails,
-                                extra: product,
+                            ),
+                            Expanded(
+                              child: GridView.builder(
+                                padding: const EdgeInsets.fromLTRB(
+                                  22,
+                                  0,
+                                  22,
+                                  22,
+                                ),
+                                itemCount: results.length,
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: crossAxisCount,
+                                      crossAxisSpacing: 16,
+                                      mainAxisSpacing: 22,
+                                      childAspectRatio: 0.60,
+                                    ),
+                                itemBuilder: (context, index) {
+                                  final product = results[index];
+                                  return ProductCard(
+                                    product: product,
+                                    onTap: () => context.push(
+                                      AppRoutes.productDetails,
+                                      extra: product,
+                                    ),
+                                  );
+                                },
                               ),
-                            );
-                          },
+                            ),
+                          ],
                         );
                       },
                     ),
