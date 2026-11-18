@@ -94,8 +94,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   void _handleAddToCart(BuildContext context) {
     final colorsList = _colors;
-    final selectedColor = colorsList.isNotEmpty &&
-            _selectedColorIndex < colorsList.length
+    final selectedColor =
+        colorsList.isNotEmpty && _selectedColorIndex < colorsList.length
         ? colorsList[_selectedColorIndex]
         : null;
 
@@ -158,7 +158,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+          icon: const Icon(
+            Icons.arrow_back_rounded,
+            color: AppColors.textPrimary,
+          ),
           tooltip: 'Back',
           onPressed: () {
             if (Navigator.of(context).canPop()) {
@@ -196,10 +199,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         },
                         itemBuilder: (context, index) => GestureDetector(
                           onTap: () => _showImageViewer(index),
-                          child: _buildImage(
-                            images[index],
-                            fit: BoxFit.cover,
-                          ),
+                          child: _buildImage(images[index], fit: BoxFit.cover),
                         ),
                       ),
                     ),
@@ -237,9 +237,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       Expanded(
                         child: Text(
                           product.name,
-                          style: Theme.of(context)
-                              .textTheme
-                              .headlineSmall
+                          style: Theme.of(context).textTheme.headlineSmall
                               ?.copyWith(
                                 color: AppColors.textPrimary,
                                 fontWeight: FontWeight.w700,
@@ -333,8 +331,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             text: _isDescriptionExpanded
                                 ? description
                                 : (description.length > 115
-                                    ? '${description.substring(0, 115)}... '
-                                    : description),
+                                      ? '${description.substring(0, 115)}... '
+                                      : description),
                           ),
                           if (description.length > 115)
                             TextSpan(
@@ -370,29 +368,57 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       itemBuilder: (context, index) {
                         final colorVal = colorsList[index];
                         final isSelected = index == _selectedColorIndex;
-                        return GestureDetector(
-                          onTap: () {
-                            setState(() => _selectedColorIndex = index);
-                          },
-                          child: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: Color(colorVal),
-                              shape: BoxShape.circle,
-                              border: isSelected
-                                  ? Border.all(color: Colors.white, width: 2)
-                                  : null,
+                        return Semantics(
+                          button: true,
+                          selected: isSelected,
+                          label: 'Select color ${index + 1}',
+                          child: InkWell(
+                            onTap: () {
+                              setState(() => _selectedColorIndex = index);
+                            },
+                            borderRadius: BorderRadius.circular(22),
+                            splashColor: Color(colorVal)
+                                .withValues(alpha: 0.35),
+                            child: AnimatedContainer(
+                              key: ValueKey('color-swatch-$index'),
+                              duration: const Duration(milliseconds: 180),
+                              width: 44,
+                              height: 44,
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: isSelected
+                                      ? AppColors.textPrimary
+                                      : Colors.transparent,
+                                  width: 2,
+                                ),
+                              ),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Color(colorVal),
+                                  shape: BoxShape.circle,
+                                  boxShadow: isSelected
+                                      ? [
+                                          BoxShadow(
+                                            color: Color(colorVal)
+                                                .withValues(alpha: 0.45),
+                                            blurRadius: 8,
+                                          ),
+                                        ]
+                                      : null,
+                                ),
+                                child: isSelected
+                                    ? const Center(
+                                        child: Icon(
+                                          Icons.check,
+                                          color: Colors.white,
+                                          size: 20,
+                                        ),
+                                      )
+                                    : null,
+                              ),
                             ),
-                            child: isSelected
-                                ? const Center(
-                                    child: Icon(
-                                      Icons.check,
-                                      color: Colors.white,
-                                      size: 20,
-                                    ),
-                                  )
-                                : null,
                           ),
                         );
                       },
@@ -471,9 +497,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     const SizedBox(height: 28),
                     Text(
                       'Sofa options',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
+                      style: Theme.of(context).textTheme.titleLarge
+                          ?.copyWith(fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(height: 14),
                     GridView.builder(
@@ -483,11 +508,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       itemCount: Product.sofaOptions.length,
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 18,
-                        childAspectRatio: 0.68,
-                      ),
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 18,
+                            childAspectRatio: 0.68,
+                          ),
                       itemBuilder: (context, index) {
                         final option = Product.sofaOptions[index];
                         return ProductCard(
@@ -510,9 +535,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
         decoration: const BoxDecoration(
           color: AppColors.background,
-          border: Border(
-            top: BorderSide(color: AppColors.border, width: 1),
-          ),
+          border: Border(top: BorderSide(color: AppColors.border, width: 1)),
         ),
         child: SafeArea(
           top: false,

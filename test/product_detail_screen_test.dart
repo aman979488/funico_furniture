@@ -4,6 +4,41 @@ import 'package:funica/features/product/views/product_detail_screen.dart';
 import 'package:funica/shared/models/product.dart';
 
 void main() {
+  testWidgets('selecting a color updates the selected swatch', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ProductDetailScreen(product: Product.sampleProducts.first),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final firstSwatch = find.byKey(const ValueKey('color-swatch-0'));
+    final secondSwatch = find.byKey(const ValueKey('color-swatch-1'));
+    await tester.ensureVisible(firstSwatch);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.descendant(of: firstSwatch, matching: find.byIcon(Icons.check)),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: secondSwatch, matching: find.byIcon(Icons.check)),
+      findsNothing,
+    );
+
+    await tester.tap(secondSwatch);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.descendant(of: firstSwatch, matching: find.byIcon(Icons.check)),
+      findsNothing,
+    );
+    expect(
+      find.descendant(of: secondSwatch, matching: find.byIcon(Icons.check)),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('sofa details show scrollable sofa options below', (
     tester,
   ) async {
