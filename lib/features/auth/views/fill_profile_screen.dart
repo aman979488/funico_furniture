@@ -7,8 +7,10 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../core/constants/firestore_collections.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/enums/user_role.dart';
 import '../../../shared/widgets/auth_input_field.dart';
 
 class FillProfileScreen extends ConsumerStatefulWidget {
@@ -39,6 +41,24 @@ class _FillProfileScreenState extends ConsumerState<FillProfileScreen> {
   bool _isLoadingProfile = true;
 
   static const _genders = ['Male', 'Female', 'Other'];
+
+  Future<DocumentReference<Map<String, dynamic>>> _getUserDocRef(String uid) async {
+    final collections = [
+      FirestoreCollections.customers,
+      FirestoreCollections.vendors,
+      FirestoreCollections.staff,
+    ];
+    for (final col in collections) {
+      final docRef = FirebaseFirestore.instance.collection(col).doc(uid);
+      final snapshot = await docRef.get();
+      if (snapshot.exists) {
+        return docRef;
+      }
+    }
+    return FirebaseFirestore.instance
+        .collection(FirestoreCollections.customers)
+        .doc(uid);
+  }
 
   @override
   void initState() {
@@ -190,7 +210,8 @@ class _FillProfileScreenState extends ConsumerState<FillProfileScreen> {
       final phoneNumber = '+91${_phoneController.text.trim()}';
       final name = _nameController.text.trim();
       await user.updateDisplayName(name);
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+      final docRef = await _getUserDocRef(user.uid);
+      await docRef.set({
         'uid': user.uid,
         'name': name,
         'nickname': _nicknameController.text.trim(),
@@ -198,6 +219,8 @@ class _FillProfileScreenState extends ConsumerState<FillProfileScreen> {
         'dateOfBirth': _dobController.text.trim(),
         'phoneNumber': phoneNumber,
         'gender': _gender,
+        'photoUrl': null,
+        'role': UserRole.customer.value,
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
@@ -240,10 +263,8 @@ class _FillProfileScreenState extends ConsumerState<FillProfileScreen> {
     }
 
     try {
-      final snapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
+      final docRef = await _getUserDocRef(user.uid);
+      final snapshot = await docRef.get();
       if (!mounted) return;
 
       final profile = snapshot.data();

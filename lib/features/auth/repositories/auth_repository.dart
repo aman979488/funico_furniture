@@ -4,6 +4,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import '../../../core/constants/firestore_collections.dart';
+import '../../../shared/enums/user_role.dart';
+
 abstract class AuthRepository {
   Future<void> signIn({required String email, required String password});
 
@@ -15,6 +18,25 @@ abstract class AuthRepository {
     required String name,
     required String email,
     required String password,
+    UserRole role = UserRole.customer,
+  });
+
+  /// Create a Vendor account (Name, Shop Name, Contact, Email, Password)
+  Future<void> createVendor({
+    required String name,
+    required String shopName,
+    required String contact,
+    required String email,
+    required String password,
+  });
+
+  /// Create a Staff account (Name, Contact, Email, Password, Role)
+  Future<void> createStaff({
+    required String name,
+    required String contact,
+    required String email,
+    required String password,
+    UserRole role = UserRole.admin,
   });
 }
 
@@ -93,6 +115,7 @@ class AuthRepositoryImpl implements AuthRepository {
     required String name,
     required String email,
     required String password,
+    UserRole role = UserRole.customer,
   }) async {
     if (Firebase.apps.isEmpty) {
       throw FirebaseAuthException(
@@ -116,29 +139,131 @@ class AuthRepositoryImpl implements AuthRepository {
 
     final displayName = name.trim();
     await user.updateDisplayName(displayName);
-    await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+    final collectionName = FirestoreCollections.getCollectionForRole(role);
+    await FirebaseFirestore.instance.collection(collectionName).doc(user.uid).set({
       'uid': user.uid,
       'name': displayName,
       'email': user.email,
+      'role': role.value,
       'createdAt': FieldValue.serverTimestamp(),
     });
   }
 
-  Future<void> _ensureUserProfile(User user) async {
-    final profile = FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid);
-    final snapshot = await profile.get();
-    if (!snapshot.exists) {
-      await profile.set({
-        'uid': user.uid,
-        'name': user.displayName ?? '',
-        'email': user.email,
-        'phoneNumber': user.phoneNumber ?? '',
-        'photoUrl': user.photoURL,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
+  @override
+  Future<void> createVendor({
+    required String name,
+    required String shopName,
+    required String contact,
+    required String email,
+    required String password,
+  }) async {
+    if (Firebase.apps.isEmpty) {
+      throw FirebaseAuthException(
+        code: 'not-initialized',
+        message: 'Firebase is not configured for this platform.',
+      );
     }
+
+    final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      email: email.trim(),
+      password: password,
+    );
+    final user = credential.user;
+    if (user == null) {
+      throw FirebaseAuthException(
+        code: 'user-not-found',
+        message: 'Firebase did not return the created vendor user.',
+      );
+    }
+
+    final displayName = name.trim();
+    await user.updateDisplayName(displayName);
+    await FirebaseFirestore.instance
+        .collection(FirestoreCollections.vendors)
+        .doc(user.uid)
+        .set({
+      'uid': user.uid,
+      'name': displayName,
+      'shopName': shopName.trim(),
+      'nameShop': shopName.trim(),
+      'phoneNumber': contact.trim(),
+      'contact': contact.trim(),
+      'email': user.email,
+      'role': UserRole.vendor.value,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  @override
+  Future<void> createStaff({
+    required String name,
+    required String contact,
+    required String email,
+    required String password,
+    UserRole role = UserRole.admin,
+  }) async {
+    if (Firebase.apps.isEmpty) {
+      throw FirebaseAuthException(
+        code: 'not-initialized',
+        message: 'Firebase is not configured for this platform.',
+      );
+    }
+
+    final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      email: email.trim(),
+      password: password,
+    );
+    final user = credential.user;
+    if (user == null) {
+      throw FirebaseAuthException(
+        code: 'user-not-found',
+        message: 'Firebase did not return the created staff user.',
+      );
+    }
+
+    final displayName = name.trim();
+    await user.updateDisplayName(displayName);
+    final staffRole = role.isStaff ? role : UserRole.admin;
+    await FirebaseFirestore.instance
+        .collection(FirestoreCollections.staff)
+        .doc(user.uid)
+        .set({
+      'uid': user.uid,
+      'name': displayName,
+      'phoneNumber': contact.trim(),
+      'contact': contact.trim(),
+      'email': user.email,
+      'role': staffRole.value,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> _ensureUserProfile(User user, {UserRole role = UserRole.customer}) async {
+    // Check across collections if exists, default to customers
+    final collectionsToCheck = [
+      FirestoreCollections.customers,
+      FirestoreCollections.vendors,
+      FirestoreCollections.staff,
+    ];
+
+    for (final col in collectionsToCheck) {
+      final doc = await FirebaseFirestore.instance.collection(col).doc(user.uid).get();
+      if (doc.exists) return;
+    }
+
+    final targetCollection = FirestoreCollections.getCollectionForRole(role);
+    await FirebaseFirestore.instance
+        .collection(targetCollection)
+        .doc(user.uid)
+        .set({
+      'uid': user.uid,
+      'name': user.displayName ?? '',
+      'email': user.email,
+      'phoneNumber': user.phoneNumber ?? '',
+      'photoUrl': user.photoURL,
+      'role': role.value,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
   }
 }
 

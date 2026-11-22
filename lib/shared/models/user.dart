@@ -1,3 +1,5 @@
+import '../enums/user_role.dart';
+
 class UserProfile {
   final String uid;
   final String name;
@@ -7,6 +9,11 @@ class UserProfile {
   final String phoneNumber;
   final String gender;
   final String? photoUrl;
+  final UserRole role;
+
+  // Role-Specific Fields
+  final String shopName; // For Vendors (Name Shop)
+  final String address;  // For Customers
 
   const UserProfile({
     required this.uid,
@@ -17,6 +24,9 @@ class UserProfile {
     this.phoneNumber = '',
     this.gender = '',
     this.photoUrl,
+    this.role = UserRole.customer,
+    this.shopName = '',
+    this.address = '',
   });
 
   factory UserProfile.fromMap(Map<String, dynamic> map, {String uid = ''}) {
@@ -29,6 +39,9 @@ class UserProfile {
       phoneNumber: (map['phoneNumber'] as String?) ?? '',
       gender: (map['gender'] as String?) ?? '',
       photoUrl: (map['photoUrl'] as String?) ?? (map['photoURL'] as String?),
+      role: UserRole.fromString(map['role'] as String?),
+      shopName: (map['shopName'] as String?) ?? (map['nameShop'] as String?) ?? '',
+      address: (map['address'] as String?) ?? '',
     );
   }
 
@@ -42,6 +55,9 @@ class UserProfile {
       'phoneNumber': phoneNumber,
       'gender': gender,
       'photoUrl': photoUrl,
+      'role': role.value,
+      'shopName': shopName,
+      'address': address,
     };
   }
 
@@ -54,6 +70,9 @@ class UserProfile {
     String? phoneNumber,
     String? gender,
     String? photoUrl,
+    UserRole? role,
+    String? shopName,
+    String? address,
     bool clearPhotoUrl = false,
   }) {
     return UserProfile(
@@ -65,6 +84,9 @@ class UserProfile {
       phoneNumber: phoneNumber ?? this.phoneNumber,
       gender: gender ?? this.gender,
       photoUrl: clearPhotoUrl ? null : photoUrl ?? this.photoUrl,
+      role: role ?? this.role,
+      shopName: shopName ?? this.shopName,
+      address: address ?? this.address,
     );
   }
 }

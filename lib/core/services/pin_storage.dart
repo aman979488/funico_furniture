@@ -4,12 +4,32 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../constants/firestore_collections.dart';
+
 class PinStorage {
   const PinStorage();
 
   static const _storage = FlutterSecureStorage();
   static const _keyPrefix = 'funica_pin_';
   static const _fpPrefix = 'funica_fp_';
+
+  Future<DocumentReference<Map<String, dynamic>>> _getUserDocRef(String userId) async {
+    final collections = [
+      FirestoreCollections.customers,
+      FirestoreCollections.vendors,
+      FirestoreCollections.staff,
+    ];
+    for (final col in collections) {
+      final docRef = FirebaseFirestore.instance.collection(col).doc(userId);
+      final snapshot = await docRef.get();
+      if (snapshot.exists) {
+        return docRef;
+      }
+    }
+    return FirebaseFirestore.instance
+        .collection(FirestoreCollections.customers)
+        .doc(userId);
+  }
 
   Future<String?> readPin(String userId) async {
     // 1. Pehle FlutterSecureStorage se try karo
@@ -30,13 +50,11 @@ class PinStorage {
       }
     } catch (_) {}
 
-    // 3. Fallback: Firestore users/{uid} se read karo (device change/reinstall pe bhi PIN mil jaye)
+    // 3. Fallback: Firestore user doc se read karo
     if (Firebase.apps.isNotEmpty) {
       try {
-        final doc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(userId)
-            .get();
+        final docRef = await _getUserDocRef(userId);
+        final doc = await docRef.get();
         final pin = doc.data()?['pin'] as String?;
         if (pin != null && pin.isNotEmpty) {
           try {
@@ -81,7 +99,8 @@ class PinStorage {
 
     if (Firebase.apps.isNotEmpty) {
       try {
-        await FirebaseFirestore.instance.collection('users').doc(userId).set({
+        final docRef = await _getUserDocRef(userId);
+        await docRef.set({
           'pin': pin,
           'hasPin': true,
           'pinUpdatedAt': FieldValue.serverTimestamp(),
@@ -97,10 +116,8 @@ class PinStorage {
       if (local != null) return local;
 
       if (Firebase.apps.isNotEmpty) {
-        final doc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(userId)
-            .get();
+        final docRef = await _getUserDocRef(userId);
+        final doc = await docRef.get();
         return (doc.data()?['fingerprintEnabled'] as bool?) ?? false;
       }
     } catch (_) {}
@@ -115,7 +132,8 @@ class PinStorage {
 
     if (Firebase.apps.isNotEmpty) {
       try {
-        await FirebaseFirestore.instance.collection('users').doc(userId).set({
+        final docRef = await _getUserDocRef(userId);
+        await docRef.set({
           'fingerprintEnabled': enabled,
         }, SetOptions(merge: true));
       } catch (_) {}
