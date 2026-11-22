@@ -21,24 +21,30 @@ class PaymentSettingsScreen extends ConsumerWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: Text(
           'Remove Card',
           style: GoogleFonts.urbanist(
             fontWeight: FontWeight.w700,
-            color: Colors.white,
+            color: AppColors.textPrimary,
           ),
         ),
         content: Text(
           'Are you sure you want to remove card ending in ${card.maskedNumber.split(' ').last}?',
-          style: const TextStyle(color: AppColors.textSecondary),
+          style: GoogleFonts.urbanist(
+            color: AppColors.textSecondary,
+            fontSize: 15,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text(
+            child: Text(
               'Cancel',
-              style: TextStyle(color: Colors.white70),
+              style: GoogleFonts.urbanist(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
           TextButton(
@@ -53,9 +59,12 @@ class PaymentSettingsScreen extends ConsumerWidget {
                 );
               }
             },
-            child: const Text(
+            child: Text(
               'Remove',
-              style: TextStyle(color: AppColors.error),
+              style: GoogleFonts.urbanist(
+                color: AppColors.error,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],
@@ -69,11 +78,12 @@ class PaymentSettingsScreen extends ConsumerWidget {
     final cards = state.paymentCards;
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
           onPressed: () => context.pop(),
         ),
         title: Text(
@@ -81,7 +91,7 @@ class PaymentSettingsScreen extends ConsumerWidget {
           style: GoogleFonts.urbanist(
             fontSize: 22,
             fontWeight: FontWeight.w700,
-            color: Colors.white,
+            color: AppColors.textPrimary,
           ),
         ),
       ),
@@ -97,7 +107,7 @@ class PaymentSettingsScreen extends ConsumerWidget {
                   style: GoogleFonts.urbanist(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white70,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -107,12 +117,15 @@ class PaymentSettingsScreen extends ConsumerWidget {
                     decoration: BoxDecoration(
                       color: AppColors.surface,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.border),
+                      border: Border.all(color: AppColors.border, width: 1.2),
                     ),
                     child: Center(
                       child: Text(
                         'No cards added yet. Tap below to add a card.',
-                        style: TextStyle(color: AppColors.textSecondary),
+                        style: GoogleFonts.urbanist(
+                          color: AppColors.textSecondary,
+                          fontSize: 15,
+                        ),
                       ),
                     ),
                   )
@@ -136,30 +149,25 @@ class PaymentSettingsScreen extends ConsumerWidget {
                   style: GoogleFonts.urbanist(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white70,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 12),
-                _OptionTile(
+                const _OptionTile(
                   icon: Icons.account_balance_wallet_rounded,
                   title: 'PayPal',
                   subtitle: 'andrew.ainsley@example.com',
                 ),
-                _OptionTile(
+                const _OptionTile(
                   icon: Icons.g_mobiledata_rounded,
                   iconSize: 32,
                   title: 'Google Pay',
-                  subtitle: 'Connected',
+                  subtitle: 'Connected with your Google Account',
                 ),
-                _OptionTile(
+                const _OptionTile(
                   icon: Icons.apple_rounded,
                   title: 'Apple Pay',
-                  subtitle: 'Connected',
-                ),
-                _OptionTile(
-                  icon: Icons.payments_outlined,
-                  title: 'Cash on Delivery',
-                  subtitle: 'Pay at your doorstep',
+                  subtitle: 'Connected with your Apple ID',
                 ),
               ],
             ),
@@ -205,9 +213,16 @@ class _CardItem extends StatelessWidget {
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: card.isDefault ? Colors.white : AppColors.border,
-          width: card.isDefault ? 1.5 : 1,
+          color: card.isDefault ? AppColors.primary : AppColors.border,
+          width: card.isDefault ? 1.5 : 1.2,
         ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A24211F),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -215,7 +230,7 @@ class _CardItem extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: const Color(0xFF2B3344),
+              color: AppColors.card,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Center(
@@ -223,7 +238,7 @@ class _CardItem extends StatelessWidget {
                   ? const Text(
                       'VISA',
                       style: TextStyle(
-                        color: Colors.blueAccent,
+                        color: Color(0xFF1A1F71),
                         fontWeight: FontWeight.w900,
                         fontSize: 14,
                         letterSpacing: 1,
@@ -269,18 +284,18 @@ class _CardItem extends StatelessWidget {
                       style: GoogleFonts.urbanist(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: Colors.white,
+                        color: AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(width: 8),
                     if (card.isDefault)
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
+                          horizontal: 8,
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.primary,
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -288,7 +303,7 @@ class _CardItem extends StatelessWidget {
                           style: GoogleFonts.urbanist(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
-                            color: Colors.black,
+                            color: Colors.white,
                           ),
                         ),
                       ),
@@ -297,9 +312,10 @@ class _CardItem extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   card.maskedNumber,
-                  style: const TextStyle(
+                  style: GoogleFonts.urbanist(
                     color: AppColors.textSecondary,
-                    fontSize: 13,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
                     letterSpacing: 1,
                   ),
                 ),
@@ -311,7 +327,7 @@ class _CardItem extends StatelessWidget {
               card.isDefault
                   ? Icons.check_circle_rounded
                   : Icons.radio_button_unchecked_rounded,
-              color: card.isDefault ? Colors.white : AppColors.textHint,
+              color: card.isDefault ? AppColors.primary : AppColors.textHint,
             ),
             tooltip: 'Make Default',
             onPressed: onSelectDefault,
@@ -352,7 +368,14 @@ class _OptionTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppColors.border, width: 1.2),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A24211F),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -360,10 +383,10 @@ class _OptionTile extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: const Color(0xFF283142),
+              color: AppColors.accentLight,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: Colors.white, size: iconSize),
+            child: Icon(icon, color: AppColors.primary, size: iconSize),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -374,15 +397,15 @@ class _OptionTile extends StatelessWidget {
                   title,
                   style: GoogleFonts.urbanist(
                     fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: const TextStyle(
-                    fontSize: 12,
+                  style: GoogleFonts.urbanist(
+                    fontSize: 13,
                     color: AppColors.textSecondary,
                   ),
                 ),

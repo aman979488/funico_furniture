@@ -2,9 +2,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/router/app_router.dart';
 import '../../../core/services/pin_storage.dart';
+import '../../../core/theme/app_colors.dart';
 import '../widgets/fingerprint_bottom_sheet.dart';
 
 class FingerprintScreen extends ConsumerStatefulWidget {
@@ -51,7 +53,7 @@ class _FingerprintScreenState extends ConsumerState<FingerprintScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF191A1F),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -64,26 +66,27 @@ class _FingerprintScreenState extends ConsumerState<FingerprintScreen> {
                   onPressed: () => context.go(AppRoutes.createPin),
                   icon: const Icon(
                     Icons.arrow_back_ios_new_rounded,
-                    color: Colors.white,
+                    color: AppColors.textPrimary,
+                    size: 20,
                   ),
                   tooltip: 'Back to PIN',
                 ),
               ),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 'Set Your Fingerprint',
-                style: TextStyle(
-                  color: Colors.white,
+                style: GoogleFonts.urbanist(
+                  color: AppColors.textPrimary,
                   fontSize: 28,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 'Add a fingerprint to make your account more secure and unlock the app faster.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Color(0xFF9AA3B2),
+                style: GoogleFonts.urbanist(
+                  color: AppColors.textSecondary,
                   fontSize: 15,
                   height: 1.5,
                 ),
@@ -101,17 +104,17 @@ class _FingerprintScreenState extends ConsumerState<FingerprintScreen> {
                     width: 190,
                     height: 190,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1F2430),
+                      color: AppColors.surface,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: const Color(0xFF5C8DFF).withValues(alpha: 0.35),
+                        color: AppColors.primary.withValues(alpha: 0.35),
                         width: 2.5,
                       ),
                       boxShadow: const [
                         BoxShadow(
-                          color: Color(0xFF3B82F6),
+                          color: Color(0x26D66B2C),
                           blurRadius: 36,
-                          spreadRadius: -10,
+                          spreadRadius: -4,
                         ),
                       ],
                     ),
@@ -119,17 +122,17 @@ class _FingerprintScreenState extends ConsumerState<FingerprintScreen> {
                       child: Icon(
                         Icons.fingerprint_rounded,
                         size: 104,
-                        color: Color(0xFF8DB4FF),
+                        color: AppColors.primary,
                       ),
                     ),
                   ),
                 ),
               ),
               const SizedBox(height: 20),
-              const Text(
+              Text(
                 'Touch the sensor above to verify',
-                style: TextStyle(
-                  color: Color(0xFF6B7280),
+                style: GoogleFonts.urbanist(
+                  color: AppColors.textSecondary,
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                 ),
@@ -142,22 +145,22 @@ class _FingerprintScreenState extends ConsumerState<FingerprintScreen> {
                     child: OutlinedButton(
                       onPressed: _onSkip,
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFFBFC8D9),
+                        foregroundColor: AppColors.textPrimary,
                         side: const BorderSide(
-                          color: Color(0xFF2A3347),
+                          color: AppColors.border,
                           width: 1.2,
                         ),
-                        backgroundColor: const Color(0xFF1C2233),
+                        backgroundColor: AppColors.surface,
                         minimumSize: const Size.fromHeight(56),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18),
+                          borderRadius: BorderRadius.circular(30),
                         ),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Skip',
-                        style: TextStyle(
+                        style: GoogleFonts.urbanist(
                           fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
@@ -167,11 +170,12 @@ class _FingerprintScreenState extends ConsumerState<FingerprintScreen> {
                     child: FilledButton(
                       onPressed: _isProcessing ? null : _startFingerprintAuth,
                       style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFF3B82F6),
+                        backgroundColor: AppColors.primary,
                         minimumSize: const Size.fromHeight(56),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18),
+                          borderRadius: BorderRadius.circular(30),
                         ),
+                        elevation: 0,
                       ),
                       child: _isProcessing
                           ? const SizedBox(
@@ -182,19 +186,19 @@ class _FingerprintScreenState extends ConsumerState<FingerprintScreen> {
                                 color: Colors.white,
                               ),
                             )
-                          : const Text(
+                          : Text(
                               'Continue',
-                              style: TextStyle(
+                              style: GoogleFonts.urbanist(
                                 color: Colors.white,
                                 fontSize: 16,
-                                fontWeight: FontWeight.w600,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
             ],
           ),
         ),

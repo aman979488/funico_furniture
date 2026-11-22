@@ -34,6 +34,10 @@ class AppAssets {
   static const chesterfieldSofa =
       '$_images/sofaImg/Luxurious Beige Velvet Tufted Sofa.webp';
   static const lShapedSofa = '$_images/sofaImg/LShaped.webp';
+  static const heroDreamSpaceCleanHd =
+      '$_images/homeimg/hero_dream_space_clean_hd.png';
+  static const heroDreamSpaceBanner =
+      '$_images/homeimg/hero_dream_space_banner.png';
   static const livingRoomImage = '$_images/homeimg/living_room.jpeg';
   static const bedroomImage = '$_images/homeimg/bedroom.jpeg';
   static const diningCollectionImage =

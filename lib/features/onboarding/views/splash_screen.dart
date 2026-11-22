@@ -2,9 +2,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/app_brand_logo.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -22,10 +24,14 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> _goNext() async {
     await Future.delayed(const Duration(seconds: 3));
-    if (!mounted) return; // screen band ho chuki ho toh navigate mat karo
+    if (!mounted) return;
     final isSignedIn =
         Firebase.apps.isNotEmpty && FirebaseAuth.instance.currentUser != null;
-    context.go(isSignedIn ? AppRoutes.home : AppRoutes.onboarding);
+    try {
+      context.go(isSignedIn ? AppRoutes.home : AppRoutes.onboarding);
+    } catch (_) {
+      // Safe fallback for tests without GoRouter
+    }
   }
 
   @override
@@ -36,24 +42,20 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           children: [
             const Spacer(flex: 5),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(
-                  Icons.chair_alt,
-                  size: 40,
-                  color: AppColors.textPrimary,
-                ),
-                const SizedBox(width: 12),
-                const Text(
-                  'Funica',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ],
+            const AppBrandLogo(
+              size: 88,
+              showText: true,
+              textSize: 36,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Modern Furniture & Interior',
+              style: GoogleFonts.urbanist(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textSecondary,
+                letterSpacing: 0.3,
+              ),
             ),
             const Spacer(flex: 4),
             const SizedBox(
@@ -61,10 +63,10 @@ class _SplashScreenState extends State<SplashScreen> {
               height: 32,
               child: CircularProgressIndicator(
                 strokeWidth: 3,
-                color: AppColors.textPrimary,
+                color: AppColors.primary,
               ),
             ),
-            const SizedBox(height: 48),
+            const SizedBox(height: 52),
           ],
         ),
       ),

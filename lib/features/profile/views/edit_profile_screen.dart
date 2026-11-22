@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -109,7 +109,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       context: context,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (ctx) => SafeArea(
         child: Padding(
@@ -118,7 +118,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 40,
+                width: 44,
                 height: 4,
                 decoration: BoxDecoration(
                   color: AppColors.border,
@@ -138,9 +138,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               ListTile(
                 leading: const Icon(
                   Icons.photo_library_rounded,
-                  color: Colors.white,
+                  color: AppColors.textPrimary,
                 ),
-                title: const Text('Choose from Gallery'),
+                title: Text(
+                  'Choose from Gallery',
+                  style: GoogleFonts.urbanist(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 onTap: () {
                   Navigator.pop(ctx);
                   _pickImage(ImageSource.gallery);
@@ -149,9 +155,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               ListTile(
                 leading: const Icon(
                   Icons.camera_alt_rounded,
-                  color: Colors.white,
+                  color: AppColors.textPrimary,
                 ),
-                title: const Text('Take a Photo'),
+                title: Text(
+                  'Take a Photo',
+                  style: GoogleFonts.urbanist(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 onTap: () {
                   Navigator.pop(ctx);
                   _pickImage(ImageSource.camera);
@@ -162,9 +174,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   Icons.delete_outline_rounded,
                   color: AppColors.error,
                 ),
-                title: const Text(
+                title: Text(
                   'Remove Photo',
-                  style: TextStyle(color: AppColors.error),
+                  style: GoogleFonts.urbanist(
+                    color: AppColors.error,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 onTap: () {
                   Navigator.pop(ctx);
@@ -190,12 +205,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       firstDate: DateTime(1940),
       lastDate: now,
       builder: (context, child) => Theme(
-        data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.dark(
-            primary: Colors.white,
-            onPrimary: Colors.black,
+        data: ThemeData.light().copyWith(
+          colorScheme: const ColorScheme.light(
+            primary: AppColors.primary,
+            onPrimary: Colors.white,
             surface: AppColors.surface,
-            onSurface: Colors.white,
+            onSurface: AppColors.textPrimary,
           ),
         ),
         child: child!,
@@ -215,7 +230,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       context: context,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (ctx) => SafeArea(
         child: Padding(
@@ -224,7 +239,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 40,
+                width: 44,
                 height: 4,
                 decoration: BoxDecoration(
                   color: AppColors.border,
@@ -245,12 +260,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 ListTile(
                   title: Text(
                     gender,
-                    style: const TextStyle(color: Colors.white),
+                    style: GoogleFonts.urbanist(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   trailing: _selectedGender == gender
                       ? const Icon(
                           Icons.check_circle_rounded,
-                          color: Colors.white,
+                          color: AppColors.primary,
                         )
                       : null,
                   onTap: () {
@@ -332,9 +350,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           Container(
             width: 120,
             height: 120,
-            decoration: const BoxDecoration(
-              color: AppColors.surface,
+            decoration: BoxDecoration(
+              color: AppColors.card,
               shape: BoxShape.circle,
+              border: Border.all(color: AppColors.border, width: 2),
             ),
             clipBehavior: Clip.antiAlias,
             child: imageProvider != null
@@ -344,20 +363,20 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     errorBuilder: (_, _, _) => const Icon(
                       Icons.person_rounded,
                       size: 64,
-                      color: Colors.white70,
+                      color: AppColors.textHint,
                     ),
                   )
                 : const Icon(
                     Icons.person_rounded,
                     size: 64,
-                    color: Colors.white70,
+                    color: AppColors.textHint,
                   ),
           ),
           Positioned(
             right: 2,
             bottom: 2,
             child: Material(
-              color: Colors.white,
+              color: AppColors.primary,
               shape: const CircleBorder(),
               child: InkWell(
                 customBorder: const CircleBorder(),
@@ -368,7 +387,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   child: Icon(
                     Icons.edit_rounded,
                     size: 18,
-                    color: Colors.black,
+                    color: Colors.white,
                   ),
                 ),
               ),
@@ -385,11 +404,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _populateFromState(state);
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
           onPressed: () => context.pop(),
         ),
         title: Text(
@@ -397,7 +417,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           style: GoogleFonts.urbanist(
             fontSize: 22,
             fontWeight: FontWeight.w700,
-            color: Colors.white,
+            color: AppColors.textPrimary,
           ),
         ),
         centerTitle: false,
@@ -417,7 +437,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   _buildAvatar(state.userProfile),
                   const SizedBox(height: 28),
 
-                  // Full Name
                   AppTextField(
                     hint: 'Full Name',
                     controller: _nameController,
@@ -431,7 +450,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   ),
                   const SizedBox(height: 18),
 
-                  // Nickname
                   AppTextField(
                     hint: 'Nickname',
                     controller: _nicknameController,
@@ -439,7 +457,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   ),
                   const SizedBox(height: 18),
 
-                  // Date of Birth
                   AppTextField(
                     hint: 'Date of Birth',
                     controller: _dobController,
@@ -454,7 +471,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   ),
                   const SizedBox(height: 18),
 
-                  // Email
                   AppTextField(
                     hint: 'Email',
                     controller: _emailController,
@@ -472,7 +488,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   ),
                   const SizedBox(height: 18),
 
-                  // Phone Number
                   AppTextField(
                     hint: 'Phone Number',
                     controller: _phoneController,
@@ -481,7 +496,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   ),
                   const SizedBox(height: 18),
 
-                  // Gender selector
                   InkWell(
                     onTap: _showGenderSheet,
                     borderRadius: BorderRadius.circular(16),
@@ -493,7 +507,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       decoration: BoxDecoration(
                         color: AppColors.surface,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.border),
+                        border: Border.all(color: AppColors.border, width: 1.2),
                       ),
                       child: Row(
                         children: [
@@ -506,9 +520,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                           Expanded(
                             child: Text(
                               _selectedGender ?? 'Select Gender',
-                              style: const TextStyle(
+                              style: GoogleFonts.urbanist(
                                 fontSize: 16,
-                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
                               ),
                             ),
                           ),
@@ -522,7 +537,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   ),
                   const SizedBox(height: 36),
 
-                  // Submit Button
                   PrimaryButton(
                     text: 'Update',
                     isLoading: _isSaving,

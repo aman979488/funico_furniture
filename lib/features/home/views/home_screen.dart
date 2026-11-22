@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +8,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_assets.dart';
 import '../../../core/router/app_router.dart';
@@ -25,6 +27,27 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   String _selectedCategory = 'All';
+  String _selectedTier = 'Basic';
+
+  void _handleMoreMenu(BuildContext context, String value) {
+    switch (value) {
+      case 'cart':
+        context.go(AppRoutes.cart);
+        break;
+      case 'wishlist':
+        context.push(AppRoutes.wishlist);
+        break;
+      case 'orders':
+        context.push(AppRoutes.orders);
+        break;
+      case 'help':
+        context.push(AppRoutes.helpCenter);
+        break;
+      case 'profile':
+        context.push(AppRoutes.profile);
+        break;
+    }
+  }
 
   static const _categories = [
     _HomeCategory('Sofa', Icons.weekend_rounded, image: AppAssets.categorySofa),
@@ -57,13 +80,38 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ),
   ];
 
-  List<Product> get _visibleProducts => Product.sampleProducts.where((product) {
+  List<Product> get _visibleProducts {
     final selectedProductCategory = _selectedCategory == 'Lighting'
         ? 'Lamp'
         : _selectedCategory;
-    return selectedProductCategory == 'All' ||
-        product.category.toLowerCase() == selectedProductCategory.toLowerCase();
-  }).toList();
+    final categoryFiltered = Product.sampleProducts.where((product) {
+      return selectedProductCategory == 'All' ||
+          product.category.toLowerCase() ==
+              selectedProductCategory.toLowerCase();
+    }).toList();
+
+    if (_selectedTier == 'Basic') return categoryFiltered;
+
+    final tierFiltered = categoryFiltered.where((product) {
+      if (_selectedTier == 'Deluxe') return product.rating >= 4.7;
+      if (_selectedTier == 'Modern') {
+        final text = '${product.name} ${product.description}'.toLowerCase();
+        return text.contains('modern') ||
+            text.contains('century') ||
+            text.contains('nordic');
+      }
+      if (_selectedTier == 'Premium') return product.price >= 100;
+      if (_selectedTier == 'Luxury') {
+        final text = '${product.name} ${product.description}'.toLowerCase();
+        return product.price >= 150 ||
+            text.contains('luxury') ||
+            text.contains('premium');
+      }
+      return true;
+    }).toList();
+
+    return tierFiltered.isNotEmpty ? tierFiltered : categoryFiltered;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,6 +126,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final userPhoto = profileState.userProfile?.photoUrl ?? user?.photoURL;
 
     return Scaffold(
+      backgroundColor: AppColors.background,
+      drawer: _HomeDrawer(
+        userName: userName,
+        userPhoto: userPhoto,
+        userEmail: user?.email,
+        onProfileTap: () => context.push(AppRoutes.profile),
+        onHelpTap: () => context.push(AppRoutes.helpCenter),
+        onWishlistTap: () => context.push(AppRoutes.wishlist),
+        onOrdersTap: () => context.push(AppRoutes.orders),
+        onCartTap: () => context.go(AppRoutes.cart),
+        onSpecialOffersTap: () => context.push(AppRoutes.specialOffers),
+        onCategoriesTap: () =>
+            context.push(AppRoutes.categoryProducts, extra: 'All'),
+      ),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -92,50 +154,41 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                 return CustomScrollView(
                   slivers: [
+                    // Top Bar (Future Interior + Menu + Search + Notifications + More)
                     SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(22, 18, 22, 0),
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                       sliver: SliverToBoxAdapter(
-                        child: _HomeHeader(
-                          userName: userName,
-                          photoUrl: userPhoto,
-                          onProfileTap: () => context.push(AppRoutes.profile),
-                          onCartTap: () => context.go(AppRoutes.cart),
-                          onNotifications: () =>
+                        child: _BrandTopBar(
+                          onSearchTap: () => context.push(AppRoutes.search),
+                          onNotificationsTap: () =>
                               context.push(AppRoutes.notifications),
+                          onMoreTap: (val) => _handleMoreMenu(context, val),
                         ),
                       ),
                     ),
+
+                    // Hero Banner (Design Your Dream Space - Above Special Offers)
+                    const SliverPadding(
+                      padding: EdgeInsets.fromLTRB(18, 14, 18, 0),
+                      sliver: SliverToBoxAdapter(child: _HeroDesignBanner()),
+                    ),
+
+                    // Tier / Collection Filter Bar (Basic, Deluxe, Modern, Premium, Luxury)
                     SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(22, 24, 22, 0),
+                      padding: const EdgeInsets.fromLTRB(18, 16, 18, 0),
                       sliver: SliverToBoxAdapter(
-                        child: TextField(
-                          readOnly: true,
-                          onTap: () => context.push(AppRoutes.search),
-                          style: const TextStyle(fontSize: 16),
-                          decoration: InputDecoration(
-                            hintText: 'Search furniture',
-                            prefixIcon: const Icon(
-                              Icons.search_rounded,
-                              size: 25,
-                            ),
-                            suffixIcon: IconButton(
-                              tooltip: 'Filter categories',
-                              onPressed: _showCategoryFilter,
-                              icon: const Icon(Icons.tune_rounded),
-                            ),
-                            filled: true,
-                            fillColor: AppColors.surface,
-                            contentPadding: const EdgeInsets.symmetric(
-                              vertical: 18,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(28),
-                              borderSide: BorderSide.none,
-                            ),
-                          ),
+                        child: _TierCollectionBar(
+                          selectedTier: _selectedTier,
+                          onTierSelected: (tier) {
+                            setState(() {
+                              _selectedTier = tier;
+                            });
+                          },
                         ),
                       ),
                     ),
+
+                    // Special Offers Header
                     SliverPadding(
                       padding: const EdgeInsets.fromLTRB(22, 20, 22, 0),
                       sliver: SliverToBoxAdapter(
@@ -189,10 +242,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     SliverPadding(
                       padding: const EdgeInsets.fromLTRB(22, 24, 22, 12),
                       sliver: SliverToBoxAdapter(
-                        child: Text(
-                          'Categories',
-                          style: Theme.of(context).textTheme.titleLarge
-                              ?.copyWith(fontWeight: FontWeight.w700),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Categories',
+                              style: Theme.of(context).textTheme.titleLarge
+                                  ?.copyWith(fontWeight: FontWeight.w700),
+                            ),
+                            IconButton(
+                              tooltip: 'Filter categories',
+                              icon: const Icon(
+                                Icons.tune_rounded,
+                                size: 20,
+                                color: AppColors.textSecondary,
+                              ),
+                              onPressed: _showCategoryFilter,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(
+                                minWidth: 32,
+                                minHeight: 32,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -373,74 +445,1095 @@ class _HomeCategory {
   final String? image;
 }
 
-class _HomeHeader extends StatelessWidget {
-  const _HomeHeader({
-    required this.userName,
-    required this.photoUrl,
-    required this.onProfileTap,
-    required this.onCartTap,
-    required this.onNotifications,
-  });
+class _HouseBrandLogo extends StatelessWidget {
+  const _HouseBrandLogo({this.size = 26});
 
-  final String userName;
-  final String? photoUrl;
-  final VoidCallback onProfileTap;
-  final VoidCallback onCartTap;
-  final VoidCallback onNotifications;
+  final double size;
 
   @override
   Widget build(BuildContext context) {
-    final hour = DateTime.now().hour;
-    final greeting = hour < 12
-        ? 'Good Morning'
-        : hour < 17
-        ? 'Good Afternoon'
-        : 'Good Evening';
+    return CustomPaint(
+      size: Size(size, size),
+      painter: const _HouseIconPainter(color: AppColors.primary),
+    );
+  }
+}
 
+class _HouseIconPainter extends CustomPainter {
+  const _HouseIconPainter({required this.color});
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final strokeWidth = size.width * 0.105;
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    final w = size.width;
+    final h = size.height;
+    final pad = strokeWidth / 2 + 0.6;
+
+    // Outer house outline
+    final outerPath = Path();
+    outerPath.moveTo(pad, h * 0.44);
+    outerPath.lineTo(w / 2, pad + 0.8);
+    outerPath.lineTo(w - pad, h * 0.44);
+    outerPath.lineTo(w - pad, h - pad);
+    outerPath.lineTo(pad, h - pad);
+    outerPath.close();
+
+    canvas.drawPath(outerPath, paint);
+
+    // Inner rounded doorway arch
+    final innerPath = Path();
+    final doorW = w * 0.36;
+    final doorLeft = (w - doorW) / 2;
+    final doorRight = doorLeft + doorW;
+    final doorBottom = h - pad;
+    final doorTop = h * 0.54;
+
+    innerPath.moveTo(doorLeft, doorBottom);
+    innerPath.lineTo(doorLeft, doorTop + 3.2);
+    innerPath.arcToPoint(
+      Offset(doorRight, doorTop + 3.2),
+      radius: Radius.circular(doorW / 2),
+    );
+    innerPath.lineTo(doorRight, doorBottom);
+
+    canvas.drawPath(innerPath, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _HouseIconPainter oldDelegate) =>
+      oldDelegate.color != color;
+}
+
+class _BrandTopBar extends StatelessWidget {
+  const _BrandTopBar({
+    required this.onSearchTap,
+    required this.onNotificationsTap,
+    required this.onMoreTap,
+  });
+
+  final VoidCallback onSearchTap;
+  final VoidCallback onNotificationsTap;
+  final void Function(String) onMoreTap;
+
+  @override
+  Widget build(BuildContext context) {
     return Row(
       children: [
-        _ProfileAvatar(photoUrl: photoUrl, onTap: onProfileTap),
-        const SizedBox(width: 14),
+        Builder(
+          builder: (drawerContext) => IconButton(
+            icon: const Icon(
+              Icons.menu_rounded,
+              size: 26,
+              color: AppColors.textPrimary,
+            ),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 38, minHeight: 38),
+            tooltip: 'Navigation Menu',
+            onPressed: () => Scaffold.of(drawerContext).openDrawer(),
+          ),
+        ),
+        const SizedBox(width: 4),
         Expanded(
-          child: InkWell(
-            onTap: onProfileTap,
-            borderRadius: BorderRadius.circular(8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '$greeting 👋',
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 15,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(
+                width: 26,
+                height: 26,
+                child: _HouseBrandLogo(size: 26),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Future Interior',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.urbanist(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                        height: 1.15,
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      'INTERIOR SOLUTIONS',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.urbanist(
+                        fontSize: 8.5,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 2.0,
+                        color: AppColors.textSecondary,
+                        height: 1.0,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        IconButton(
+          icon: const Icon(
+            Icons.search_rounded,
+            size: 24,
+            color: AppColors.textPrimary,
+          ),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 38, minHeight: 38),
+          tooltip: 'Search',
+          onPressed: onSearchTap,
+        ),
+        IconButton(
+          icon: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              const Icon(
+                Icons.notifications_none_rounded,
+                size: 24,
+                color: AppColors.textPrimary,
+              ),
+              Positioned(
+                top: 0,
+                right: 0,
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: AppColors.primary,
+                    shape: BoxShape.circle,
                   ),
                 ),
-                const SizedBox(height: 3),
-                Text(
-                  userName.isEmpty ? 'Welcome back' : userName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 21,
-                    fontWeight: FontWeight.w700,
+              ),
+            ],
+          ),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 38, minHeight: 38),
+          tooltip: 'Notifications',
+          onPressed: onNotificationsTap,
+        ),
+        PopupMenuButton<String>(
+          icon: const Icon(
+            Icons.more_vert_rounded,
+            size: 22,
+            color: AppColors.textPrimary,
+          ),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 36, minHeight: 38),
+          tooltip: 'More Options',
+          color: AppColors.surface,
+          elevation: 4,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: AppColors.border),
+          ),
+          onSelected: onMoreTap,
+          itemBuilder: (context) => [
+            const PopupMenuItem(
+              value: 'cart',
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.shopping_bag_outlined,
+                    size: 20,
+                    color: AppColors.primary,
+                  ),
+                  SizedBox(width: 10),
+                  Text('My Cart'),
+                ],
+              ),
+            ),
+            const PopupMenuItem(
+              value: 'wishlist',
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.favorite_border_rounded,
+                    size: 20,
+                    color: AppColors.primary,
+                  ),
+                  SizedBox(width: 10),
+                  Text('Wishlist'),
+                ],
+              ),
+            ),
+            const PopupMenuItem(
+              value: 'orders',
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.receipt_long_outlined,
+                    size: 20,
+                    color: AppColors.primary,
+                  ),
+                  SizedBox(width: 10),
+                  Text('Orders'),
+                ],
+              ),
+            ),
+            const PopupMenuItem(
+              value: 'help',
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.help_outline_rounded,
+                    size: 20,
+                    color: AppColors.primary,
+                  ),
+                  SizedBox(width: 10),
+                  Text('Help Center'),
+                ],
+              ),
+            ),
+            const PopupMenuItem(
+              value: 'profile',
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.person_outline_rounded,
+                    size: 20,
+                    color: AppColors.primary,
+                  ),
+                  SizedBox(width: 10),
+                  Text('Profile Settings'),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _HeroDesignBanner extends StatefulWidget {
+  const _HeroDesignBanner();
+
+  @override
+  State<_HeroDesignBanner> createState() => _HeroDesignBannerState();
+}
+
+class _HeroDesignBannerState extends State<_HeroDesignBanner> {
+  final _pageController = PageController();
+  int _currentPage = 0;
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        SizedBox(
+          height: 195,
+          child: PageView(
+            controller: _pageController,
+            onPageChanged: (idx) => setState(() => _currentPage = idx),
+            children: [
+              // Slide 1: Exact Design Your Dream Space banner matching the reference photo
+              ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: Material(
+                  color: const Color(0xFFF7F2EC),
+                  child: InkWell(
+                    onTap: () =>
+                        context.push(AppRoutes.categoryProducts, extra: 'All'),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        // Clean HD living room background
+                        Image.asset(
+                          AppAssets.heroDreamSpaceCleanHd,
+                          fit: BoxFit.cover,
+                          alignment: Alignment.centerRight,
+                          errorBuilder: (_, _, _) => Image.asset(
+                            AppAssets.neutralSofaRoom,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        // Crisp vector typography and pill button on the left
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(22, 16, 16, 16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Design Your\nDream Space',
+                                style: GoogleFonts.playfairDisplay(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF2B1E17),
+                                  height: 1.15,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                'Modern | Functional | Timeless',
+                                style: GoogleFonts.urbanist(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF6E6862),
+                                  letterSpacing: 0.2,
+                                ),
+                              ),
+                              const SizedBox(height: 13),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8.5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary,
+                                  borderRadius: BorderRadius.circular(24),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.primary.withValues(
+                                        alpha: 0.26,
+                                      ),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'Explore Designs',
+                                      style: GoogleFonts.urbanist(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 5),
+                                    const Icon(
+                                      Icons.arrow_forward_rounded,
+                                      size: 15,
+                                      color: Colors.white,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ],
+              ),
+              // Slide 2: Minimalist Living Inspiration
+              ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: Material(
+                  color: const Color(0xFFF7F2EC),
+                  child: InkWell(
+                    onTap: () =>
+                        context.push(AppRoutes.categoryProducts, extra: 'Sofa'),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Image.asset(
+                          AppAssets.neutralSofaRoom,
+                          fit: BoxFit.cover,
+                          alignment: Alignment.centerRight,
+                        ),
+                        DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                              stops: const [0.0, 0.48, 0.72, 1.0],
+                              colors: [
+                                const Color(0xFFF7F2EB).withValues(alpha: 0.98),
+                                const Color(0xFFF7F2EB).withValues(alpha: 0.90),
+                                const Color(0xFFF7F2EB).withValues(alpha: 0.35),
+                                Colors.transparent,
+                              ],
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 16,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Elevate Your\nLiving Room',
+                                style: GoogleFonts.playfairDisplay(
+                                  fontSize: 23,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF281E17),
+                                  height: 1.15,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                'Crafted for comfort & elegance',
+                                style: GoogleFonts.urbanist(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF6E6862),
+                                  letterSpacing: 0.2,
+                                ),
+                              ),
+                              const SizedBox(height: 14),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8.5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary,
+                                  borderRadius: BorderRadius.circular(24),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'Shop Sofas',
+                                      style: GoogleFonts.urbanist(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 5),
+                                    const Icon(
+                                      Icons.arrow_forward_rounded,
+                                      size: 15,
+                                      color: Colors.white,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(
+            3,
+            (index) => AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              width: index == _currentPage ? 22 : 6,
+              height: 6,
+              margin: const EdgeInsets.symmetric(horizontal: 3),
+              decoration: BoxDecoration(
+                color: index == _currentPage
+                    ? AppColors.primary
+                    : AppColors.border,
+                borderRadius: BorderRadius.circular(6),
+              ),
             ),
           ),
         ),
-        _HeaderAction(
-          icon: Icons.notifications_none_rounded,
-          tooltip: 'Notifications',
-          onPressed: onNotifications,
-        ),
-        _HeaderAction(
-          icon: Icons.shopping_bag_outlined,
-          tooltip: 'Cart',
-          onPressed: onCartTap,
-        ),
       ],
+    );
+  }
+}
+
+class _TierCollectionBar extends StatelessWidget {
+  const _TierCollectionBar({
+    required this.selectedTier,
+    required this.onTierSelected,
+  });
+
+  final String selectedTier;
+  final ValueChanged<String> onTierSelected;
+
+  static const tiers = ['Basic', 'Deluxe', 'Modern', 'Premium', 'Luxury'];
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.center,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520),
+        child: Row(
+          children: [
+            for (int i = 0; i < tiers.length; i++) ...[
+              if (i > 0) const SizedBox(width: 8),
+              Expanded(
+                child: _TierItemCard(
+                  tier: tiers[i],
+                  isSelected: selectedTier == tiers[i],
+                  onTap: () => onTierSelected(tiers[i]),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TierItemCard extends StatelessWidget {
+  const _TierItemCard({
+    required this.tier,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final String tier;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final bgColor = isSelected ? AppColors.primary : const Color(0xFFFAF2EB);
+    final iconColor = isSelected ? Colors.white : AppColors.primary;
+    final textColor = isSelected ? Colors.white : AppColors.textPrimary;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          height: 70,
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.32),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ]
+                : null,
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _TierIcon(tier: tier, color: iconColor, size: 26),
+              const SizedBox(height: 5),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  tier,
+                  maxLines: 1,
+                  style: GoogleFonts.urbanist(
+                    fontSize: 12.5,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                    color: textColor,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TierIcon extends StatelessWidget {
+  const _TierIcon({required this.tier, required this.color, this.size = 26});
+
+  final String tier;
+  final Color color;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: CustomPaint(
+        painter: switch (tier) {
+          'Basic' => _SofaIconPainter(color: color),
+          'Deluxe' => _CrownIconPainter(color: color),
+          'Modern' => _LayersIconPainter(color: color),
+          'Premium' => _StarIconPainter(color: color),
+          'Luxury' => _DiamondIconPainter(color: color),
+          _ => _SofaIconPainter(color: color),
+        },
+      ),
+    );
+  }
+}
+
+class _SofaIconPainter extends CustomPainter {
+  const _SofaIconPainter({required this.color});
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.8
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    final w = size.width;
+    final h = size.height;
+
+    // Backrest (center top)
+    final backRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(w * 0.16, h * 0.12, w * 0.68, h * 0.46),
+      const Radius.circular(4),
+    );
+    canvas.drawRRect(backRect, paint);
+
+    // Left armrest
+    final leftArm = RRect.fromRectAndRadius(
+      Rect.fromLTWH(w * 0.04, h * 0.28, w * 0.18, h * 0.50),
+      const Radius.circular(3),
+    );
+    canvas.drawRRect(leftArm, paint);
+
+    // Right armrest
+    final rightArm = RRect.fromRectAndRadius(
+      Rect.fromLTWH(w * 0.78, h * 0.28, w * 0.18, h * 0.50),
+      const Radius.circular(3),
+    );
+    canvas.drawRRect(rightArm, paint);
+
+    // Seat cushion between armrests
+    final seatRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(w * 0.22, h * 0.52, w * 0.56, h * 0.26),
+      const Radius.circular(2),
+    );
+    canvas.drawRRect(seatRect, paint);
+
+    // Two small legs at bottom
+    canvas.drawLine(
+      Offset(w * 0.18, h * 0.78),
+      Offset(w * 0.14, h * 0.92),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(w * 0.82, h * 0.78),
+      Offset(w * 0.86, h * 0.92),
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _SofaIconPainter oldDelegate) =>
+      oldDelegate.color != color;
+}
+
+class _CrownIconPainter extends CustomPainter {
+  const _CrownIconPainter({required this.color});
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.8
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    final dotPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+
+    final w = size.width;
+    final h = size.height;
+
+    // Crown outline path (matching reference photo: 3 peaks with dots)
+    final path = Path()
+      ..moveTo(w * 0.12, h * 0.82)
+      ..lineTo(w * 0.14, h * 0.38)
+      ..lineTo(w * 0.36, h * 0.58)
+      ..lineTo(w * 0.50, h * 0.22)
+      ..lineTo(w * 0.64, h * 0.58)
+      ..lineTo(w * 0.86, h * 0.38)
+      ..lineTo(w * 0.88, h * 0.82)
+      ..close();
+
+    canvas.drawPath(path, paint);
+
+    // Bottom base band line
+    canvas.drawLine(
+      Offset(w * 0.12, h * 0.74),
+      Offset(w * 0.88, h * 0.74),
+      paint,
+    );
+
+    // Small circles on 3 peak tips
+    final r = w * 0.055;
+    canvas.drawCircle(Offset(w * 0.14, h * 0.32), r, dotPaint);
+    canvas.drawCircle(Offset(w * 0.50, h * 0.16), r, dotPaint);
+    canvas.drawCircle(Offset(w * 0.86, h * 0.32), r, dotPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _CrownIconPainter oldDelegate) =>
+      oldDelegate.color != color;
+}
+
+class _LayersIconPainter extends CustomPainter {
+  const _LayersIconPainter({required this.color});
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.8
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    final w = size.width;
+    final h = size.height;
+
+    // Top rhombus (diamond tilted in isometric view)
+    final topRhombus = Path()
+      ..moveTo(w * 0.50, h * 0.12)
+      ..lineTo(w * 0.88, h * 0.32)
+      ..lineTo(w * 0.50, h * 0.52)
+      ..lineTo(w * 0.12, h * 0.32)
+      ..close();
+    canvas.drawPath(topRhombus, paint);
+
+    // Middle layer chevron
+    final midChevron = Path()
+      ..moveTo(w * 0.12, h * 0.50)
+      ..lineTo(w * 0.50, h * 0.70)
+      ..lineTo(w * 0.88, h * 0.50);
+    canvas.drawPath(midChevron, paint);
+
+    // Bottom layer chevron
+    final botChevron = Path()
+      ..moveTo(w * 0.12, h * 0.68)
+      ..lineTo(w * 0.50, h * 0.88)
+      ..lineTo(w * 0.88, h * 0.68);
+    canvas.drawPath(botChevron, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _LayersIconPainter oldDelegate) =>
+      oldDelegate.color != color;
+}
+
+class _StarIconPainter extends CustomPainter {
+  const _StarIconPainter({required this.color});
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.8
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    final w = size.width;
+    final h = size.height;
+    final cx = w / 2;
+    final cy = h / 2;
+    final outerR = w * 0.44;
+    final innerR = outerR * 0.42;
+
+    final path = Path();
+    for (int i = 0; i < 10; i++) {
+      final r = i.isEven ? outerR : innerR;
+      final angle = (i * 36 - 90) * math.pi / 180;
+      final x = cx + r * math.cos(angle);
+      final y = cy + r * math.sin(angle);
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+    path.close();
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _StarIconPainter oldDelegate) =>
+      oldDelegate.color != color;
+}
+
+class _DiamondIconPainter extends CustomPainter {
+  const _DiamondIconPainter({required this.color});
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.8
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    final w = size.width;
+    final h = size.height;
+
+    // Diamond outer outline
+    final outer = Path()
+      ..moveTo(w * 0.28, h * 0.18)
+      ..lineTo(w * 0.72, h * 0.18)
+      ..lineTo(w * 0.90, h * 0.44)
+      ..lineTo(w * 0.50, h * 0.88)
+      ..lineTo(w * 0.10, h * 0.44)
+      ..close();
+    canvas.drawPath(outer, paint);
+
+    // Inner facet lines: inverted triangle in top half
+    final innerTriangle = Path()
+      ..moveTo(w * 0.28, h * 0.18)
+      ..lineTo(w * 0.50, h * 0.44)
+      ..lineTo(w * 0.72, h * 0.18);
+    canvas.drawPath(innerTriangle, paint);
+
+    // Lines from facet points
+    canvas.drawLine(
+      Offset(w * 0.50, h * 0.44),
+      Offset(w * 0.50, h * 0.88),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(w * 0.10, h * 0.44),
+      Offset(w * 0.50, h * 0.44),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(w * 0.90, h * 0.44),
+      Offset(w * 0.50, h * 0.44),
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _DiamondIconPainter oldDelegate) =>
+      oldDelegate.color != color;
+}
+
+class _HomeDrawer extends StatelessWidget {
+  const _HomeDrawer({
+    required this.userName,
+    required this.userPhoto,
+    required this.userEmail,
+    required this.onProfileTap,
+    required this.onHelpTap,
+    required this.onWishlistTap,
+    required this.onOrdersTap,
+    required this.onCartTap,
+    required this.onSpecialOffersTap,
+    required this.onCategoriesTap,
+  });
+
+  final String userName;
+  final String? userPhoto;
+  final String? userEmail;
+  final VoidCallback onProfileTap;
+  final VoidCallback onHelpTap;
+  final VoidCallback onWishlistTap;
+  final VoidCallback onOrdersTap;
+  final VoidCallback onCartTap;
+  final VoidCallback onSpecialOffersTap;
+  final VoidCallback onCategoriesTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Drawer(
+      backgroundColor: AppColors.background,
+      child: SafeArea(
+        child: Column(
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+              decoration: const BoxDecoration(
+                border: Border(bottom: BorderSide(color: AppColors.border)),
+              ),
+              child: Row(
+                children: [
+                  _ProfileAvatar(
+                    photoUrl: userPhoto,
+                    onTap: () {
+                      Navigator.pop(context);
+                      onProfileTap();
+                    },
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          userName.isEmpty ? 'Funica User' : userName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.urbanist(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        if (userEmail != null && userEmail!.isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            userEmail!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.urbanist(
+                              fontSize: 12.5,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Navigation items
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                children: [
+                  _DrawerItem(
+                    icon: Icons.home_rounded,
+                    title: 'Home',
+                    onTap: () => Navigator.pop(context),
+                  ),
+                  _DrawerItem(
+                    icon: Icons.grid_view_rounded,
+                    title: 'All Categories',
+                    onTap: () {
+                      Navigator.pop(context);
+                      onCategoriesTap();
+                    },
+                  ),
+                  _DrawerItem(
+                    icon: Icons.local_offer_outlined,
+                    title: 'Special Offers',
+                    onTap: () {
+                      Navigator.pop(context);
+                      onSpecialOffersTap();
+                    },
+                  ),
+                  _DrawerItem(
+                    icon: Icons.favorite_border_rounded,
+                    title: 'My Wishlist',
+                    onTap: () {
+                      Navigator.pop(context);
+                      onWishlistTap();
+                    },
+                  ),
+                  _DrawerItem(
+                    icon: Icons.shopping_bag_outlined,
+                    title: 'My Cart',
+                    onTap: () {
+                      Navigator.pop(context);
+                      onCartTap();
+                    },
+                  ),
+                  _DrawerItem(
+                    icon: Icons.receipt_long_outlined,
+                    title: 'My Orders',
+                    onTap: () {
+                      Navigator.pop(context);
+                      onOrdersTap();
+                    },
+                  ),
+                  const Divider(color: AppColors.border, height: 24),
+                  _DrawerItem(
+                    icon: Icons.help_outline_rounded,
+                    title: 'Help Center',
+                    onTap: () {
+                      Navigator.pop(context);
+                      onHelpTap();
+                    },
+                  ),
+                  _DrawerItem(
+                    icon: Icons.person_outline_rounded,
+                    title: 'Profile Settings',
+                    onTap: () {
+                      Navigator.pop(context);
+                      onProfileTap();
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DrawerItem extends StatelessWidget {
+  const _DrawerItem({
+    required this.icon,
+    required this.title,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(icon, color: AppColors.textPrimary, size: 22),
+      title: Text(
+        title,
+        style: GoogleFonts.urbanist(
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textPrimary,
+        ),
+      ),
+      onTap: onTap,
+      dense: true,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20),
     );
   }
 }
@@ -485,46 +1578,6 @@ class _ProfileAvatar extends StatelessWidget {
               )
             : const Icon(Icons.person_rounded, size: 34, color: Colors.white70),
       ),
-    );
-  }
-}
-
-class _HeaderAction extends StatelessWidget {
-  const _HeaderAction({
-    required this.icon,
-    required this.tooltip,
-    required this.onPressed,
-  });
-
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return IconButton(
-      onPressed: onPressed,
-      tooltip: tooltip,
-      icon: _HeaderActionIcon(icon: icon),
-    );
-  }
-}
-
-class _HeaderActionIcon extends StatelessWidget {
-  const _HeaderActionIcon({required this.icon});
-
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 48,
-      height: 48,
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        shape: BoxShape.circle,
-      ),
-      child: Icon(icon, color: AppColors.textPrimary),
     );
   }
 }
@@ -806,9 +1859,16 @@ class _OfferSlide extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 2),
       decoration: BoxDecoration(
-        color: const Color(0xFF192231),
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFF28354A)),
+        border: Border.all(color: AppColors.border),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x140D0A08),
+            blurRadius: 14,
+            offset: Offset(0, 5),
+          ),
+        ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
@@ -906,9 +1966,9 @@ class _OfferSlide extends StatelessWidget {
                       ),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: const Color(0xFF131A26),
+                          color: AppColors.card,
                           borderRadius: BorderRadius.circular(18),
-                          border: Border.all(color: const Color(0xFF232D3F)),
+                          border: Border.all(color: AppColors.border),
                         ),
                         clipBehavior: Clip.antiAlias,
                         child: Stack(

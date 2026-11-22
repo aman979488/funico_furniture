@@ -1,8 +1,9 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_assets.dart';
 import '../../../core/constants/app_strings.dart';
@@ -65,6 +66,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: PageView(
         controller: _controller,
         children: [
@@ -95,7 +97,7 @@ class _Photo extends StatelessWidget {
       fit: BoxFit.cover,
       width: double.infinity,
       height: double.infinity,
-      errorBuilder: (_, _, _) => Container(color: const Color(0xFF2A2D36)),
+      errorBuilder: (_, _, _) => Container(color: AppColors.card),
     );
   }
 }
@@ -126,10 +128,10 @@ class _WelcomePage extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.end,
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Text(
                   AppStrings.welcomeTo,
-                  style: TextStyle(
+                  style: GoogleFonts.urbanist(
                     fontSize: 28,
                     fontWeight: FontWeight.w600,
                     color: Colors.white,
@@ -137,16 +139,21 @@ class _WelcomePage extends StatelessWidget {
                 ),
                 Text(
                   AppStrings.appName,
-                  style: TextStyle(
+                  style: GoogleFonts.urbanist(
                     fontSize: 56,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w800,
                     color: Colors.white,
+                    letterSpacing: -1,
                   ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Text(
                   AppStrings.welcomeSubtitle,
-                  style: TextStyle(fontSize: 14, color: Colors.white70),
+                  style: GoogleFonts.urbanist(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w400,
+                    color: Colors.white70,
+                  ),
                 ),
               ],
             ),
@@ -198,10 +205,10 @@ class _SlidePage extends StatelessWidget {
                   Text(
                     data.title,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                    style: GoogleFonts.urbanist(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
                       height: 1.3,
                     ),
                   ),

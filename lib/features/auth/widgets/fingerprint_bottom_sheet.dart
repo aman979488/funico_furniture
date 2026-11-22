@@ -1,10 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:local_auth/local_auth.dart';
 
-/// App me fingerprint ka bottom sheet / pop-up box jo niche se drag hoke aata hai
-/// Uses the device's native biometric prompt for fingerprint verification.
+import '../../../core/theme/app_colors.dart';
+
 class FingerprintBottomSheet extends StatefulWidget {
   const FingerprintBottomSheet({
     super.key,
@@ -16,6 +17,7 @@ class FingerprintBottomSheet extends StatefulWidget {
   final String title;
   final String subtitle;
   final VoidCallback onAuthenticated;
+
   static Future<bool?> show({
     required BuildContext context,
     required String title,
@@ -25,7 +27,7 @@ class FingerprintBottomSheet extends StatefulWidget {
     return showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF191F2D),
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
@@ -136,32 +138,31 @@ class _FingerprintBottomSheetState extends State<FingerprintBottomSheet>
   Widget build(BuildContext context) {
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+        padding: const EdgeInsets.fromLTRB(24, 14, 24, 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Drag indicator bar
             Center(
               child: Container(
                 width: 44,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF3B4861),
+                  color: AppColors.border,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
             ),
-            const SizedBox(height: 22),
+            const SizedBox(height: 24),
 
-            // Icon / Sensor with pulse effect
             AnimatedBuilder(
               animation: _pulseController,
               builder: (context, child) {
                 final pulse = _pulseController.value;
                 final ringColor = _isSuccess
-                    ? const Color(0xFF10B981)
-                    : const Color(0xFF3B82F6)
-                          .withValues(alpha: 0.2 + (pulse * 0.3));
+                    ? AppColors.success
+                    : AppColors.primary.withValues(
+                        alpha: 0.2 + (pulse * 0.3),
+                      );
 
                 return Material(
                   color: Colors.transparent,
@@ -176,21 +177,20 @@ class _FingerprintBottomSheetState extends State<FingerprintBottomSheet>
                       height: 104,
                       decoration: BoxDecoration(
                         color: _isSuccess
-                            ? const Color(0xFF0F3A2E)
-                            : const Color(0xFF1F2B42),
+                            ? const Color(0xFFE8F8F0)
+                            : AppColors.accentLight,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: _isSuccess
-                              ? const Color(0xFF10B981)
-                              : ringColor,
+                          color: ringColor,
                           width: 2.5,
                         ),
                         boxShadow: [
                           BoxShadow(
                             color: _isSuccess
-                                ? const Color(0xFF10B981).withValues(alpha: 0.4)
-                                : const Color(0xFF3B82F6)
-                                      .withValues(alpha: 0.25 * pulse),
+                                ? AppColors.success.withValues(alpha: 0.3)
+                                : AppColors.primary.withValues(
+                                    alpha: 0.25 * pulse,
+                                  ),
                             blurRadius: 28,
                             spreadRadius: 2,
                           ),
@@ -200,10 +200,10 @@ class _FingerprintBottomSheetState extends State<FingerprintBottomSheet>
                         _isSuccess
                             ? Icons.check_rounded
                             : Icons.fingerprint_rounded,
-                        size: 56,
+                        size: 54,
                         color: _isSuccess
-                            ? const Color(0xFF34D399)
-                            : const Color(0xFF8DB4FF),
+                            ? AppColors.success
+                            : AppColors.primary,
                       ),
                     ),
                   ),
@@ -215,8 +215,8 @@ class _FingerprintBottomSheetState extends State<FingerprintBottomSheet>
             Text(
               widget.title,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white,
+              style: GoogleFonts.urbanist(
+                color: AppColors.textPrimary,
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
               ),
@@ -225,12 +225,12 @@ class _FingerprintBottomSheetState extends State<FingerprintBottomSheet>
             Text(
               _statusText ?? widget.subtitle,
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: GoogleFonts.urbanist(
                 color: _isSuccess
-                    ? const Color(0xFF34D399)
-                    : const Color(0xFF9AA3B2),
+                    ? AppColors.success
+                    : AppColors.textSecondary,
                 fontSize: 14,
-                fontWeight: _isSuccess ? FontWeight.w600 : FontWeight.w400,
+                fontWeight: _isSuccess ? FontWeight.w700 : FontWeight.w500,
               ),
             ),
 
@@ -241,18 +241,18 @@ class _FingerprintBottomSheetState extends State<FingerprintBottomSheet>
                   child: OutlinedButton(
                     onPressed: () => Navigator.of(context).pop(false),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFFBFC8D9),
-                      side: const BorderSide(color: Color(0xFF2E3A52)),
+                      foregroundColor: AppColors.textPrimary,
+                      side: const BorderSide(color: AppColors.border, width: 1.2),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(30),
                       ),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Cancel',
-                      style: TextStyle(
+                      style: GoogleFonts.urbanist(
                         fontSize: 15,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
@@ -265,18 +265,19 @@ class _FingerprintBottomSheetState extends State<FingerprintBottomSheet>
                           ? null
                           : _authenticateWithBiometrics,
                       style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFF3B82F6),
+                        backgroundColor: AppColors.primary,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(30),
                         ),
+                        elevation: 0,
                       ),
                       child: Text(
                         _isAuthenticating ? 'Waiting...' : 'Touch Sensor',
-                        style: TextStyle(
+                        style: GoogleFonts.urbanist(
                           color: Colors.white,
                           fontSize: 15,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),

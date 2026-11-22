@@ -8,15 +8,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/router/app_router.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/auth_input_field.dart';
 
-const _bg = Color(0xFF191A1F);
-const _field = Color(0xFF1C2233);
-const _hint = Color(0xFF8A90A0);
-const _accent = Color(0xFF3B82F6);
-
 class FillProfileScreen extends ConsumerStatefulWidget {
-  /// Signup se aaya hua name aur email.
   final String? name;
   final String? email;
 
@@ -65,7 +60,6 @@ class _FillProfileScreenState extends ConsumerState<FillProfileScreen> {
     super.dispose();
   }
 
-  // ---------- Photo ----------
   Future<void> _pickPhoto(ImageSource source) async {
     final file = await _picker.pickImage(
       source: source,
@@ -80,64 +74,75 @@ class _FillProfileScreenState extends ConsumerState<FillProfileScreen> {
   void _showPhotoOptions() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: _field,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (_) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(
-                Icons.photo_library_outlined,
-                color: Colors.white,
-              ),
-              title: const Text(
-                'Gallery',
-                style: TextStyle(color: Colors.white),
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                _pickPhoto(ImageSource.gallery);
-              },
-            ),
-            ListTile(
-              leading: const Icon(
-                Icons.camera_alt_outlined,
-                color: Colors.white,
-              ),
-              title: const Text(
-                'Camera',
-                style: TextStyle(color: Colors.white),
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                _pickPhoto(ImageSource.camera);
-              },
-            ),
-            if (_photoBytes != null)
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
               ListTile(
                 leading: const Icon(
-                  Icons.delete_outline,
-                  color: Colors.redAccent,
+                  Icons.photo_library_outlined,
+                  color: AppColors.textPrimary,
                 ),
-                title: const Text(
-                  'Remove photo',
-                  style: TextStyle(color: Colors.redAccent),
+                title: Text(
+                  'Gallery',
+                  style: GoogleFonts.urbanist(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 onTap: () {
                   Navigator.pop(context);
-                  setState(() => _photoBytes = null);
+                  _pickPhoto(ImageSource.gallery);
                 },
               ),
-          ],
+              ListTile(
+                leading: const Icon(
+                  Icons.camera_alt_outlined,
+                  color: AppColors.textPrimary,
+                ),
+                title: Text(
+                  'Camera',
+                  style: GoogleFonts.urbanist(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickPhoto(ImageSource.camera);
+                },
+              ),
+              if (_photoBytes != null)
+                ListTile(
+                  leading: const Icon(
+                    Icons.delete_outline,
+                    color: AppColors.error,
+                  ),
+                  title: Text(
+                    'Remove photo',
+                    style: GoogleFonts.urbanist(
+                      color: AppColors.error,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    setState(() => _photoBytes = null);
+                  },
+                ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  // ---------- Date of birth ----------
   Future<void> _pickDob() async {
     final now = DateTime.now();
     final picked = await showDatePicker(
@@ -146,10 +151,12 @@ class _FillProfileScreenState extends ConsumerState<FillProfileScreen> {
       firstDate: DateTime(1940),
       lastDate: now,
       builder: (context, child) => Theme(
-        data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.dark(
-            primary: _accent,
-            surface: _field,
+        data: ThemeData.light().copyWith(
+          colorScheme: const ColorScheme.light(
+            primary: AppColors.primary,
+            onPrimary: Colors.white,
+            surface: AppColors.surface,
+            onSurface: AppColors.textPrimary,
           ),
         ),
         child: child!,
@@ -165,7 +172,6 @@ class _FillProfileScreenState extends ConsumerState<FillProfileScreen> {
     });
   }
 
-  // ---------- Submit ----------
   Future<void> _onContinue() async {
     if (_isSaving || _isLoadingProfile || !_formKey.currentState!.validate()) {
       return;
@@ -303,9 +309,12 @@ class _FillProfileScreenState extends ConsumerState<FillProfileScreen> {
             left: menuLeft,
             width: menuWidth,
             child: Material(
-              color: _field,
+              color: AppColors.surface,
               elevation: 8,
-              borderRadius: BorderRadius.circular(12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: const BorderSide(color: AppColors.border, width: 1.2),
+              ),
               clipBehavior: Clip.antiAlias,
               child: ConstrainedBox(
                 constraints: BoxConstraints(maxHeight: availableHeight),
@@ -333,7 +342,7 @@ class _FillProfileScreenState extends ConsumerState<FillProfileScreen> {
                                     style: GoogleFonts.urbanist(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600,
-                                      color: Colors.white,
+                                      color: AppColors.textPrimary,
                                     ),
                                   ),
                                 ),
@@ -358,22 +367,26 @@ class _FillProfileScreenState extends ConsumerState<FillProfileScreen> {
     _genderMenuEntry = null;
   }
 
-  // ---------- UI ----------
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: _bg,
+        backgroundColor: AppColors.background,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Fill Your Profile',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+          style: GoogleFonts.urbanist(
+            color: AppColors.textPrimary,
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: Colors.white,
+            color: AppColors.textPrimary,
+            size: 20,
           ),
           onPressed: () =>
               context.canPop() ? context.pop() : context.go(AppRoutes.signup),
@@ -392,11 +405,10 @@ class _FillProfileScreenState extends ConsumerState<FillProfileScreen> {
                     _buildAvatar(),
                     const SizedBox(height: 28),
 
-                    // Full name
                     AuthInputField(
                       controller: _nameController,
                       hint: 'Full Name',
-                      icon: Icons.person_outline,
+                      icon: Icons.person_outline_rounded,
                       textCapitalization: TextCapitalization.words,
                       textInputAction: TextInputAction.next,
                       validator: (v) {
@@ -408,7 +420,6 @@ class _FillProfileScreenState extends ConsumerState<FillProfileScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Nickname
                     AuthInputField(
                       controller: _nicknameController,
                       hint: 'Nickname (optional)',
@@ -418,7 +429,6 @@ class _FillProfileScreenState extends ConsumerState<FillProfileScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Date of birth
                     AuthInputField(
                       controller: _dobController,
                       hint: 'Date of Birth',
@@ -432,7 +442,6 @@ class _FillProfileScreenState extends ConsumerState<FillProfileScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Email (read-only)
                     AuthInputField(
                       controller: _emailController,
                       hint: 'Email',
@@ -441,7 +450,6 @@ class _FillProfileScreenState extends ConsumerState<FillProfileScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Phone
                     AuthInputField(
                       controller: _phoneController,
                       hint: 'Phone Number',
@@ -464,7 +472,6 @@ class _FillProfileScreenState extends ConsumerState<FillProfileScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Gender
                     FormField<String>(
                       initialValue: _gender,
                       validator: (value) =>
@@ -487,11 +494,14 @@ class _FillProfileScreenState extends ConsumerState<FillProfileScreen> {
                                   style: GoogleFonts.urbanist(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
-                                    color: Colors.white,
+                                    color: AppColors.textPrimary,
                                   ),
                                 ),
                               ),
-                              const Icon(Icons.arrow_drop_down, color: _hint),
+                              const Icon(
+                                Icons.arrow_drop_down,
+                                color: AppColors.textHint,
+                              ),
                             ],
                           ),
                         ),
@@ -499,7 +509,6 @@ class _FillProfileScreenState extends ConsumerState<FillProfileScreen> {
                     ),
                     const SizedBox(height: 32),
 
-                    // Continue
                     SizedBox(
                       width: double.infinity,
                       height: 56,
@@ -508,10 +517,12 @@ class _FillProfileScreenState extends ConsumerState<FillProfileScreen> {
                             ? null
                             : _onContinue,
                         style: FilledButton.styleFrom(
-                          backgroundColor: _accent,
+                          backgroundColor: AppColors.primary,
+                          disabledBackgroundColor: AppColors.disabled,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30),
                           ),
+                          elevation: 0,
                         ),
                         child: _isSaving || _isLoadingProfile
                             ? const SizedBox(
@@ -522,11 +533,12 @@ class _FillProfileScreenState extends ConsumerState<FillProfileScreen> {
                                   color: Colors.white,
                                 ),
                               )
-                            : const Text(
+                            : Text(
                                 'Continue',
-                                style: TextStyle(
+                                style: GoogleFonts.urbanist(
                                   fontSize: 16,
-                                  fontWeight: FontWeight.w600,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
                                 ),
                               ),
                       ),
@@ -548,12 +560,16 @@ class _FillProfileScreenState extends ConsumerState<FillProfileScreen> {
         children: [
           CircleAvatar(
             radius: 54,
-            backgroundColor: _field,
+            backgroundColor: AppColors.card,
             backgroundImage: _photoBytes != null
                 ? MemoryImage(_photoBytes!)
                 : null,
             child: _photoBytes == null
-                ? const Icon(Icons.person, size: 54, color: _hint)
+                ? const Icon(
+                    Icons.person_rounded,
+                    size: 54,
+                    color: AppColors.textHint,
+                  )
                 : null,
           ),
           Positioned(
@@ -562,9 +578,9 @@ class _FillProfileScreenState extends ConsumerState<FillProfileScreen> {
             child: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: _accent,
+                color: AppColors.primary,
                 shape: BoxShape.circle,
-                border: Border.all(color: _bg, width: 3),
+                border: Border.all(color: AppColors.background, width: 3),
               ),
               child: const Icon(Icons.edit, size: 16, color: Colors.white),
             ),
@@ -582,29 +598,29 @@ class _FillProfileScreenState extends ConsumerState<FillProfileScreen> {
 
     return InputDecoration(
       filled: true,
-      fillColor: const Color(0xFF1C2230),
+      fillColor: AppColors.surface,
       hintText: hint,
       hintStyle: GoogleFonts.urbanist(
-        fontSize: 16,
+        fontSize: 15,
         fontWeight: FontWeight.w500,
-        color: const Color(0xFF8B93A7),
+        color: AppColors.textHint,
       ),
       errorStyle: GoogleFonts.urbanist(
         fontSize: 12.5,
         fontWeight: FontWeight.w600,
-        color: Colors.redAccent,
+        color: AppColors.error,
       ),
       contentPadding: const EdgeInsets.fromLTRB(0, 19, 16, 19),
       prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
       prefixIcon: Padding(
         padding: const EdgeInsets.only(left: 18, right: 14),
-        child: Icon(icon, size: 22, color: const Color(0xFF8B93A7)),
+        child: Icon(icon, size: 22, color: AppColors.textHint),
       ),
-      border: border(const Color(0xFF2B3345), 1),
-      enabledBorder: border(const Color(0xFF2B3345), 1),
-      focusedBorder: border(Colors.white, 1.5),
-      errorBorder: border(Colors.redAccent, 1),
-      focusedErrorBorder: border(Colors.redAccent, 1.5),
+      border: border(AppColors.border, 1.2),
+      enabledBorder: border(AppColors.border, 1.2),
+      focusedBorder: border(AppColors.primary, 1.6),
+      errorBorder: border(AppColors.error, 1.2),
+      focusedErrorBorder: border(AppColors.error, 1.6),
     );
   }
 }

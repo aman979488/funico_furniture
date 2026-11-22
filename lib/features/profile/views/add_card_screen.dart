@@ -98,11 +98,12 @@ class _AddCardScreenState extends ConsumerState<AddCardScreen> {
     final isVisa = _cardType == 'visa';
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
           onPressed: () => context.pop(),
         ),
         title: Text(
@@ -110,7 +111,7 @@ class _AddCardScreenState extends ConsumerState<AddCardScreen> {
           style: GoogleFonts.urbanist(
             fontSize: 22,
             fontWeight: FontWeight.w700,
-            color: Colors.white,
+            color: AppColors.textPrimary,
           ),
         ),
       ),
@@ -139,7 +140,7 @@ class _AddCardScreenState extends ConsumerState<AddCardScreen> {
                       borderRadius: BorderRadius.circular(22),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.4),
+                          color: Colors.black.withValues(alpha: 0.25),
                           blurRadius: 16,
                           offset: const Offset(0, 8),
                         ),
@@ -152,10 +153,13 @@ class _AddCardScreenState extends ConsumerState<AddCardScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Icon(
-                              Icons.credit_card_rounded,
-                              color: Colors.white70,
-                              size: 28,
+                            Text(
+                              'Funica Wallet',
+                              style: GoogleFonts.urbanist(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 18,
+                              ),
                             ),
                             if (isVisa)
                               const Text(
@@ -163,7 +167,7 @@ class _AddCardScreenState extends ConsumerState<AddCardScreen> {
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w900,
-                                  fontSize: 20,
+                                  fontSize: 22,
                                   letterSpacing: 2,
                                 ),
                               )
@@ -171,22 +175,20 @@ class _AddCardScreenState extends ConsumerState<AddCardScreen> {
                               Row(
                                 children: [
                                   Container(
-                                    width: 18,
-                                    height: 18,
+                                    width: 22,
+                                    height: 22,
                                     decoration: const BoxDecoration(
                                       color: Colors.redAccent,
                                       shape: BoxShape.circle,
                                     ),
                                   ),
                                   Transform.translate(
-                                    offset: const Offset(-6, 0),
+                                    offset: const Offset(-8, 0),
                                     child: Container(
-                                      width: 18,
-                                      height: 18,
+                                      width: 22,
+                                      height: 22,
                                       decoration: BoxDecoration(
-                                        color: Colors.amber.withValues(
-                                          alpha: 0.9,
-                                        ),
+                                        color: Colors.amber.withValues(alpha: 0.9),
                                         shape: BoxShape.circle,
                                       ),
                                     ),
@@ -198,12 +200,12 @@ class _AddCardScreenState extends ConsumerState<AddCardScreen> {
                         Text(
                           rawNumber.isEmpty
                               ? '•••• •••• •••• ••••'
-                              : _numberController.text,
+                              : _formatCardNumber(rawNumber),
                           style: GoogleFonts.sourceCodePro(
-                            fontSize: 20,
-                            letterSpacing: 2.2,
-                            fontWeight: FontWeight.w600,
                             color: Colors.white,
+                            fontSize: 20,
+                            letterSpacing: 3,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                         Row(
@@ -212,12 +214,13 @@ class _AddCardScreenState extends ConsumerState<AddCardScreen> {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
+                                Text(
                                   'CARD HOLDER',
-                                  style: TextStyle(
-                                    color: Colors.white54,
+                                  style: GoogleFonts.urbanist(
+                                    color: Colors.white60,
                                     fontSize: 10,
                                     letterSpacing: 1,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                                 const SizedBox(height: 2),
@@ -225,8 +228,6 @@ class _AddCardScreenState extends ConsumerState<AddCardScreen> {
                                   _nameController.text.isEmpty
                                       ? 'YOUR NAME'
                                       : _nameController.text.toUpperCase(),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
                                   style: GoogleFonts.urbanist(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w700,
@@ -238,12 +239,13 @@ class _AddCardScreenState extends ConsumerState<AddCardScreen> {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
+                                Text(
                                   'EXPIRES',
-                                  style: TextStyle(
-                                    color: Colors.white54,
+                                  style: GoogleFonts.urbanist(
+                                    color: Colors.white60,
                                     fontSize: 10,
                                     letterSpacing: 1,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                                 const SizedBox(height: 2),
@@ -266,7 +268,6 @@ class _AddCardScreenState extends ConsumerState<AddCardScreen> {
                   ),
                   const SizedBox(height: 28),
 
-                  // Cardholder Name
                   AppTextField(
                     hint: 'Card Holder Name',
                     controller: _nameController,
@@ -277,7 +278,6 @@ class _AddCardScreenState extends ConsumerState<AddCardScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Card Number
                   AppTextField(
                     hint: 'Card Number',
                     controller: _numberController,
@@ -316,7 +316,6 @@ class _AddCardScreenState extends ConsumerState<AddCardScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Expiry Date & CVV
                   Row(
                     children: [
                       Expanded(
@@ -369,7 +368,6 @@ class _AddCardScreenState extends ConsumerState<AddCardScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Default Card switch
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
@@ -378,7 +376,7 @@ class _AddCardScreenState extends ConsumerState<AddCardScreen> {
                     decoration: BoxDecoration(
                       color: AppColors.surface,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.border),
+                      border: Border.all(color: AppColors.border, width: 1.2),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -388,15 +386,15 @@ class _AddCardScreenState extends ConsumerState<AddCardScreen> {
                           style: GoogleFonts.urbanist(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                            color: AppColors.textPrimary,
                           ),
                         ),
                         Switch(
                           value: _isDefault,
                           activeThumbColor: Colors.white,
-                          activeTrackColor: const Color(0xFF4A5568),
-                          inactiveThumbColor: Colors.grey,
-                          inactiveTrackColor: AppColors.background,
+                          activeTrackColor: AppColors.primary,
+                          inactiveThumbColor: Colors.white,
+                          inactiveTrackColor: AppColors.disabled,
                           onChanged: (val) => setState(() => _isDefault = val),
                         ),
                       ],

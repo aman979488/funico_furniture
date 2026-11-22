@@ -9,6 +9,7 @@ Yeh document app ke maujooda authentication code ka status batata hai. Isme sirf
 - **Navigation:** `go_router`
 - **Authentication/profile backend:** Firebase Authentication aur Cloud Firestore
 - **Local security:** `flutter_secure_storage`, `shared_preferences`, `local_auth`
+- **Theme:** Dashboard-aligned warm Scandinavian theme (`AppColors.background` #FBF7F4, primary burnt-orange #D66B2C, white surfaces, Urbanist font)
 
 ## Jo kaam ho chuka hai
 

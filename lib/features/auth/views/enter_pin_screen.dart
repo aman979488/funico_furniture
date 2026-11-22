@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/router/app_router.dart';
 import '../../../core/services/pin_session.dart';
 import '../../../core/services/pin_storage.dart';
+import '../../../core/theme/app_colors.dart';
 
 const _pinLength = 4;
 
@@ -108,80 +110,125 @@ class _EnterPinScreenState extends ConsumerState<EnterPinScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF191A1F),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 420),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
-                    Icons.lock_rounded,
-                    color: Color(0xFF8DB4FF),
-                    size: 52,
+                  const SizedBox(height: 16),
+                  Container(
+                    width: 76,
+                    height: 76,
+                    decoration: const BoxDecoration(
+                      color: AppColors.accentLight,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Color(0x1AD66B2C),
+                          blurRadius: 18,
+                          offset: Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        Icons.lock_rounded,
+                        color: AppColors.primary,
+                        size: 38,
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: 20),
-                  const Text(
+                  const SizedBox(height: 24),
+                  Text(
                     'Enter your PIN',
-                    style: TextStyle(
-                      color: Colors.white,
+                    style: GoogleFonts.urbanist(
+                      color: AppColors.textPrimary,
                       fontSize: 26,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                   const SizedBox(height: 10),
-                  const Text(
+                  Text(
                     'Enter the 4-digit PIN you created to unlock your account.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Color(0xFF9AA3B2), fontSize: 15),
+                    style: GoogleFonts.urbanist(
+                      color: AppColors.textSecondary,
+                      fontSize: 15,
+                      height: 1.4,
+                    ),
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 32),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(
                       _pinLength,
-                      (index) => Container(
-                        width: 58,
-                        height: 58,
-                        margin: const EdgeInsets.symmetric(horizontal: 8),
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF1C2233),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: _error != null
-                                ? Colors.redAccent
-                                : const Color(0xFF2A3347),
+                      (index) {
+                        final isFilled = index < _pin.length;
+                        final hasError = _error != null;
+
+                        return Container(
+                          width: 58,
+                          height: 58,
+                          margin: const EdgeInsets.symmetric(horizontal: 8),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: hasError
+                                  ? AppColors.error
+                                  : isFilled
+                                      ? AppColors.primary
+                                      : AppColors.border,
+                              width: isFilled || hasError ? 1.6 : 1.2,
+                            ),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x0A24211F),
+                                blurRadius: 8,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
                           ),
-                        ),
-                        child: index < _pin.length
-                            ? const Icon(
-                                Icons.circle,
-                                color: Colors.white,
-                                size: 12,
-                              )
-                            : null,
-                      ),
+                          child: isFilled
+                              ? const Icon(
+                                  Icons.circle,
+                                  color: AppColors.primary,
+                                  size: 14,
+                                )
+                              : null,
+                        );
+                      },
                     ),
                   ),
                   SizedBox(
-                    height: 38,
+                    height: 36,
                     child: Center(
                       child: _isLoading
-                          ? const CircularProgressIndicator()
-                          : _error != null
-                          ? Text(
-                              _error!,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                color: Colors.redAccent,
-                                fontSize: 13,
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.2,
+                                color: AppColors.primary,
                               ),
                             )
-                          : null,
+                          : _error != null
+                              ? Text(
+                                  _error!,
+                                  textAlign: TextAlign.center,
+                                  style: GoogleFonts.urbanist(
+                                    color: AppColors.error,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                )
+                              : null,
                     ),
                   ),
                   if (_error != null && _savedPin == null)
@@ -193,19 +240,31 @@ class _EnterPinScreenState extends ConsumerState<EnterPinScreen> {
                         });
                         _loadPin();
                       },
-                      child: const Text('Retry'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                      ),
+                      child: Text(
+                        'Retry',
+                        style: GoogleFonts.urbanist(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     )
-                  else
+                  else ...[
                     _buildKeypad(),
-                  const SizedBox(height: 14),
+                    const SizedBox(height: 20),
+                  ],
                   TextButton(
                     onPressed: _onLogoutAndReset,
-                    child: const Text(
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                    ),
+                    child: Text(
                       'Forgot PIN? Sign out & log in again',
-                      style: TextStyle(
-                        color: Color(0xFF8DB4FF),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
+                      style: GoogleFonts.urbanist(
+                        color: AppColors.primary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
@@ -228,40 +287,59 @@ class _EnterPinScreenState extends ConsumerState<EnterPinScreen> {
 
     return Column(
       children: rows.map((row) {
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: row.map((key) {
-            if (key.isEmpty) return const SizedBox(width: 72, height: 58);
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 5),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: row.map((key) {
+              if (key.isEmpty) return const SizedBox(width: 76, height: 56);
 
-            final isBack = key == 'back';
+              final isBack = key == 'back';
 
-            return SizedBox(
-              width: 72,
-              height: 58,
-              child: TextButton(
-                style: TextButton.styleFrom(
-                  shape: RoundedRectangleBorder(
+              return Container(
+                width: 76,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: AppColors.border.withValues(alpha: 0.7),
+                    width: 1,
+                  ),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x0824211F),
+                      blurRadius: 4,
+                      offset: Offset(0, 1),
+                    ),
+                  ],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
                     borderRadius: BorderRadius.circular(18),
+                    onTap: isBack ? _onBackspace : () => _onDigit(key),
+                    child: Center(
+                      child: isBack
+                          ? const Icon(
+                              Icons.backspace_outlined,
+                              color: AppColors.textPrimary,
+                              size: 22,
+                            )
+                          : Text(
+                              key,
+                              style: GoogleFonts.urbanist(
+                                color: AppColors.textPrimary,
+                                fontSize: 24,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                    ),
                   ),
                 ),
-                onPressed: isBack ? _onBackspace : () => _onDigit(key),
-                child: isBack
-                    ? const Icon(
-                        Icons.backspace_outlined,
-                        color: Colors.white,
-                        size: 24,
-                      )
-                    : Text(
-                        key,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-              ),
-            );
-          }).toList(),
+              );
+            }).toList(),
+          ),
         );
       }).toList(),
     );

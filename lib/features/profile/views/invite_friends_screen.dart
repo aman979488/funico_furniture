@@ -39,11 +39,12 @@ class _InviteFriendsScreenState extends State<InviteFriendsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
           onPressed: () => context.pop(),
         ),
         title: Text(
@@ -51,7 +52,7 @@ class _InviteFriendsScreenState extends State<InviteFriendsScreen> {
           style: GoogleFonts.urbanist(
             fontSize: 22,
             fontWeight: FontWeight.w700,
-            color: Colors.white,
+            color: AppColors.textPrimary,
           ),
         ),
       ),
@@ -62,51 +63,62 @@ class _InviteFriendsScreenState extends State<InviteFriendsScreen> {
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               children: [
-                // Referral Banner
                 Container(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(22),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF243048), Color(0xFF161E2E)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFF33425E)),
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(color: AppColors.border, width: 1.2),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x0A24211F),
+                        blurRadius: 12,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
                   ),
                   child: Column(
                     children: [
-                      const Icon(
-                        Icons.card_giftcard_rounded,
-                        size: 42,
-                        color: Colors.white,
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: const BoxDecoration(
+                          color: AppColors.accentLight,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.card_giftcard_rounded,
+                          size: 30,
+                          color: AppColors.primary,
+                        ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 14),
                       Text(
                         'Invite Friends & Get \$20 OFF',
                         style: GoogleFonts.urbanist(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 6),
-                      const Text(
+                      Text(
                         'Share your referral code with friends and earn rewards when they place their first furniture order.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: GoogleFonts.urbanist(
                           color: AppColors.textSecondary,
-                          fontSize: 13,
+                          fontSize: 14,
+                          height: 1.4,
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 18),
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 10,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.surface,
+                          color: AppColors.card,
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(color: AppColors.border),
                         ),
@@ -119,7 +131,7 @@ class _InviteFriendsScreenState extends State<InviteFriendsScreen> {
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 2,
-                                color: Colors.white,
+                                color: AppColors.primary,
                               ),
                             ),
                             IconButton(
@@ -127,7 +139,7 @@ class _InviteFriendsScreenState extends State<InviteFriendsScreen> {
                               tooltip: 'Copy Code',
                               icon: const Icon(
                                 Icons.copy_rounded,
-                                color: Colors.white,
+                                color: AppColors.primary,
                                 size: 20,
                               ),
                             ),
@@ -143,7 +155,7 @@ class _InviteFriendsScreenState extends State<InviteFriendsScreen> {
                   style: GoogleFonts.urbanist(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -190,20 +202,27 @@ class _ContactTile extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppColors.border, width: 1.2),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A24211F),
+            blurRadius: 6,
+            offset: Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         children: [
           CircleAvatar(
-            backgroundColor: const Color(0xFF2C394F),
+            backgroundColor: AppColors.card,
             child: Text(
               name.isNotEmpty ? name[0] : '?',
-              style: const TextStyle(
-                color: Colors.white,
+              style: GoogleFonts.urbanist(
+                color: AppColors.textPrimary,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -217,15 +236,15 @@ class _ContactTile extends StatelessWidget {
                   name,
                   style: GoogleFonts.urbanist(
                     fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   phone,
-                  style: const TextStyle(
-                    fontSize: 12,
+                  style: GoogleFonts.urbanist(
+                    fontSize: 13,
                     color: AppColors.textSecondary,
                   ),
                 ),
@@ -235,16 +254,20 @@ class _ContactTile extends StatelessWidget {
           ElevatedButton(
             onPressed: onToggle,
             style: ElevatedButton.styleFrom(
-              backgroundColor: isInvited ? Colors.transparent : Colors.white,
-              foregroundColor: isInvited ? Colors.white70 : Colors.black,
-              side: isInvited ? const BorderSide(color: Colors.white24) : null,
+              backgroundColor: isInvited ? AppColors.surface : AppColors.primary,
+              foregroundColor: isInvited ? AppColors.textHint : Colors.white,
+              side: isInvited ? const BorderSide(color: AppColors.border) : null,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              minimumSize: const Size(80, 36),
               shape: const StadiumBorder(),
               elevation: 0,
             ),
             child: Text(
               isInvited ? 'Invited' : 'Invite',
-              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+              style: GoogleFonts.urbanist(
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+              ),
             ),
           ),
         ],

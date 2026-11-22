@@ -88,11 +88,10 @@ void main() {
 
       // Tap 'Add to Cart' (in bottomNavigationBar)
       await tester.tap(find.text('Add to Cart'));
-      await tester.pump(); // starts snackbar animation
-      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pumpAndSettle();
 
-      // SnackBar with confirmation appears
-      expect(find.text('${product.name} added to cart'), findsOneWidget);
+      // No View Cart SnackBar popup appears
+      expect(find.text('View Cart'), findsNothing);
     });
 
     testWidgets('CartScreen shows items and empty state', (tester) async {

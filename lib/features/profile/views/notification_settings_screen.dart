@@ -16,11 +16,12 @@ class NotificationSettingsScreen extends ConsumerWidget {
     final notifier = ref.read(profileViewModelProvider.notifier);
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
           onPressed: () => context.pop(),
         ),
         title: Text(
@@ -28,7 +29,7 @@ class NotificationSettingsScreen extends ConsumerWidget {
           style: GoogleFonts.urbanist(
             fontSize: 22,
             fontWeight: FontWeight.w700,
-            color: Colors.white,
+            color: AppColors.textPrimary,
           ),
         ),
       ),
@@ -39,7 +40,7 @@ class NotificationSettingsScreen extends ConsumerWidget {
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               children: [
-                _SectionTitle(title: 'Common Notifications'),
+                const _SectionTitle(title: 'Common Notifications'),
                 _SwitchTile(
                   title: 'General Notification',
                   value: prefs.generalNotification,
@@ -62,9 +63,9 @@ class NotificationSettingsScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Divider(),
+                const Divider(color: AppColors.border),
                 const SizedBox(height: 16),
-                _SectionTitle(title: 'System & Services'),
+                const _SectionTitle(title: 'System & Services'),
                 _SwitchTile(
                   title: 'Special Offers',
                   value: prefs.specialOffers,
@@ -130,9 +131,8 @@ class _SectionTitle extends StatelessWidget {
         title,
         style: GoogleFonts.urbanist(
           fontSize: 14,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w700,
           color: AppColors.textSecondary,
-          letterSpacing: 0.5,
         ),
       ),
     );
@@ -153,13 +153,20 @@ class _SwitchTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: 5),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: AppColors.border, width: 1.2),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x0A24211F),
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
+          ],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -170,16 +177,16 @@ class _SwitchTile extends StatelessWidget {
                 style: GoogleFonts.urbanist(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: Colors.white,
+                  color: AppColors.textPrimary,
                 ),
               ),
             ),
             Switch(
               value: value,
               activeThumbColor: Colors.white,
-              activeTrackColor: const Color(0xFF4A5568),
-              inactiveThumbColor: Colors.grey,
-              inactiveTrackColor: AppColors.background,
+              activeTrackColor: AppColors.primary,
+              inactiveThumbColor: Colors.white,
+              inactiveTrackColor: AppColors.disabled,
               onChanged: onChanged,
             ),
           ],

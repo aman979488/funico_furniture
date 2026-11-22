@@ -21,24 +21,30 @@ class AddressListScreen extends ConsumerWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: Text(
           'Delete Address',
           style: GoogleFonts.urbanist(
             fontWeight: FontWeight.w700,
-            color: Colors.white,
+            color: AppColors.textPrimary,
           ),
         ),
         content: Text(
           'Are you sure you want to delete "${address.name}" address?',
-          style: const TextStyle(color: AppColors.textSecondary),
+          style: GoogleFonts.urbanist(
+            color: AppColors.textSecondary,
+            fontSize: 15,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text(
+            child: Text(
               'Cancel',
-              style: TextStyle(color: Colors.white70),
+              style: GoogleFonts.urbanist(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
           TextButton(
@@ -53,9 +59,12 @@ class AddressListScreen extends ConsumerWidget {
                 );
               }
             },
-            child: const Text(
+            child: Text(
               'Delete',
-              style: TextStyle(color: AppColors.error),
+              style: GoogleFonts.urbanist(
+                color: AppColors.error,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],
@@ -69,11 +78,12 @@ class AddressListScreen extends ConsumerWidget {
     final addresses = state.addresses;
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
           onPressed: () => context.pop(),
         ),
         title: Text(
@@ -81,7 +91,7 @@ class AddressListScreen extends ConsumerWidget {
           style: GoogleFonts.urbanist(
             fontSize: 22,
             fontWeight: FontWeight.w700,
-            color: Colors.white,
+            color: AppColors.textPrimary,
           ),
         ),
       ),
@@ -100,7 +110,7 @@ class AddressListScreen extends ConsumerWidget {
                             width: 80,
                             height: 80,
                             decoration: const BoxDecoration(
-                              color: AppColors.surface,
+                              color: AppColors.card,
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
@@ -115,14 +125,14 @@ class AddressListScreen extends ConsumerWidget {
                             style: GoogleFonts.urbanist(
                               fontSize: 20,
                               fontWeight: FontWeight.w700,
-                              color: Colors.white,
+                              color: AppColors.textPrimary,
                             ),
                           ),
                           const SizedBox(height: 8),
-                          const Text(
+                          Text(
                             'You have not added any delivery address yet. Please add a new address to continue.',
                             textAlign: TextAlign.center,
-                            style: TextStyle(
+                            style: GoogleFonts.urbanist(
                               color: AppColors.textSecondary,
                               fontSize: 14,
                             ),
@@ -193,9 +203,16 @@ class _AddressCard extends StatelessWidget {
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: address.isDefault ? Colors.white : AppColors.border,
-          width: address.isDefault ? 1.5 : 1,
+          color: address.isDefault ? AppColors.primary : AppColors.border,
+          width: address.isDefault ? 1.5 : 1.2,
         ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A24211F),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
       ),
       padding: const EdgeInsets.all(18),
       child: Row(
@@ -205,15 +222,14 @@ class _AddressCard extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: const Color(0xFF28303F),
+              color: address.isDefault
+                  ? AppColors.accentLight
+                  : AppColors.card,
               shape: BoxShape.circle,
-              border: Border.all(
-                color: address.isDefault ? Colors.white70 : Colors.transparent,
-              ),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.location_on_rounded,
-              color: Colors.white,
+              color: address.isDefault ? AppColors.primary : AppColors.textSecondary,
               size: 24,
             ),
           ),
@@ -229,7 +245,7 @@ class _AddressCard extends StatelessWidget {
                       style: GoogleFonts.urbanist(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
-                        color: Colors.white,
+                        color: AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -240,7 +256,7 @@ class _AddressCard extends StatelessWidget {
                           vertical: 3,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.primary,
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -248,7 +264,7 @@ class _AddressCard extends StatelessWidget {
                           style: GoogleFonts.urbanist(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
-                            color: Colors.black,
+                            color: Colors.white,
                           ),
                         ),
                       ),
@@ -257,78 +273,63 @@ class _AddressCard extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   address.fullAddress,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
+                  style: GoogleFonts.urbanist(
                     fontSize: 14,
+                    color: AppColors.textSecondary,
                     height: 1.4,
                   ),
                 ),
-                if (address.phoneNumber != null &&
-                    address.phoneNumber!.isNotEmpty) ...[
-                  const SizedBox(height: 6),
+                if (address.phoneNumber != null && address.phoneNumber!.isNotEmpty) ...[
+                  const SizedBox(height: 4),
                   Text(
                     address.phoneNumber!,
-                    style: const TextStyle(
-                      color: AppColors.textHint,
+                    style: GoogleFonts.urbanist(
                       fontSize: 13,
+                      color: AppColors.textHint,
                     ),
                   ),
                 ],
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    if (!address.isDefault)
-                      TextButton.icon(
-                        style: TextButton.styleFrom(
-                          padding: EdgeInsets.zero,
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        onPressed: onSetDefault,
-                        icon: const Icon(
-                          Icons.check_circle_outline_rounded,
-                          size: 16,
-                          color: Colors.white70,
-                        ),
-                        label: const Text(
-                          'Set Default',
-                          style: TextStyle(color: Colors.white70, fontSize: 13),
-                        ),
-                      ),
-                    const Spacer(),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.edit_outlined,
-                        size: 20,
-                        color: Colors.white70,
-                      ),
-                      onPressed: onEdit,
-                      tooltip: 'Edit Address',
-                      constraints: const BoxConstraints(
-                        minWidth: 32,
-                        minHeight: 32,
-                      ),
-                      padding: EdgeInsets.zero,
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.delete_outline_rounded,
-                        size: 20,
-                        color: AppColors.error,
-                      ),
-                      onPressed: onDelete,
-                      tooltip: 'Delete Address',
-                      constraints: const BoxConstraints(
-                        minWidth: 32,
-                        minHeight: 32,
-                      ),
-                      padding: EdgeInsets.zero,
-                    ),
-                  ],
-                ),
               ],
             ),
+          ),
+          Column(
+            children: [
+              IconButton(
+                icon: Icon(
+                  address.isDefault
+                      ? Icons.radio_button_checked_rounded
+                      : Icons.radio_button_unchecked_rounded,
+                  color: address.isDefault
+                      ? AppColors.primary
+                      : AppColors.textHint,
+                ),
+                tooltip: 'Set as Default',
+                onPressed: onSetDefault,
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(
+                      Icons.edit_outlined,
+                      size: 20,
+                      color: AppColors.textSecondary,
+                    ),
+                    tooltip: 'Edit',
+                    onPressed: onEdit,
+                  ),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.delete_outline_rounded,
+                      size: 20,
+                      color: AppColors.error,
+                    ),
+                    tooltip: 'Delete',
+                    onPressed: onDelete,
+                  ),
+                ],
+              ),
+            ],
           ),
         ],
       ),

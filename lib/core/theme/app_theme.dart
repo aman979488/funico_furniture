@@ -4,8 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
 class AppTheme {
-  static ThemeData get dark {
-    final base = ThemeData.dark(useMaterial3: true);
+  static ThemeData get light {
+    final base = ThemeData.light(useMaterial3: true);
 
     OutlineInputBorder border(Color color, [double width = 0]) {
       return OutlineInputBorder(
@@ -18,7 +18,7 @@ class AppTheme {
 
     return base.copyWith(
       scaffoldBackgroundColor: AppColors.background,
-      colorScheme: const ColorScheme.dark(
+      colorScheme: const ColorScheme.light(
         primary: AppColors.primary,
         onPrimary: AppColors.onPrimary,
         surface: AppColors.surface,
@@ -37,7 +37,7 @@ class AppTheme {
         titleTextStyle: GoogleFonts.urbanist(
           fontSize: 24,
           fontWeight: FontWeight.bold,
-          color: Colors.white,
+          color: AppColors.textPrimary,
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -53,7 +53,7 @@ class AppTheme {
         ),
         border: border(Colors.transparent),
         enabledBorder: border(Colors.transparent),
-        focusedBorder: border(Colors.white, 1.2),
+        focusedBorder: border(AppColors.primary, 1.2),
         errorBorder: border(AppColors.error, 1),
         focusedErrorBorder: border(AppColors.error, 1.2),
       ),
@@ -73,10 +73,10 @@ class AppTheme {
       checkboxTheme: CheckboxThemeData(
         fillColor: WidgetStateProperty.resolveWith(
           (states) => states.contains(WidgetState.selected)
-              ? Colors.white
+              ? AppColors.primary
               : Colors.transparent,
         ),
-        checkColor: WidgetStateProperty.all(Colors.black),
+        checkColor: WidgetStateProperty.all(Colors.white),
         side: const BorderSide(color: AppColors.textSecondary, width: 1.5),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
       ),
@@ -90,6 +90,9 @@ class AppTheme {
           borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
         ),
       ),
+      iconTheme: const IconThemeData(color: AppColors.textPrimary),
     );
   }
+
+  static ThemeData get dark => light;
 }

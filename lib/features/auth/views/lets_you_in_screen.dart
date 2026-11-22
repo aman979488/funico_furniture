@@ -5,39 +5,38 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_assets.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/services/pin_session.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/app_brand_logo.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../shared/widgets/social_button.dart';
 import '../viewmodels/auth_viewmodel.dart';
 
-/// Reference design ke measurements ek jagah. Kuch adjust karna ho toh
-/// sirf yahan badlo.
 class _Dim {
   _Dim._();
 
   static const double sideMargin = 28;
-  static const double topGap = 48;
-  static const double heroSize = 190;
-  static const double heroToTitle = 16;
-  static const double titleSize = 44;
-  static const double titleToButtons = 28;
-  static const double socialHeight = 60;
-  static const double socialFont = 17;
+  static const double topGap = 36;
+  static const double heroSize = 180;
+  static const double heroToTitle = 20;
+  static const double titleSize = 38;
+  static const double titleToButtons = 26;
+  static const double socialHeight = 58;
+  static const double socialFont = 16;
   static const double socialGap = 14;
-  static const double minGapBeforeCreate = 24;
-  static const double createHeight = 60;
-  static const double createFont = 19;
-  static const double createToLogin = 32;
+  static const double minGapBeforeCreate = 20;
+  static const double createHeight = 58;
+  static const double createFont = 17;
+  static const double createToLogin = 24;
   static const double bottomText = 15;
-  static const double bottomGap = 40;
+  static const double bottomGap = 32;
 
-  /// Isse chhoti screen pe layout compress hone ke bajay scroll hoga
-  static const double minContentHeight = 720;
+  static const double minContentHeight = 700;
 }
 
 class LetsYouInScreen extends ConsumerStatefulWidget {
@@ -92,14 +91,13 @@ class _LetsYouInScreenState extends ConsumerState<LetsYouInScreen> {
   Widget build(BuildContext context) {
     final isLoading = ref.watch(authViewModelProvider).isLoading;
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 420),
             child: LayoutBuilder(
               builder: (context, constraints) {
-                // Column ko definite height milti hai, isliye Spacer
-                // hamesha bachi hui jagah bharta hai
                 final height = math.max(
                   constraints.maxHeight,
                   _Dim.minContentHeight,
@@ -115,24 +113,31 @@ class _LetsYouInScreenState extends ConsumerState<LetsYouInScreen> {
                       children: [
                         const SizedBox(height: _Dim.topGap),
 
-                        // ---------- Illustration (circle, bina border) ----------
-                        ClipOval(
-                          child: Image.asset(
-                            AppAssets.homeDesignLogo,
-                            height: _Dim.heroSize,
-                            width: _Dim.heroSize,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => Container(
-                              height: _Dim.heroSize,
-                              width: _Dim.heroSize,
-                              decoration: const BoxDecoration(
-                                color: AppColors.surface,
-                                shape: BoxShape.circle,
+                        // ---------- Hero illustration ----------
+                        Container(
+                          height: _Dim.heroSize,
+                          width: _Dim.heroSize,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColors.card,
+                            border: Border.all(
+                              color: AppColors.border,
+                              width: 2,
+                            ),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x1AD66B2C),
+                                blurRadius: 24,
+                                offset: Offset(0, 8),
                               ),
-                              child: const Icon(
-                                Icons.chair_alt,
-                                size: 80,
-                                color: AppColors.textPrimary,
+                            ],
+                          ),
+                          child: ClipOval(
+                            child: Image.asset(
+                              AppAssets.onboarding1,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, _, _) => const Center(
+                                child: AppBrandLogo(size: 90),
                               ),
                             ),
                           ),
@@ -140,11 +145,12 @@ class _LetsYouInScreenState extends ConsumerState<LetsYouInScreen> {
                         const SizedBox(height: _Dim.heroToTitle),
 
                         // ---------- Title ----------
-                        const Text(
+                        Text(
                           AppStrings.letsYouIn,
-                          style: TextStyle(
+                          style: GoogleFonts.urbanist(
                             fontSize: _Dim.titleSize,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.5,
                             color: AppColors.textPrimary,
                           ),
                         ),
@@ -157,7 +163,7 @@ class _LetsYouInScreenState extends ConsumerState<LetsYouInScreen> {
                             fontSize: _Dim.socialFont,
                             icon: const FaIcon(
                               FontAwesomeIcons.google,
-                              size: 22,
+                              size: 20,
                               color: Color(0xFFEA4335),
                             ),
                             label: AppStrings.continueWithGoogle,
@@ -171,13 +177,11 @@ class _LetsYouInScreenState extends ConsumerState<LetsYouInScreen> {
                             fontSize: _Dim.socialFont,
                             icon: const FaIcon(
                               FontAwesomeIcons.apple,
-                              size: 24,
-                              color: Colors.white,
+                              size: 22,
+                              color: AppColors.textPrimary,
                             ),
                             label: AppStrings.continueWithApple,
-                            onPressed: () {
-                              // TODO: Apple sign-in baad mein
-                            },
+                            onPressed: () {},
                           ),
                         ),
                         const SizedBox(height: _Dim.socialGap),
@@ -187,17 +191,14 @@ class _LetsYouInScreenState extends ConsumerState<LetsYouInScreen> {
                             fontSize: _Dim.socialFont,
                             icon: const FaIcon(
                               FontAwesomeIcons.facebook,
-                              size: 23,
+                              size: 21,
                               color: Color(0xFF1877F2),
                             ),
                             label: AppStrings.continueWithFacebook,
-                            onPressed: () {
-                              // TODO: Facebook sign-in baad mein
-                            },
+                            onPressed: () {},
                           ),
                         ),
 
-                        // Beech ki flexible khali jagah (reference jaisi)
                         const Spacer(),
                         const SizedBox(height: _Dim.minGapBeforeCreate),
 
@@ -216,10 +217,11 @@ class _LetsYouInScreenState extends ConsumerState<LetsYouInScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Text(
+                            Text(
                               AppStrings.alreadyHaveAccount,
-                              style: TextStyle(
+                              style: GoogleFonts.urbanist(
                                 fontSize: _Dim.bottomText,
+                                fontWeight: FontWeight.w500,
                                 color: AppColors.textSecondary,
                               ),
                             ),
@@ -227,17 +229,17 @@ class _LetsYouInScreenState extends ConsumerState<LetsYouInScreen> {
                             InkWell(
                               onTap: () => context.push(AppRoutes.login),
                               borderRadius: BorderRadius.circular(8),
-                              child: const Padding(
-                                padding: EdgeInsets.symmetric(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
                                   horizontal: 4,
                                   vertical: 6,
                                 ),
                                 child: Text(
                                   AppStrings.login,
-                                  style: TextStyle(
+                                  style: GoogleFonts.urbanist(
                                     fontSize: _Dim.bottomText,
                                     fontWeight: FontWeight.w700,
-                                    color: AppColors.textPrimary,
+                                    color: AppColors.primary,
                                   ),
                                 ),
                               ),
@@ -258,7 +260,6 @@ class _LetsYouInScreenState extends ConsumerState<LetsYouInScreen> {
   }
 }
 
-/// Dabane pe button thoda chhota hota hai (press effect), chhodne pe wapas.
 class _PressScale extends StatefulWidget {
   const _PressScale({required this.child});
   final Widget child;

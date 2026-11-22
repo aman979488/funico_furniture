@@ -4,16 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/theme/app_colors.dart';
 
-/// Is field ke apne colors (theme ke inputDecorationTheme pe depend nahi)
-class _FieldColors {
-  _FieldColors._();
-
-  static const Color fill = Color(0xFF1C2230); // navy tint
-  static const Color fillFocused = Color(0xFF212A3B); // focus pe thoda halka
-  static const Color idleBorder = Color(0xFF2B3345);
-  static const Color hint = Color(0xFF8B93A7);
-}
-
 class AuthInputField extends StatefulWidget {
   const AuthInputField({
     super.key,
@@ -78,7 +68,7 @@ class _AuthInputFieldState extends State<AuthInputField> {
   @override
   Widget build(BuildContext context) {
     final focused = _focus.hasFocus;
-    final iconColor = focused ? Colors.white : _FieldColors.hint;
+    final iconColor = focused ? AppColors.primary : AppColors.textHint;
 
     return TextFormField(
       controller: widget.controller,
@@ -94,7 +84,7 @@ class _AuthInputFieldState extends State<AuthInputField> {
       onFieldSubmitted: widget.onSubmitted,
       autofillHints: widget.autofillHints,
       autovalidateMode: AutovalidateMode.onUserInteraction,
-      cursorColor: Colors.white,
+      cursorColor: AppColors.primary,
       style: GoogleFonts.urbanist(
         fontSize: 16,
         fontWeight: FontWeight.w600,
@@ -102,12 +92,12 @@ class _AuthInputFieldState extends State<AuthInputField> {
       ),
       decoration: InputDecoration(
         filled: true,
-        fillColor: focused ? _FieldColors.fillFocused : _FieldColors.fill,
+        fillColor: AppColors.surface,
         hintText: widget.hint,
         hintStyle: GoogleFonts.urbanist(
-          fontSize: 16,
+          fontSize: 15,
           fontWeight: FontWeight.w500,
-          color: _FieldColors.hint,
+          color: AppColors.textHint,
         ),
         prefixText: widget.prefixText,
         prefixStyle: GoogleFonts.urbanist(
@@ -120,7 +110,6 @@ class _AuthInputFieldState extends State<AuthInputField> {
           fontWeight: FontWeight.w600,
           color: AppColors.error,
         ),
-        // left 0: icon ke baad ka gap prefixIcon ka padding sambhalta hai
         contentPadding: const EdgeInsets.fromLTRB(0, 19, 16, 19),
         prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
         prefixIcon: Padding(
@@ -140,11 +129,11 @@ class _AuthInputFieldState extends State<AuthInputField> {
                 onPressed: () => setState(() => _obscure = !_obscure),
               )
             : null,
-        border: _border(_FieldColors.idleBorder, 1),
-        enabledBorder: _border(_FieldColors.idleBorder, 1),
-        focusedBorder: _border(Colors.white, 1.5),
-        errorBorder: _border(AppColors.error, 1),
-        focusedErrorBorder: _border(AppColors.error, 1.5),
+        border: _border(AppColors.border, 1.2),
+        enabledBorder: _border(AppColors.border, 1.2),
+        focusedBorder: _border(AppColors.primary, 1.6),
+        errorBorder: _border(AppColors.error, 1.2),
+        focusedErrorBorder: _border(AppColors.error, 1.6),
       ),
     );
   }

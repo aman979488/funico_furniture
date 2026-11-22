@@ -57,9 +57,16 @@ class _SpecialOfferCard extends StatelessWidget {
     return Container(
       height: 170,
       decoration: BoxDecoration(
-        color: const Color(0xFF192231),
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF28354A)),
+        border: Border.all(color: AppColors.border),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x140D0A08),
+            blurRadius: 12,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       clipBehavior: Clip.antiAlias,
       child: Stack(
@@ -72,7 +79,7 @@ class _SpecialOfferCard extends StatelessWidget {
               heightFactor: 1,
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: const Color(0xFF131A26),
+                  color: AppColors.card,
                   borderRadius: const BorderRadius.horizontal(
                     right: Radius.circular(20),
                   ),

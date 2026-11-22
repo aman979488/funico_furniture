@@ -110,42 +110,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     } catch (_) {
       // Graceful fallback when ProviderScope is absent in widget tests
     }
-
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        backgroundColor: AppColors.surface,
-        duration: const Duration(seconds: 3),
-        content: Row(
-          children: [
-            const Icon(
-              Icons.check_circle_rounded,
-              color: AppColors.success,
-              size: 22,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                '${widget.product.name} added to cart',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
-        action: SnackBarAction(
-          label: 'View Cart',
-          textColor: AppColors.primary,
-          onPressed: () {
-            context.push(AppRoutes.cart);
-          },
-        ),
-      ),
-    );
   }
 
   @override

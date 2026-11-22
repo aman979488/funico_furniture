@@ -11,6 +11,7 @@ import '../../features/auth/views/login_screen.dart';
 import '../../features/auth/views/lets_you_in_screen.dart';
 import '../../features/auth/views/signup_screen.dart';
 import '../../features/help/views/help_center_screen.dart';
+import '../../features/estimator/views/estimator_screen.dart';
 import '../../features/home/views/home_screen.dart';
 import '../../features/home/views/main_shell_screen.dart';
 import '../../features/home/views/special_offers_screen.dart';
@@ -52,6 +53,7 @@ class AppRoutes {
   static const createPin = '/create-pin';
   static const enterPin = '/enter-pin';
   static const home = '/home';
+  static const estimator = '/estimator';
   static const search = '/search';
   static const categoryProducts = '/category-products';
   static const productDetails = '/product-details';
@@ -221,6 +223,10 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.home,
           builder: (context, state) => const HomeScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.estimator,
+          builder: (context, state) => const EstimatorScreen(),
         ),
         GoRoute(
           path: AppRoutes.wishlist,

@@ -30,7 +30,7 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
       isScrollControlled: true,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (ctx) => Padding(
         padding: EdgeInsets.only(
@@ -45,7 +45,7 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 40,
+                width: 44,
                 height: 4,
                 decoration: BoxDecoration(
                   color: AppColors.border,
@@ -56,15 +56,18 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
               Text(
                 'Change PIN',
                 style: GoogleFonts.urbanist(
-                  fontSize: 20,
+                  fontSize: 22,
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'Enter a 4-digit security PIN for quick access',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                style: GoogleFonts.urbanist(
+                  color: AppColors.textSecondary,
+                  fontSize: 14,
+                ),
               ),
               const SizedBox(height: 20),
               AppTextField(
@@ -127,26 +130,32 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: Text(
           'Reset Password',
           style: GoogleFonts.urbanist(
             fontWeight: FontWeight.w700,
-            color: Colors.white,
+            color: AppColors.textPrimary,
           ),
         ),
         content: Text(
           email != null && email.isNotEmpty
               ? 'We will send a password reset email to $email.'
               : 'Please enter your account email to receive a password reset link.',
-          style: const TextStyle(color: AppColors.textSecondary),
+          style: GoogleFonts.urbanist(
+            color: AppColors.textSecondary,
+            fontSize: 15,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text(
+            child: Text(
               'Cancel',
-              style: TextStyle(color: Colors.white70),
+              style: GoogleFonts.urbanist(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
           TextButton(
@@ -173,9 +182,12 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                 }
               }
             },
-            child: const Text(
+            child: Text(
               'Send Link',
-              style: TextStyle(color: Colors.white),
+              style: GoogleFonts.urbanist(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],
@@ -190,11 +202,12 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
     final notifier = ref.read(profileViewModelProvider.notifier);
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
           onPressed: () => context.pop(),
         ),
         title: Text(
@@ -202,7 +215,7 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
           style: GoogleFonts.urbanist(
             fontSize: 22,
             fontWeight: FontWeight.w700,
-            color: Colors.white,
+            color: AppColors.textPrimary,
           ),
         ),
       ),
@@ -238,7 +251,7 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                const Divider(),
+                const Divider(color: AppColors.border),
                 const SizedBox(height: 24),
                 _ActionButton(
                   icon: Icons.pin_rounded,
@@ -282,7 +295,14 @@ class _SecuritySwitchTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: AppColors.border, width: 1.2),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x0A24211F),
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
+          ],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -296,14 +316,14 @@ class _SecuritySwitchTile extends StatelessWidget {
                     style: GoogleFonts.urbanist(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: Colors.white,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: const TextStyle(
-                      fontSize: 12,
+                    style: GoogleFonts.urbanist(
+                      fontSize: 13,
                       color: AppColors.textSecondary,
                     ),
                   ),
@@ -313,9 +333,9 @@ class _SecuritySwitchTile extends StatelessWidget {
             Switch(
               value: value,
               activeThumbColor: Colors.white,
-              activeTrackColor: const Color(0xFF4A5568),
-              inactiveThumbColor: Colors.grey,
-              inactiveTrackColor: AppColors.background,
+              activeTrackColor: AppColors.primary,
+              inactiveThumbColor: Colors.white,
+              inactiveTrackColor: AppColors.disabled,
               onChanged: onChanged,
             ),
           ],
@@ -346,19 +366,34 @@ class _ActionButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: AppColors.border, width: 1.2),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x0A24211F),
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
+          ],
         ),
         child: Row(
           children: [
-            Icon(icon, color: Colors.white, size: 22),
+            Container(
+              width: 40,
+              height: 40,
+              decoration: const BoxDecoration(
+                color: AppColors.accentLight,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: AppColors.primary, size: 20),
+            ),
             const SizedBox(width: 14),
             Expanded(
               child: Text(
                 label,
                 style: GoogleFonts.urbanist(
                   fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
                 ),
               ),
             ),

@@ -1,5 +1,5 @@
-// TODO: app_text_field.dart
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/theme/app_colors.dart';
 
@@ -70,20 +70,30 @@ class _AppTextFieldState extends State<AppTextField> {
       readOnly: widget.readOnly,
       onTap: widget.onTap,
       maxLines: widget.isPassword ? 1 : widget.maxLines,
-      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-      cursorColor: Colors.white,
+      style: GoogleFonts.urbanist(
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textPrimary,
+      ),
+      cursorColor: AppColors.primary,
       decoration: InputDecoration(
         isDense: widget.isCompact,
         contentPadding: widget.isCompact
             ? const EdgeInsets.symmetric(horizontal: 14, vertical: 14)
-            : null,
-        filled: widget.isCompact ? true : null,
-        fillColor: widget.isCompact ? const Color(0xFF111B2A) : null,
+            : const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        filled: true,
+        fillColor: AppColors.surface,
         hintText: widget.hint,
-        hintStyle: widget.isCompact
-            ? const TextStyle(fontSize: 15, color: AppColors.textHint)
-            : null,
-        errorStyle: widget.isCompact ? const TextStyle(fontSize: 13) : null,
+        hintStyle: GoogleFonts.urbanist(
+          fontSize: widget.isCompact ? 14 : 15,
+          fontWeight: FontWeight.w500,
+          color: AppColors.textHint,
+        ),
+        errorStyle: GoogleFonts.urbanist(
+          fontSize: widget.isCompact ? 12 : 13,
+          fontWeight: FontWeight.w500,
+          color: AppColors.error,
+        ),
         prefixIcon: widget.prefixIcon == null
             ? null
             : Icon(
@@ -98,24 +108,26 @@ class _AppTextFieldState extends State<AppTextField> {
         suffixIconConstraints: widget.isCompact
             ? const BoxConstraints(minWidth: 44, minHeight: 50)
             : null,
-        border: widget.isCompact
-            ? OutlineInputBorder(
-                borderRadius: BorderRadius.circular(11),
-                borderSide: BorderSide.none,
-              )
-            : null,
-        enabledBorder: widget.isCompact
-            ? OutlineInputBorder(
-                borderRadius: BorderRadius.circular(11),
-                borderSide: BorderSide.none,
-              )
-            : null,
-        focusedBorder: widget.isCompact
-            ? OutlineInputBorder(
-                borderRadius: BorderRadius.circular(11),
-                borderSide: const BorderSide(color: Colors.white, width: 1),
-              )
-            : null,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: AppColors.border, width: 1.2),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: AppColors.border, width: 1.2),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: AppColors.primary, width: 1.6),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: AppColors.error, width: 1.2),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: AppColors.error, width: 1.6),
+        ),
       ),
     );
   }

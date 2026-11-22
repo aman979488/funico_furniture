@@ -85,11 +85,13 @@ class _HelpCenterScreenState extends State<HelpCenterScreen>
     }).toList();
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.background,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
           onPressed: () => context.pop(),
         ),
         title: Text(
@@ -97,14 +99,17 @@ class _HelpCenterScreenState extends State<HelpCenterScreen>
           style: GoogleFonts.urbanist(
             fontSize: 22,
             fontWeight: FontWeight.w700,
-            color: Colors.white,
+            color: AppColors.textPrimary,
           ),
         ),
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: Colors.white,
-          labelColor: Colors.white,
+          indicatorColor: AppColors.primary,
+          indicatorSize: TabBarIndicatorSize.tab,
+          indicatorWeight: 3,
+          labelColor: AppColors.primary,
           unselectedLabelColor: AppColors.textSecondary,
+          dividerColor: AppColors.border,
           labelStyle: GoogleFonts.urbanist(
             fontSize: 16,
             fontWeight: FontWeight.w700,
@@ -132,14 +137,40 @@ class _HelpCenterScreenState extends State<HelpCenterScreen>
                     TextField(
                       controller: _searchController,
                       onChanged: (_) => setState(() {}),
+                      style: GoogleFonts.urbanist(
+                        fontSize: 15,
+                        color: AppColors.textPrimary,
+                      ),
                       decoration: InputDecoration(
                         hintText: 'Search FAQ...',
-                        prefixIcon: const Icon(Icons.search_rounded),
+                        hintStyle: GoogleFonts.urbanist(
+                          color: AppColors.textHint,
+                          fontSize: 14,
+                        ),
+                        prefixIcon: const Icon(
+                          Icons.search_rounded,
+                          color: AppColors.textSecondary,
+                        ),
                         filled: true,
                         fillColor: AppColors.surface,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide.none,
+                          borderSide: const BorderSide(color: AppColors.border),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: const BorderSide(color: AppColors.border),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: const BorderSide(
+                            color: AppColors.primary,
+                            width: 1.4,
+                          ),
                         ),
                       ),
                     ),
@@ -159,19 +190,26 @@ class _HelpCenterScreenState extends State<HelpCenterScreen>
                                   setState(() => _selectedFaqCategory = cat);
                                 }
                               },
-                              selectedColor: Colors.white,
+                              selectedColor: AppColors.primary,
                               backgroundColor: AppColors.surface,
-                              labelStyle: TextStyle(
-                                color: isSelected ? Colors.black : Colors.white,
+                              labelStyle: GoogleFonts.urbanist(
+                                color: isSelected
+                                    ? Colors.white
+                                    : AppColors.textPrimary,
                                 fontWeight: isSelected
                                     ? FontWeight.w700
-                                    : FontWeight.w500,
+                                    : FontWeight.w600,
+                                fontSize: 13,
                               ),
                               side: BorderSide(
                                 color: isSelected
-                                    ? Colors.white
+                                    ? AppColors.primary
                                     : AppColors.border,
                               ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              showCheckmark: false,
                             ),
                           );
                         }).toList(),
@@ -179,45 +217,48 @@ class _HelpCenterScreenState extends State<HelpCenterScreen>
                     ),
                     const SizedBox(height: 16),
                     for (final faq in filteredFaqs)
-                      Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        decoration: BoxDecoration(
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Material(
                           color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppColors.border),
-                        ),
-                        child: Theme(
-                          data: Theme.of(context)
-                              .copyWith(dividerColor: Colors.transparent),
-                          child: ExpansionTile(
-                            iconColor: Colors.white,
-                            collapsedIconColor: Colors.white70,
-                            title: Text(
-                              faq['question']!,
-                              style: GoogleFonts.urbanist(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
-                            ),
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.fromLTRB(
-                                  16,
-                                  0,
-                                  16,
-                                  16,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: const BorderSide(color: AppColors.border),
+                          ),
+                          clipBehavior: Clip.antiAlias,
+                          child: Theme(
+                            data: Theme.of(context)
+                                .copyWith(dividerColor: Colors.transparent),
+                            child: ExpansionTile(
+                              iconColor: AppColors.primary,
+                              collapsedIconColor: AppColors.textSecondary,
+                              title: Text(
+                                faq['question']!,
+                                style: GoogleFonts.urbanist(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
                                 ),
-                                child: Text(
-                                  faq['answer']!,
-                                  style: const TextStyle(
-                                    color: AppColors.textSecondary,
-                                    fontSize: 14,
-                                    height: 1.5,
+                              ),
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    16,
+                                    0,
+                                    16,
+                                    16,
+                                  ),
+                                  child: Text(
+                                    faq['answer']!,
+                                    style: GoogleFonts.urbanist(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 14,
+                                      height: 1.5,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -305,40 +346,45 @@ class _ContactOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Material(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: ListTile(
-        onTap: onTap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        leading: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: const Color(0xFF283245),
-            borderRadius: BorderRadius.circular(12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: AppColors.border),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: ListTile(
+          onTap: onTap,
+          leading: Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: AppColors.accentLight,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(icon, color: AppColors.primary, size: 22),
           ),
-          child: Icon(icon, color: Colors.white),
-        ),
-        title: Text(
-          title,
-          style: GoogleFonts.urbanist(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
+          title: Text(
+            title,
+            style: GoogleFonts.urbanist(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
           ),
-        ),
-        subtitle: Text(
-          subtitle,
-          style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
-        ),
-        trailing: const Icon(
-          Icons.chevron_right_rounded,
-          color: AppColors.textHint,
+          subtitle: Text(
+            subtitle,
+            style: GoogleFonts.urbanist(
+              color: AppColors.textSecondary,
+              fontSize: 13,
+            ),
+          ),
+          trailing: const Icon(
+            Icons.chevron_right_rounded,
+            color: AppColors.textHint,
+          ),
         ),
       ),
     );

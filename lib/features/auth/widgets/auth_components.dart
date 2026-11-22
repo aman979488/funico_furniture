@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/theme/app_colors.dart';
 
@@ -8,24 +9,19 @@ class AuthBrand extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        _bar(29),
-        const SizedBox(height: 3),
-        _bar(23),
-        const SizedBox(height: 3),
-        _bar(16),
-      ],
-    );
-  }
-
-  Widget _bar(double width) {
     return Container(
-      width: width,
-      height: 7,
+      width: 52,
+      height: 52,
       decoration: BoxDecoration(
-        color: AppColors.textPrimary,
-        borderRadius: BorderRadius.circular(4),
+        color: AppColors.accentLight,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: const Center(
+        child: Icon(
+          Icons.chair_rounded,
+          size: 28,
+          color: AppColors.primary,
+        ),
       ),
     );
   }
@@ -40,41 +36,49 @@ class AuthSocialDivider extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const Expanded(child: Divider(color: AppColors.border)),
+        const Expanded(child: Divider(color: AppColors.border, thickness: 1)),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
             label,
-            style: const TextStyle(
+            style: GoogleFonts.urbanist(
               fontSize: 14,
+              fontWeight: FontWeight.w500,
               color: AppColors.textSecondary,
             ),
           ),
         ),
-        const Expanded(child: Divider(color: AppColors.border)),
+        const Expanded(child: Divider(color: AppColors.border, thickness: 1)),
       ],
     );
   }
 }
 
 class AuthSocialIconRow extends StatelessWidget {
-  const AuthSocialIconRow({super.key});
+  const AuthSocialIconRow({super.key, this.onGoogleTap, this.onAppleTap, this.onFacebookTap});
+
+  final VoidCallback? onGoogleTap;
+  final VoidCallback? onAppleTap;
+  final VoidCallback? onFacebookTap;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: const [
+      children: [
         _SocialIconButton(
-          icon: FaIcon(FontAwesomeIcons.google, color: Color(0xFFEA4335)),
+          icon: const FaIcon(FontAwesomeIcons.google, color: Color(0xFFEA4335), size: 24),
+          onTap: onGoogleTap,
         ),
-        SizedBox(width: 16),
+        const SizedBox(width: 18),
         _SocialIconButton(
-          icon: FaIcon(FontAwesomeIcons.apple, color: AppColors.textPrimary),
+          icon: const FaIcon(FontAwesomeIcons.apple, color: AppColors.textPrimary, size: 26),
+          onTap: onAppleTap,
         ),
-        SizedBox(width: 16),
+        const SizedBox(width: 18),
         _SocialIconButton(
-          icon: FaIcon(FontAwesomeIcons.facebookF, color: Color(0xFF1877F2)),
+          icon: const FaIcon(FontAwesomeIcons.facebookF, color: Color(0xFF1877F2), size: 24),
+          onTap: onFacebookTap,
         ),
       ],
     );
@@ -82,19 +86,35 @@ class AuthSocialIconRow extends StatelessWidget {
 }
 
 class _SocialIconButton extends StatelessWidget {
-  const _SocialIconButton({required this.icon});
+  const _SocialIconButton({required this.icon, this.onTap});
 
   final Widget icon;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        onTap: () {},
-        borderRadius: BorderRadius.circular(12),
-        child: SizedBox(width: 44, height: 44, child: Center(child: icon)),
+    return Container(
+      width: 58,
+      height: 58,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border, width: 1.2),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A24211F),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Center(child: icon),
+        ),
       ),
     );
   }
@@ -120,19 +140,27 @@ class AuthFooter extends StatelessWidget {
       children: [
         Text(
           prompt,
-          style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+          style: GoogleFonts.urbanist(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: AppColors.textSecondary,
+          ),
         ),
         TextButton(
           onPressed: onTap,
           style: TextButton.styleFrom(
-            foregroundColor: AppColors.textPrimary,
-            padding: const EdgeInsets.symmetric(horizontal: 5),
+            foregroundColor: AppColors.primary,
+            padding: const EdgeInsets.symmetric(horizontal: 6),
             minimumSize: Size.zero,
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
           child: Text(
             action,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+            style: GoogleFonts.urbanist(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: AppColors.primary,
+            ),
           ),
         ),
       ],

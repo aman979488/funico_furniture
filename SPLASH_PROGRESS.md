@@ -5,7 +5,7 @@ Yeh document app ke maujooda splash screen aur usse jude startup/navigation beha
 ## Jo implement hai
 
 - App ka initial route splash screen hai.
-- Splash screen par dark background, chair icon ke saath **Funica** branding, aur circular loading indicator dikhte hain.
+- Splash screen par dashboard jaisa warm theme (`AppColors.background`), stylish chair icon ke saath **Funica** branding, aur primary burnt-orange circular loading indicator dikhte hain.
 - Screen khulne ke baad teen seconds ka fixed delay hota hai.
 - Delay ke baad Firebase initialized ho aur current user signed in ho, to splash `/home` par navigate karta hai.
 - Signed-in user ke PIN/session state ko `go_router` redirect sambhalta hai. Locked user ko home ke bajaye PIN verification par bheja ja sakta hai.

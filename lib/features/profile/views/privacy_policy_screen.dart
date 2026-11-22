@@ -10,11 +10,12 @@ class PrivacyPolicyScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
           onPressed: () => context.pop(),
         ),
         title: Text(
@@ -22,7 +23,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
           style: GoogleFonts.urbanist(
             fontSize: 22,
             fontWeight: FontWeight.w700,
-            color: Colors.white,
+            color: AppColors.textPrimary,
           ),
         ),
       ),
@@ -38,13 +39,13 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   style: GoogleFonts.urbanist(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'Funica collects personal information you provide when creating an account, editing your profile, adding delivery addresses, or placing orders. This includes your name, email, phone number, address details, and payment preferences. We also collect device and analytics data to improve the shopping experience.',
-                  style: TextStyle(
+                  style: GoogleFonts.urbanist(
                     color: AppColors.textSecondary,
                     fontSize: 14,
                     height: 1.6,
@@ -56,13 +57,13 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   style: GoogleFonts.urbanist(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'Your data is primarily used to process furniture purchases, coordinate delivery and assembly logistics, send transaction receipts and order status notifications, and personalize your home decor recommendations.',
-                  style: TextStyle(
+                  style: GoogleFonts.urbanist(
                     color: AppColors.textSecondary,
                     fontSize: 14,
                     height: 1.6,
@@ -74,13 +75,13 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   style: GoogleFonts.urbanist(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'We never sell your personal data. We only share delivery details with verified logistics couriers to fulfill your furniture shipment, and payment tokens with PCI-compliant payment gateways.',
-                  style: TextStyle(
+                  style: GoogleFonts.urbanist(
                     color: AppColors.textSecondary,
                     fontSize: 14,
                     height: 1.6,
@@ -92,13 +93,13 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   style: GoogleFonts.urbanist(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'The security of your personal data is vital to us. We implement industry-standard AES encryption, secure cloud storage with Firebase, and strict biometric/PIN authentication to safeguard your credentials.',
-                  style: TextStyle(
+                  style: GoogleFonts.urbanist(
                     color: AppColors.textSecondary,
                     fontSize: 14,
                     height: 1.6,
@@ -110,13 +111,13 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   style: GoogleFonts.urbanist(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'You have the right to inspect, update, or request the deletion of your personal account data at any time from your Profile settings or by contacting our 24/7 customer care team.',
-                  style: TextStyle(
+                  style: GoogleFonts.urbanist(
                     color: AppColors.textSecondary,
                     fontSize: 14,
                     height: 1.6,

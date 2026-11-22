@@ -8,10 +8,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../core/constants/app_assets.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/services/pin_session.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/app_brand_logo.dart';
 import '../viewmodels/profile_viewmodel.dart';
 
 class _MenuItem {
@@ -64,6 +64,10 @@ class ProfileScreen extends ConsumerWidget {
   Future<void> _confirmLogout(BuildContext context) async {
     final confirmed = await showModalBottomSheet<bool>(
       context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
       builder: (sheetContext) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
@@ -71,7 +75,7 @@ class ProfileScreen extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 40,
+                width: 44,
                 height: 4,
                 decoration: BoxDecoration(
                   color: AppColors.border,
@@ -88,7 +92,7 @@ class ProfileScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              const Divider(),
+              const Divider(color: AppColors.border),
               const SizedBox(height: 16),
               Text(
                 'Are you sure you want to log out?',
@@ -105,17 +109,17 @@ class ProfileScreen extends ConsumerWidget {
                   Expanded(
                     child: _SheetButton(
                       label: 'Cancel',
-                      background: AppColors.disabled,
-                      foreground: Colors.white,
+                      background: AppColors.card,
+                      foreground: AppColors.textPrimary,
                       onTap: () => Navigator.pop(sheetContext, false),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 14),
                   Expanded(
                     child: _SheetButton(
                       label: 'Yes, Logout',
-                      background: Colors.white,
-                      foreground: Colors.black,
+                      background: AppColors.error,
+                      foreground: Colors.white,
                       onTap: () => Navigator.pop(sheetContext, true),
                     ),
                   ),
@@ -157,9 +161,10 @@ class ProfileScreen extends ConsumerWidget {
     }
 
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
+      decoration: BoxDecoration(
+        color: AppColors.card,
         shape: BoxShape.circle,
+        border: Border.all(color: AppColors.border, width: 2),
       ),
       clipBehavior: Clip.antiAlias,
       child: imageProvider != null
@@ -169,10 +174,14 @@ class ProfileScreen extends ConsumerWidget {
               errorBuilder: (_, _, _) => const Icon(
                 Icons.person_rounded,
                 size: 64,
-                color: Colors.white70,
+                color: AppColors.textHint,
               ),
             )
-          : const Icon(Icons.person_rounded, size: 64, color: Colors.white70),
+          : const Icon(
+              Icons.person_rounded,
+              size: 64,
+              color: AppColors.textHint,
+            ),
     );
   }
 
@@ -193,6 +202,7 @@ class ProfileScreen extends ConsumerWidget {
     final selectedLanguage = state.selectedLanguage;
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -203,50 +213,39 @@ class ProfileScreen extends ConsumerWidget {
                 children: [
                   const SizedBox(height: 20),
 
-                  Transform.translate(
-                    offset: const Offset(-8, 0),
-                    child: Row(
-                      children: [
-                        IconButton(
-                          onPressed: () {
-                            if (context.canPop()) {
-                              context.pop();
-                            } else {
-                              context.go(AppRoutes.home);
-                            }
-                          },
-                          tooltip: 'Back',
-                          icon: const Icon(
-                            Icons.arrow_back_rounded,
-                            color: AppColors.textPrimary,
-                          ),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints.tightFor(
-                            width: 28,
-                            height: 36,
-                          ),
+                  Row(
+                    children: [
+                      IconButton(
+                        onPressed: () {
+                          if (context.canPop()) {
+                            context.pop();
+                          } else {
+                            context.go(AppRoutes.home);
+                          }
+                        },
+                        tooltip: 'Back',
+                        icon: const Icon(
+                          Icons.arrow_back_rounded,
+                          color: AppColors.textPrimary,
                         ),
-                        const SizedBox(width: 8),
-                        Image.asset(
-                          AppAssets.logo,
-                          height: 30,
-                          errorBuilder: (_, _, _) => const Icon(
-                            Icons.chair_alt,
-                            size: 30,
-                            color: AppColors.textPrimary,
-                          ),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints.tightFor(
+                          width: 32,
+                          height: 36,
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Profile',
-                          style: GoogleFonts.urbanist(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
-                          ),
+                      ),
+                      const SizedBox(width: 8),
+                      const AppBrandLogo(size: 32),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Profile',
+                        style: GoogleFonts.urbanist(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 28),
 
@@ -260,7 +259,7 @@ class ProfileScreen extends ConsumerWidget {
                           right: 2,
                           bottom: 2,
                           child: Material(
-                            color: Colors.white,
+                            color: AppColors.primary,
                             shape: const CircleBorder(),
                             child: InkWell(
                               customBorder: const CircleBorder(),
@@ -271,7 +270,7 @@ class ProfileScreen extends ConsumerWidget {
                                 child: Icon(
                                   Icons.edit_rounded,
                                   size: 18,
-                                  color: Colors.black,
+                                  color: Colors.white,
                                 ),
                               ),
                             ),
@@ -306,7 +305,7 @@ class ProfileScreen extends ConsumerWidget {
                     ),
                   ],
                   const SizedBox(height: 24),
-                  const Divider(),
+                  const Divider(color: AppColors.border),
                   const SizedBox(height: 8),
 
                   for (final item in _menu)
@@ -369,13 +368,13 @@ class _MenuTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 4),
         child: Row(
           children: [
-            Icon(icon, size: 26, color: tint),
+            Icon(icon, size: 24, color: tint),
             const SizedBox(width: 18),
             Expanded(
               child: Text(
                 label,
                 style: GoogleFonts.urbanist(
-                  fontSize: 18,
+                  fontSize: 17,
                   fontWeight: FontWeight.w600,
                   color: tint,
                 ),
@@ -385,18 +384,18 @@ class _MenuTile extends StatelessWidget {
               Text(
                 trailing!,
                 style: GoogleFonts.urbanist(
-                  fontSize: 16,
+                  fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+                  color: AppColors.textSecondary,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
             ],
             if (showChevron)
               const Icon(
                 Icons.chevron_right_rounded,
-                size: 26,
-                color: AppColors.textPrimary,
+                size: 24,
+                color: AppColors.textHint,
               ),
           ],
         ),

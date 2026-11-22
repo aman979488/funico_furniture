@@ -23,7 +23,8 @@ Future<void> main() async {
     );
     await GoogleSignIn.instance.initialize(
       clientId: kIsWeb && googleClientId.isNotEmpty ? googleClientId : null,
-      serverClientId: googleClientId.isNotEmpty ? googleClientId : null,
+      serverClientId:
+          !kIsWeb && googleClientId.isNotEmpty ? googleClientId : null,
     );
   }
   runApp(const ProviderScope(child: FunicaApp()));
@@ -61,9 +62,9 @@ class _FunicaAppState extends State<FunicaApp> with WidgetsBindingObserver {
     return MaterialApp.router(
       title: 'Funica',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.dark,
-      darkTheme: AppTheme.dark,
-      themeMode: ThemeMode.dark,
+      theme: AppTheme.light,
+      darkTheme: AppTheme.light,
+      themeMode: ThemeMode.light,
       routerConfig: appRouter,
     );
   }

@@ -5,15 +5,14 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../core/constants/app_assets.dart';
-import '../../../core/constants/app_strings.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/services/pin_session.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/app_brand_logo.dart';
 import '../../../shared/widgets/auth_input_field.dart';
+import '../widgets/auth_components.dart';
 import '../viewmodels/auth_viewmodel.dart';
 
-/// Is screen ke texts (collision se bachne ke liye yahin rakhe hain)
 class _Txt {
   _Txt._();
   static const title = 'Create Your Account';
@@ -22,6 +21,8 @@ class _Txt {
   static const password = 'Password';
   static const signUp = 'Sign Up';
   static const orSignUpWith = 'or sign up with';
+  static const alreadyHaveAccount = 'Already have an account?';
+  static const login = 'Login';
 }
 
 class SignupScreen extends ConsumerStatefulWidget {
@@ -50,7 +51,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     super.dispose();
   }
 
-  // ---------- Validators ----------
   String? _validateName(String? v) {
     if (v == null || v.trim().length < 2) return 'Enter your full name';
     return null;
@@ -69,7 +69,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     return null;
   }
 
-  // ---------- Submit ----------
   Future<void> _onSignUp() async {
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) {
@@ -146,9 +145,12 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     final authState = ref.watch(authViewModelProvider);
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
+        backgroundColor: AppColors.background,
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
           onPressed: () {
             if (context.canPop()) {
               context.pop();
@@ -174,27 +176,20 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   key: _formKey,
                   child: Column(
                     children: [
-                      const SizedBox(height: 48),
+                      const SizedBox(height: 20),
 
                       // ---------- Logo ----------
-                      Image.asset(
-                        AppAssets.logo,
-                        height: 80,
-                        errorBuilder: (_, _, _) => const Icon(
-                          Icons.chair_alt,
-                          size: 80,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
+                      const AppBrandLogo(size: 72),
+                      const SizedBox(height: 18),
 
                       // ---------- Title ----------
                       Text(
                         _Txt.title,
                         textAlign: TextAlign.center,
                         style: GoogleFonts.urbanist(
-                          fontSize: 32,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.5,
                           color: AppColors.textPrimary,
                         ),
                       ),
@@ -204,7 +199,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                       AuthInputField(
                         controller: _nameCtrl,
                         hint: _Txt.fullName,
-                        icon: Icons.person,
+                        icon: Icons.person_outline_rounded,
                         keyboardType: TextInputType.name,
                         textInputAction: TextInputAction.next,
                         validator: _validateName,
@@ -214,7 +209,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                       AuthInputField(
                         controller: _emailCtrl,
                         hint: _Txt.email,
-                        icon: Icons.email,
+                        icon: Icons.email_outlined,
                         keyboardType: TextInputType.emailAddress,
                         textInputAction: TextInputAction.next,
                         validator: _validateEmail,
@@ -224,7 +219,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                       AuthInputField(
                         controller: _passCtrl,
                         hint: _Txt.password,
-                        icon: Icons.lock,
+                        icon: Icons.lock_outline_rounded,
                         isPassword: true,
                         textInputAction: TextInputAction.done,
                         validator: _validatePassword,
@@ -245,11 +240,22 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                           final filled = _allFilled;
                           return AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
-                            height: 58,
+                            height: 56,
                             width: double.infinity,
                             decoration: BoxDecoration(
-                              color: filled ? Colors.white : AppColors.disabled,
+                              color: filled
+                                  ? AppColors.primary
+                                  : AppColors.disabled,
                               borderRadius: BorderRadius.circular(30),
+                              boxShadow: filled
+                                  ? const [
+                                      BoxShadow(
+                                        color: Color(0x33D66B2C),
+                                        blurRadius: 16,
+                                        offset: Offset(0, 6),
+                                      ),
+                                    ]
+                                  : null,
                             ),
                             child: Material(
                               color: Colors.transparent,
@@ -263,17 +269,17 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                           height: 22,
                                           child: CircularProgressIndicator(
                                             strokeWidth: 2.5,
-                                            color: Colors.black,
+                                            color: Colors.white,
                                           ),
                                         )
                                       : Text(
                                           _Txt.signUp,
                                           style: GoogleFonts.urbanist(
-                                            fontSize: 17,
+                                            fontSize: 16,
                                             fontWeight: FontWeight.w700,
                                             color: filled
-                                                ? Colors.black
-                                                : Colors.white70,
+                                                ? Colors.white
+                                                : AppColors.textSecondary,
                                           ),
                                         ),
                                 ),
@@ -287,7 +293,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                       // ---------- Divider ----------
                       Row(
                         children: [
-                          const Expanded(child: Divider()),
+                          const Expanded(
+                            child:
+                                Divider(color: AppColors.border, thickness: 1),
+                          ),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             child: Text(
@@ -299,7 +308,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                               ),
                             ),
                           ),
-                          const Expanded(child: Divider()),
+                          const Expanded(
+                            child:
+                                Divider(color: AppColors.border, thickness: 1),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 24),
@@ -311,7 +323,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                           _SocialSquare(
                             icon: const FaIcon(
                               FontAwesomeIcons.google,
-                              size: 26,
+                              size: 24,
                               color: Color(0xFFEA4335),
                             ),
                             onTap: authState.isLoading ? null : _google,
@@ -320,61 +332,29 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                           _SocialSquare(
                             icon: const FaIcon(
                               FontAwesomeIcons.apple,
-                              size: 28,
-                              color: Colors.white,
+                              size: 26,
+                              color: AppColors.textPrimary,
                             ),
-                            onTap: () {
-                              // TODO: Apple sign-in
-                            },
+                            onTap: () {},
                           ),
                           const SizedBox(width: 16),
                           _SocialSquare(
                             icon: const FaIcon(
                               FontAwesomeIcons.facebook,
-                              size: 26,
+                              size: 24,
                               color: Color(0xFF1877F2),
                             ),
-                            onTap: () {
-                              // TODO: Facebook sign-in
-                            },
+                            onTap: () {},
                           ),
                         ],
                       ),
                       const SizedBox(height: 28),
 
                       // ---------- Already have account ----------
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            AppStrings.alreadyHaveAccount,
-                            style: GoogleFonts.urbanist(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          InkWell(
-                            onTap: () =>
-                                context.pushReplacement(AppRoutes.login),
-                            borderRadius: BorderRadius.circular(8),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 4,
-                                vertical: 6,
-                              ),
-                              child: Text(
-                                AppStrings.login,
-                                style: GoogleFonts.urbanist(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+                      AuthFooter(
+                        prompt: _Txt.alreadyHaveAccount,
+                        action: _Txt.login,
+                        onTap: () => context.pushReplacement(AppRoutes.login),
                       ),
                       const SizedBox(height: 24),
                     ],
@@ -397,16 +377,28 @@ class _SocialSquare extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.surface,
-      shape: RoundedRectangleBorder(
+    return Container(
+      width: 64,
+      height: 64,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: AppColors.border.withValues(alpha: 0.5)),
+        border: Border.all(color: AppColors.border, width: 1.2),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A24211F),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
       ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: SizedBox(width: 64, height: 64, child: Center(child: icon)),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Center(child: icon),
+        ),
       ),
     );
   }

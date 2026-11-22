@@ -3,9 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../core/constants/app_assets.dart';
-import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/app_brand_logo.dart';
 import '../../../shared/widgets/auth_input_field.dart';
 import '../viewmodels/auth_viewmodel.dart';
 
@@ -59,9 +58,12 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     final authState = ref.watch(authViewModelProvider);
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
+        backgroundColor: AppColors.background,
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
           onPressed: () => context.pop(),
           tooltip: 'Back',
         ),
@@ -81,23 +83,16 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   key: _formKey,
                   child: Column(
                     children: [
-                      const SizedBox(height: 48),
-                      Image.asset(
-                        AppAssets.logo,
-                        height: 80,
-                        errorBuilder: (_, _, _) => const Icon(
-                          Icons.chair_alt,
-                          size: 80,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 20),
+                      const AppBrandLogo(size: 72),
+                      const SizedBox(height: 18),
                       Text(
                         'Forgot Password?',
                         textAlign: TextAlign.center,
                         style: GoogleFonts.urbanist(
-                          fontSize: 32,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.5,
                           color: AppColors.textPrimary,
                         ),
                       ),
@@ -116,7 +111,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                       AuthInputField(
                         controller: _emailController,
                         hint: 'Email address',
-                        icon: Icons.email,
+                        icon: Icons.email_outlined,
                         keyboardType: TextInputType.emailAddress,
                         textInputAction: TextInputAction.done,
                         validator: _validateEmail,
@@ -132,23 +127,32 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                           final emailEntered = _emailController.text
                               .trim()
                               .isNotEmpty;
-                          final canSubmit =
-                              emailEntered && !authState.isLoading;
                           return AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
-                            height: 58,
+                            height: 56,
                             width: double.infinity,
                             decoration: BoxDecoration(
                               color: emailEntered
-                                  ? Colors.white
+                                  ? AppColors.primary
                                   : AppColors.disabled,
                               borderRadius: BorderRadius.circular(30),
+                              boxShadow: emailEntered
+                                  ? const [
+                                      BoxShadow(
+                                        color: Color(0x33D66B2C),
+                                        blurRadius: 16,
+                                        offset: Offset(0, 6),
+                                      ),
+                                    ]
+                                  : null,
                             ),
                             child: Material(
                               color: Colors.transparent,
                               child: InkWell(
                                 borderRadius: BorderRadius.circular(30),
-                                onTap: canSubmit ? _onSendResetLink : null,
+                                onTap: (!authState.isLoading && emailEntered)
+                                    ? _onSendResetLink
+                                    : null,
                                 child: Center(
                                   child: authState.isLoading
                                       ? const SizedBox(
@@ -156,17 +160,17 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                                           height: 22,
                                           child: CircularProgressIndicator(
                                             strokeWidth: 2.5,
-                                            color: Colors.black,
+                                            color: Colors.white,
                                           ),
                                         )
                                       : Text(
                                           'Send Reset Link',
                                           style: GoogleFonts.urbanist(
-                                            fontSize: 17,
+                                            fontSize: 16,
                                             fontWeight: FontWeight.w700,
                                             color: emailEntered
-                                                ? Colors.black
-                                                : Colors.white70,
+                                                ? Colors.white
+                                                : AppColors.textSecondary,
                                           ),
                                         ),
                                 ),
@@ -176,40 +180,6 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                         },
                       ),
                       const SizedBox(height: 28),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'Remember your password?',
-                            style: GoogleFonts.urbanist(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          InkWell(
-                            onTap: () =>
-                                context.pushReplacement(AppRoutes.login),
-                            borderRadius: BorderRadius.circular(8),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 4,
-                                vertical: 6,
-                              ),
-                              child: Text(
-                                'Login',
-                                style: GoogleFonts.urbanist(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
                     ],
                   ),
                 ),

@@ -2,20 +2,23 @@ import 'package:flutter/material.dart';
 
 class AppColors {
   // Backgrounds
-  static const background = Color(0xFF181A20); // screen ka main dark background
-  static const surface = Color(0xFF1F222A); // cards, input fields
-  static const card = Color(0xFF35383F); // product image ke piche ka grey box
-  static const border = Color(0xFF35383F); // input aur card border
+  static const background = Color(
+    0xFFFBF7F4,
+  ); // warm off-white screen background
+  static const surface = Color(0xFFFFFFFF); // cards, input fields
+  static const card = Color(0xFFF1E7DE); // warm product-image background
+  static const border = Color(0xFFE5D7CB); // input aur card border
 
   // Text
-  static const textPrimary = Colors.white;
-  static const textSecondary = Color(0xFF9E9E9E);
-  static const textHint = Color(0xFF757575);
+  static const textPrimary = Color(0xFF24211F);
+  static const textSecondary = Color(0xFF756F69);
+  static const textHint = Color(0xFF9C948C);
 
   // Buttons
-  static const primary = Colors.white; // white pill button
-  static const onPrimary = Colors.black; // button ke andar ka text
-  static const disabled = Color(0xFF35383F); // grey disabled button
+  static const primary = Color(0xFFD66B2C); // burnt-orange pill button
+  static const onPrimary = Colors.white;
+  static const disabled = Color(0xFFE8DDD4);
+  static const accentLight = Color(0xFFFBE6D5);
 
   // Status
   static const success = Color(0xFF07BD74);

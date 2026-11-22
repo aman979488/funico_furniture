@@ -27,7 +27,7 @@ const specialOffers = [
     description:
         'Upgrade your home with premium furniture. Style meets comfort!',
     icon: Icons.weekend_rounded,
-    color: Color(0xFF8DB4FF),
+    color: Color(0xFFD66B2C),
     imagePath: AppAssets.sofaimg,
   ),
   SpecialOffer(
@@ -35,7 +35,7 @@ const specialOffers = [
     title: 'Living Room Sale',
     description: 'Make room for comfort with deals on sofas and lounge chairs.',
     icon: Icons.chair_rounded,
-    color: Color(0xFFD9A57E),
+    color: Color(0xFFC96A35),
     imagePath: AppAssets.livingRoomImage,
   ),
   SpecialOffer(
@@ -43,7 +43,7 @@ const specialOffers = [
     title: 'Bedroom Refresh',
     description: 'Find a better night’s sleep with special bedroom offers.',
     icon: Icons.bed_rounded,
-    color: Color(0xFFB7A2E8),
+    color: Color(0xFFA85F3D),
     imagePath: AppAssets.bedroomImage,
   ),
   SpecialOffer(
@@ -51,7 +51,7 @@ const specialOffers = [
     title: 'Dining Collection',
     description: 'Bring everyone together around a table made for sharing.',
     icon: Icons.dining_rounded,
-    color: Color(0xFFE0BC72),
+    color: Color(0xFFCB7A45),
     imagePath: AppAssets.diningCollectionImage,
   ),
   SpecialOffer(
@@ -59,7 +59,7 @@ const specialOffers = [
     title: 'Lighting Deals',
     description: 'Brighten every corner with warm, welcoming lights.',
     icon: Icons.light_rounded,
-    color: Color(0xFFE6D58C),
+    color: Color(0xFFB86A3B),
     imagePath: AppAssets.lightingDealsImage,
   ),
 ];

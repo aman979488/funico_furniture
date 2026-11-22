@@ -118,11 +118,12 @@ class _AddAddressScreenState extends ConsumerState<AddAddressScreen> {
     final isEdit = widget.existingAddress != null;
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
           onPressed: () => context.pop(),
         ),
         title: Text(
@@ -130,7 +131,7 @@ class _AddAddressScreenState extends ConsumerState<AddAddressScreen> {
           style: GoogleFonts.urbanist(
             fontSize: 22,
             fontWeight: FontWeight.w700,
-            color: Colors.white,
+            color: AppColors.textPrimary,
           ),
         ),
       ),
@@ -146,13 +147,12 @@ class _AddAddressScreenState extends ConsumerState<AddAddressScreen> {
                   vertical: 16,
                 ),
                 children: [
-                  // Address Label Quick Chips
                   Text(
                     'Address Type',
                     style: GoogleFonts.urbanist(
                       fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white70,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -170,23 +170,26 @@ class _AddAddressScreenState extends ConsumerState<AddAddressScreen> {
                             setState(() => _nameController.text = tag);
                           }
                         },
-                        selectedColor: Colors.white,
+                        selectedColor: AppColors.primary,
                         backgroundColor: AppColors.surface,
-                        labelStyle: TextStyle(
-                          color: isSelected ? Colors.black : Colors.white,
+                        labelStyle: GoogleFonts.urbanist(
+                          color: isSelected ? Colors.white : AppColors.textPrimary,
                           fontWeight: isSelected
                               ? FontWeight.w700
-                              : FontWeight.w500,
+                              : FontWeight.w600,
                         ),
                         side: BorderSide(
-                          color: isSelected ? Colors.white : AppColors.border,
+                          color: isSelected ? AppColors.primary : AppColors.border,
+                          width: 1.2,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
                         ),
                       );
                     }).toList(),
                   ),
                   const SizedBox(height: 18),
 
-                  // Custom Name
                   AppTextField(
                     hint: 'Address Name (e.g. Home, Office)',
                     controller: _nameController,
@@ -197,7 +200,6 @@ class _AddAddressScreenState extends ConsumerState<AddAddressScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Street / Building Details
                   AppTextField(
                     hint: 'Street Address / Apartment / Flat',
                     controller: _detailsController,
@@ -209,7 +211,6 @@ class _AddAddressScreenState extends ConsumerState<AddAddressScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // City & State
                   Row(
                     children: [
                       Expanded(
@@ -234,7 +235,6 @@ class _AddAddressScreenState extends ConsumerState<AddAddressScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Postal Code & Country
                   Row(
                     children: [
                       Expanded(
@@ -260,7 +260,6 @@ class _AddAddressScreenState extends ConsumerState<AddAddressScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Phone Number
                   AppTextField(
                     hint: 'Phone Number (for delivery)',
                     controller: _phoneController,
@@ -269,7 +268,6 @@ class _AddAddressScreenState extends ConsumerState<AddAddressScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Set as Default switch
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
@@ -278,16 +276,18 @@ class _AddAddressScreenState extends ConsumerState<AddAddressScreen> {
                     decoration: BoxDecoration(
                       color: AppColors.surface,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.border),
+                      border: Border.all(color: AppColors.border, width: 1.2),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.check_circle_outline_rounded,
-                              color: Colors.white70,
+                              color: _isDefault
+                                  ? AppColors.primary
+                                  : AppColors.textHint,
                               size: 22,
                             ),
                             const SizedBox(width: 12),
@@ -296,7 +296,7 @@ class _AddAddressScreenState extends ConsumerState<AddAddressScreen> {
                               style: GoogleFonts.urbanist(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.white,
+                                color: AppColors.textPrimary,
                               ),
                             ),
                           ],
@@ -304,9 +304,9 @@ class _AddAddressScreenState extends ConsumerState<AddAddressScreen> {
                         Switch(
                           value: _isDefault,
                           activeThumbColor: Colors.white,
-                          activeTrackColor: const Color(0xFF4A5568),
-                          inactiveThumbColor: Colors.grey,
-                          inactiveTrackColor: AppColors.background,
+                          activeTrackColor: AppColors.primary,
+                          inactiveThumbColor: Colors.white,
+                          inactiveTrackColor: AppColors.disabled,
                           onChanged: (val) => setState(() => _isDefault = val),
                         ),
                       ],
@@ -314,7 +314,6 @@ class _AddAddressScreenState extends ConsumerState<AddAddressScreen> {
                   ),
                   const SizedBox(height: 36),
 
-                  // Save Button
                   PrimaryButton(
                     text: isEdit ? 'Apply Changes' : 'Save Address',
                     isLoading: _isLoading,

@@ -81,11 +81,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.background,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
           onPressed: () => context.pop(),
         ),
         title: Text(
@@ -93,14 +95,19 @@ class _NotificationScreenState extends State<NotificationScreen> {
           style: GoogleFonts.urbanist(
             fontSize: 22,
             fontWeight: FontWeight.w700,
-            color: Colors.white,
+            color: AppColors.textPrimary,
           ),
         ),
         actions: [
           if (_notifications.isNotEmpty)
             PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert_rounded, color: Colors.white),
+              icon: const Icon(Icons.more_vert_rounded, color: AppColors.textPrimary),
               color: AppColors.surface,
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: const BorderSide(color: AppColors.border),
+              ),
               onSelected: (val) {
                 if (val == 'mark_read') _markAllAsRead();
                 if (val == 'clear') _clearAll();
@@ -108,16 +115,28 @@ class _NotificationScreenState extends State<NotificationScreen> {
               itemBuilder: (_) => [
                 const PopupMenuItem(
                   value: 'mark_read',
-                  child: Text(
-                    'Mark all as read',
-                    style: TextStyle(color: Colors.white),
+                  child: Row(
+                    children: [
+                      Icon(Icons.done_all_rounded, size: 20, color: AppColors.primary),
+                      SizedBox(width: 10),
+                      Text(
+                        'Mark all as read',
+                        style: TextStyle(color: AppColors.textPrimary),
+                      ),
+                    ],
                   ),
                 ),
                 const PopupMenuItem(
                   value: 'clear',
-                  child: Text(
-                    'Clear all',
-                    style: TextStyle(color: AppColors.error),
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete_outline_rounded, size: 20, color: AppColors.error),
+                      SizedBox(width: 10),
+                      Text(
+                        'Clear all',
+                        style: TextStyle(color: AppColors.error),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -139,13 +158,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
                             width: 80,
                             height: 80,
                             decoration: const BoxDecoration(
-                              color: AppColors.surface,
+                              color: AppColors.accentLight,
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
                               Icons.notifications_off_outlined,
                               size: 40,
-                              color: AppColors.textSecondary,
+                              color: AppColors.primary,
                             ),
                           ),
                           const SizedBox(height: 20),
@@ -154,13 +173,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
                             style: GoogleFonts.urbanist(
                               fontSize: 20,
                               fontWeight: FontWeight.w700,
-                              color: Colors.white,
+                              color: AppColors.textPrimary,
                             ),
                           ),
                           const SizedBox(height: 8),
-                          const Text(
+                          Text(
                             'You do not have any notifications at the moment.',
-                            style: TextStyle(
+                            style: GoogleFonts.urbanist(
                               color: AppColors.textSecondary,
                               fontSize: 14,
                             ),
@@ -177,6 +196,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                     itemCount: _notifications.length,
                     itemBuilder: (context, index) {
                       final item = _notifications[index];
+                      final isRead = item['isRead'] == true;
                       final isFirstInSection =
                           index == 0 ||
                           _notifications[index - 1]['section'] !=
@@ -193,83 +213,118 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                 style: GoogleFonts.urbanist(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
-                                  color: AppColors.textSecondary,
+                                  color: AppColors.textPrimary,
                                 ),
                               ),
                             ),
                           ],
-                          Container(
-                            margin: const EdgeInsets.only(bottom: 10),
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: item['isRead'] == true
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: Material(
+                              color: isRead
                                   ? AppColors.surface
-                                  : const Color(0xFF222B3D),
+                                  : const Color(0xFFFFF9F5),
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: item['isRead'] == true
-                                    ? AppColors.border
-                                    : const Color(0xFF3B4D6E),
-                              ),
-                            ),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Container(
-                                  width: 44,
-                                  height: 44,
+                              clipBehavior: Clip.antiAlias,
+                              child: InkWell(
+                                onTap: () {
+                                  setState(() => item['isRead'] = true);
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(16),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF2A364C),
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: isRead
+                                          ? AppColors.border
+                                          : AppColors.primary.withValues(
+                                              alpha: 0.45,
+                                            ),
+                                      width: isRead ? 1.0 : 1.2,
+                                    ),
                                   ),
-                                  child: Icon(
-                                    item['icon'] as IconData,
-                                    color: Colors.white,
-                                    size: 22,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                              item['title'] as String,
+                                      Container(
+                                        width: 48,
+                                        height: 48,
+                                        decoration: BoxDecoration(
+                                          color: isRead
+                                              ? AppColors.card
+                                              : AppColors.accentLight,
+                                          borderRadius:
+                                              BorderRadius.circular(14),
+                                        ),
+                                        child: Icon(
+                                          item['icon'] as IconData,
+                                          color: AppColors.primary,
+                                          size: 24,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 14),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Expanded(
+                                                  child: Text(
+                                                    item['title'] as String,
+                                                    style: GoogleFonts.urbanist(
+                                                      fontSize: 15.5,
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                      color:
+                                                          AppColors.textPrimary,
+                                                    ),
+                                                  ),
+                                                ),
+                                                if (!isRead) ...[
+                                                  Container(
+                                                    width: 7,
+                                                    height: 7,
+                                                    margin:
+                                                        const EdgeInsets.only(
+                                                          right: 6,
+                                                        ),
+                                                    decoration:
+                                                        const BoxDecoration(
+                                                          color:
+                                                              AppColors.primary,
+                                                          shape:
+                                                              BoxShape.circle,
+                                                        ),
+                                                  ),
+                                                ],
+                                                Text(
+                                                  item['time'] as String,
+                                                  style: GoogleFonts.urbanist(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w500,
+                                                    color: AppColors.textHint,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 5),
+                                            Text(
+                                              item['description'] as String,
                                               style: GoogleFonts.urbanist(
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.w700,
-                                                color: Colors.white,
+                                                fontSize: 13.5,
+                                                color: AppColors.textSecondary,
+                                                height: 1.45,
                                               ),
                                             ),
-                                          ),
-                                          Text(
-                                            item['time'] as String,
-                                            style: const TextStyle(
-                                              fontSize: 11,
-                                              color: AppColors.textHint,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        item['description'] as String,
-                                        style: const TextStyle(
-                                          fontSize: 13,
-                                          color: AppColors.textSecondary,
-                                          height: 1.4,
+                                          ],
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                              ],
+                              ),
                             ),
                           ),
                         ],
