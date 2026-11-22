@@ -45,18 +45,20 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyBXCyecm0GyRU5WacDo3KG_JERvHUigps4',
-    appId: '1:655147824865:android:c8c396341dbdfa8096a9a0',
+    appId: '1:655147824865:android:2fc32ce2366e45ec96a9a0',
     messagingSenderId: '655147824865',
     projectId: 'funica-9a16a',
     storageBucket: 'funica-9a16a.firebasestorage.app',
   );
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyBUhDN12Y0TljPvNBiVphxNy54k14QfO0A',
-    appId: '1:655147824865:ios:73cc511a0c3c558996a9a0',
+    appId: '1:655147824865:ios:8e9b6f47c2ac444a96a9a0',
     messagingSenderId: '655147824865',
     projectId: 'funica-9a16a',
     storageBucket: 'funica-9a16a.firebasestorage.app',
-    iosBundleId: 'com.funica.funica',
+    androidClientId: '655147824865-91qa77pips5irqojdjgsuago5lc08dp3.apps.googleusercontent.com',
+    iosClientId: '655147824865-05or66jh6u3r4pad98js7gkiccf5v89r.apps.googleusercontent.com',
+    iosBundleId: 'com.atech.fi',
   );
   static const FirebaseOptions web = FirebaseOptions(
     apiKey: 'AIzaSyC9KKYcAlXDQ-D1gsgzX4S_eBhHawKYzMk',

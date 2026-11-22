@@ -42,6 +42,8 @@ import '../services/pin_session.dart';
 /// Saare route paths ek jagah. Navigate karne ke liye:
 /// context.go(AppRoutes.login);   (replace)
 /// context.push(AppRoutes.signup); (upar stack karna)
+///
+///
 class AppRoutes {
   static const splash = '/';
   static const onboarding = '/onboarding';
@@ -75,6 +77,7 @@ class AppRoutes {
   static const inviteFriends = '/invite-friends';
   static const notifications = '/notifications';
 }
+
 
 final GoRouter appRouter = GoRouter(
   initialLocation: AppRoutes.splash,

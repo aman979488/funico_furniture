@@ -6,6 +6,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/constants/firestore_collections.dart';
 import '../../../shared/models/address.dart';
 import '../../../shared/models/payment_card.dart';
 import '../../../shared/models/user.dart';
@@ -166,6 +167,24 @@ class ProfileRepositoryImpl implements ProfileRepository {
     return 'default_guest_user';
   }
 
+  Future<DocumentReference<Map<String, dynamic>>> _getUserDocRef(String uid) async {
+    final collections = [
+      FirestoreCollections.customers,
+      FirestoreCollections.vendors,
+      FirestoreCollections.staff,
+    ];
+    for (final col in collections) {
+      final docRef = FirebaseFirestore.instance.collection(col).doc(uid);
+      final snapshot = await docRef.get();
+      if (snapshot.exists) {
+        return docRef;
+      }
+    }
+    return FirebaseFirestore.instance
+        .collection(FirestoreCollections.customers)
+        .doc(uid);
+  }
+
   @override
   Future<UserProfile> fetchProfile() async {
     final uid = _currentUid;
@@ -185,38 +204,20 @@ class ProfileRepositoryImpl implements ProfileRepository {
     if (Firebase.apps.isNotEmpty && FirebaseAuth.instance.currentUser != null) {
       try {
         final authUser = FirebaseAuth.instance.currentUser!;
-        final doc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .get();
+        final docRef = await _getUserDocRef(uid);
+        final doc = await docRef.get();
 
         if (doc.exists && doc.data() != null) {
-          final data = doc.data()!;
-          final profile = UserProfile(
-            uid: uid,
-            name: (data['name'] as String?)?.isNotEmpty == true
-                ? data['name'] as String
-                : (authUser.displayName ?? 'Funica User'),
-            nickname: data['nickname'] as String? ?? '',
-            email: data['email'] as String? ?? authUser.email ?? '',
-            dateOfBirth: data['dateOfBirth'] as String? ?? '',
-            phoneNumber: data['phoneNumber'] as String? ?? '',
-            gender: data['gender'] as String? ?? '',
-            photoUrl: data.containsKey('photoUrl')
-                ? data['photoUrl'] as String?
-                : authUser.photoURL,
-          );
-
+          final profile = UserProfile.fromMap(doc.data()!, uid: uid);
           await prefs.setString(
             '$_profilePrefix$uid',
             jsonEncode(profile.toMap()),
           );
           return profile;
         } else {
-          // If Firestore doc doesn't exist yet, seed with Firebase Auth details
           final profile = UserProfile(
             uid: uid,
-            name: authUser.displayName ?? 'Funica User',
+            name: authUser.displayName ?? '',
             email: authUser.email ?? '',
             photoUrl: authUser.photoURL,
           );
@@ -233,12 +234,8 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
     return UserProfile(
       uid: uid,
-      name: 'Funica User',
-      email: 'user@funica.com',
-      nickname: 'User',
-      gender: 'Male',
-      dateOfBirth: '12/10/1998',
-      phoneNumber: '+91 98765 43210',
+      name: '',
+      email: '',
     );
   }
 
@@ -263,17 +260,8 @@ class ProfileRepositoryImpl implements ProfileRepository {
       } catch (_) {}
 
       try {
-        await FirebaseFirestore.instance.collection('users').doc(uid).set({
-          'uid': uid,
-          'name': profile.name,
-          'nickname': profile.nickname,
-          'email': profile.email,
-          'dateOfBirth': profile.dateOfBirth,
-          'phoneNumber': profile.phoneNumber,
-          'gender': profile.gender,
-          'photoUrl': profile.photoUrl,
-          'updatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
+        final docRef = await _getUserDocRef(uid);
+        await docRef.set(profile.toMap()..['updatedAt'] = FieldValue.serverTimestamp(), SetOptions(merge: true));
       } catch (_) {}
     }
   }
@@ -295,48 +283,26 @@ class ProfileRepositoryImpl implements ProfileRepository {
       } catch (_) {}
     }
 
-    // Default sample addresses
-    final defaultAddresses = [
-      const Address(
-        id: 'addr_1',
-        name: 'Home',
-        details: 'Flat 402, Lotus Residency, 14th Main Rd, Indiranagar',
-        city: 'Bengaluru',
-        state: 'Karnataka',
-        postalCode: '560038',
-        country: 'India',
-        isDefault: true,
-        phoneNumber: '+91 98765 43210',
-      ),
-      const Address(
-        id: 'addr_2',
-        name: 'Office',
-        details: 'Tower B, Tech Park, Outer Ring Road, Bellandur',
-        city: 'Bengaluru',
-        state: 'Karnataka',
-        postalCode: '560103',
-        country: 'India',
-        isDefault: false,
-        phoneNumber: '+91 98765 43211',
-      ),
-      const Address(
-        id: 'addr_3',
-        name: 'Apartment',
-        details: 'B-704, Skyline Heights, MG Road',
-        city: 'Mumbai',
-        state: 'Maharashtra',
-        postalCode: '400001',
-        country: 'India',
-        isDefault: false,
-        phoneNumber: '+91 98765 43212',
-      ),
-    ];
+    // 2. Fetch from Firestore if available
+    if (Firebase.apps.isNotEmpty && FirebaseAuth.instance.currentUser != null) {
+      try {
+        final docRef = await _getUserDocRef(uid);
+        final doc = await docRef.get();
+        if (doc.exists && doc.data()?['addresses'] != null) {
+          final list = doc.data()!['addresses'] as List;
+          final addresses = list
+              .map((e) => Address.fromMap(e as Map<String, dynamic>))
+              .toList();
+          await prefs.setString(
+            '$_addressPrefix$uid',
+            jsonEncode(addresses.map((e) => e.toMap()).toList()),
+          );
+          return addresses;
+        }
+      } catch (_) {}
+    }
 
-    await prefs.setString(
-      '$_addressPrefix$uid',
-      jsonEncode(defaultAddresses.map((e) => e.toMap()).toList()),
-    );
-    return defaultAddresses;
+    return const [];
   }
 
   @override
@@ -368,7 +334,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
     if (Firebase.apps.isNotEmpty && FirebaseAuth.instance.currentUser != null) {
       try {
-        await FirebaseFirestore.instance.collection('users').doc(uid).set({
+        await (await _getUserDocRef(uid)).set({
           'addresses': updated.map((e) => e.toMap()).toList(),
         }, SetOptions(merge: true));
       } catch (_) {}
@@ -394,7 +360,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
     if (Firebase.apps.isNotEmpty && FirebaseAuth.instance.currentUser != null) {
       try {
-        await FirebaseFirestore.instance.collection('users').doc(uid).set({
+        await (await _getUserDocRef(uid)).set({
           'addresses': updated.map((e) => e.toMap()).toList(),
         }, SetOptions(merge: true));
       } catch (_) {}
@@ -417,7 +383,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
     if (Firebase.apps.isNotEmpty && FirebaseAuth.instance.currentUser != null) {
       try {
-        await FirebaseFirestore.instance.collection('users').doc(uid).set({
+        await (await _getUserDocRef(uid)).set({
           'addresses': updated.map((e) => e.toMap()).toList(),
         }, SetOptions(merge: true));
       } catch (_) {}
@@ -441,33 +407,26 @@ class ProfileRepositoryImpl implements ProfileRepository {
       } catch (_) {}
     }
 
-    // Default sample cards
-    final defaultCards = [
-      const PaymentCard(
-        id: 'card_1',
-        cardHolderName: 'Andrew Ainsley',
-        cardNumber: '4242 4242 4242 2672',
-        expiryDate: '12/26',
-        cvv: '888',
-        cardType: 'mastercard',
-        isDefault: true,
-      ),
-      const PaymentCard(
-        id: 'card_2',
-        cardHolderName: 'Andrew Ainsley',
-        cardNumber: '5500 0000 0000 8923',
-        expiryDate: '09/27',
-        cvv: '321',
-        cardType: 'visa',
-        isDefault: false,
-      ),
-    ];
+    // 2. Fetch from Firestore if available
+    if (Firebase.apps.isNotEmpty && FirebaseAuth.instance.currentUser != null) {
+      try {
+        final docRef = await _getUserDocRef(uid);
+        final doc = await docRef.get();
+        if (doc.exists && doc.data()?['paymentCards'] != null) {
+          final list = doc.data()!['paymentCards'] as List;
+          final cards = list
+              .map((e) => PaymentCard.fromMap(e as Map<String, dynamic>))
+              .toList();
+          await prefs.setString(
+            '$_cardsPrefix$uid',
+            jsonEncode(cards.map((e) => e.toMap()).toList()),
+          );
+          return cards;
+        }
+      } catch (_) {}
+    }
 
-    await prefs.setString(
-      '$_cardsPrefix$uid',
-      jsonEncode(defaultCards.map((e) => e.toMap()).toList()),
-    );
-    return defaultCards;
+    return const [];
   }
 
   @override
@@ -498,7 +457,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
     if (Firebase.apps.isNotEmpty && FirebaseAuth.instance.currentUser != null) {
       try {
-        await FirebaseFirestore.instance.collection('users').doc(uid).set({
+        await (await _getUserDocRef(uid)).set({
           'paymentCards': updated.map((e) => e.toMap()).toList(),
         }, SetOptions(merge: true));
       } catch (_) {}
@@ -523,7 +482,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
     if (Firebase.apps.isNotEmpty && FirebaseAuth.instance.currentUser != null) {
       try {
-        await FirebaseFirestore.instance.collection('users').doc(uid).set({
+        await (await _getUserDocRef(uid)).set({
           'paymentCards': updated.map((e) => e.toMap()).toList(),
         }, SetOptions(merge: true));
       } catch (_) {}
@@ -546,7 +505,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
     if (Firebase.apps.isNotEmpty && FirebaseAuth.instance.currentUser != null) {
       try {
-        await FirebaseFirestore.instance.collection('users').doc(uid).set({
+        await (await _getUserDocRef(uid)).set({
           'paymentCards': updated.map((e) => e.toMap()).toList(),
         }, SetOptions(merge: true));
       } catch (_) {}
@@ -580,7 +539,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
     if (Firebase.apps.isNotEmpty && FirebaseAuth.instance.currentUser != null) {
       try {
-        await FirebaseFirestore.instance.collection('users').doc(uid).set({
+        await (await _getUserDocRef(uid)).set({
           'notificationPreferences': preferences.toMap(),
         }, SetOptions(merge: true));
       } catch (_) {}
@@ -612,7 +571,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
     if (Firebase.apps.isNotEmpty && FirebaseAuth.instance.currentUser != null) {
       try {
-        await FirebaseFirestore.instance.collection('users').doc(uid).set({
+        await (await _getUserDocRef(uid)).set({
           'securityPreferences': preferences.toMap(),
         }, SetOptions(merge: true));
       } catch (_) {}

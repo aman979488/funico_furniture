@@ -1,4 +1,4 @@
-package com.funica.funica
+package com.atech.fi
 
 import io.flutter.embedding.android.FlutterActivity
 
