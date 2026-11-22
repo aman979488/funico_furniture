@@ -41,7 +41,8 @@ class _SplashScreenState extends State<SplashScreen> {
       body: SizedBox.expand(
         child: Column(
           children: [
-            const Spacer(flex: 5),
+            const Spacer(flex: 9),
+            const SizedBox(height: 24),
             const AppBrandLogo(
               size: 88,
               showText: true,
@@ -57,7 +58,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 letterSpacing: 0.3,
               ),
             ),
-            const Spacer(flex: 4),
+            const Spacer(flex: 5),
             const SizedBox(
               width: 32,
               height: 32,

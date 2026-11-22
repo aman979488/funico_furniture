@@ -1,5 +1,5 @@
 class AppStrings {
-  static const appName = 'Funica';
+  static const appName = 'Future Interior';
   static const welcomeTo = 'Welcome to 👋';
   static const welcomeSubtitle =
       'Discover high-quality products, just for you.';
@@ -9,7 +9,7 @@ class AppStrings {
   static const onboardingTitle2 =
       'Your satisfaction is our number one priority';
   static const onboardingTitle3 =
-      "Let's fulfill your house needs with Funica right now!";
+      "Let's fulfill your house needs with Future Interior right now!";
 
   static const next = 'Next';
   static const letsYouIn = "Let's you in";

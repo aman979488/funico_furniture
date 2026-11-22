@@ -12,6 +12,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_assets.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/services/pin_session.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/models/product.dart';
 import '../../../shared/widgets/product_card.dart';
@@ -46,6 +47,43 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       case 'profile':
         context.push(AppRoutes.profile);
         break;
+    }
+  }
+
+  Future<void> _confirmLogout() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to log out?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Yes, Logout'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    try {
+      if (Firebase.apps.isNotEmpty) await FirebaseAuth.instance.signOut();
+      PinSession.lock();
+      if (mounted) context.go(AppRoutes.letsYouIn);
+    } on FirebaseAuthException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            error.message ?? 'Could not log out. Please try again.',
+          ),
+        ),
+      );
     }
   }
 
@@ -139,6 +177,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         onSpecialOffersTap: () => context.push(AppRoutes.specialOffers),
         onCategoriesTap: () =>
             context.push(AppRoutes.categoryProducts, extra: 'All'),
+        onLogoutTap: _confirmLogout,
       ),
       body: SafeArea(
         child: Center(
@@ -186,58 +225,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           },
                         ),
                       ),
-                    ),
-
-                    // Special Offers Header
-                    SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(22, 20, 22, 0),
-                      sliver: SliverToBoxAdapter(
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                'Special Offers',
-                                style: Theme.of(context).textTheme.titleLarge
-                                    ?.copyWith(fontWeight: FontWeight.w700),
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: () =>
-                                  context.push(AppRoutes.specialOffers),
-                              style: TextButton.styleFrom(
-                                padding: EdgeInsets.zero,
-                                minimumSize: Size.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    'See All',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium
-                                        ?.copyWith(
-                                          color: AppColors.textSecondary,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  const Icon(
-                                    Icons.chevron_right_rounded,
-                                    size: 18,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SliverPadding(
-                      padding: EdgeInsets.fromLTRB(22, 10, 22, 0),
-                      sliver: SliverToBoxAdapter(child: _FeaturedBanner()),
                     ),
                     SliverPadding(
                       padding: const EdgeInsets.fromLTRB(22, 24, 22, 12),
@@ -729,12 +716,167 @@ class _HeroDesignBanner extends StatefulWidget {
 
 class _HeroDesignBannerState extends State<_HeroDesignBanner> {
   final _pageController = PageController();
+  late final Timer _slideTimer;
   int _currentPage = 0;
+  bool _isAutoSliding = false;
+
+  static const _slidesCount = 4;
+
+  @override
+  void initState() {
+    super.initState();
+    _slideTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+      if (!mounted || !_pageController.hasClients) return;
+      _slideToNextPage();
+    });
+  }
+
+  Future<void> _slideToNextPage() async {
+    if (_isAutoSliding || !mounted || !_pageController.hasClients) return;
+
+    _isAutoSliding = true;
+    try {
+      final currentPage = _pageController.page?.round() ?? _currentPage;
+      final nextPage = (currentPage + 1) % _slidesCount;
+      if (!mounted || !_pageController.hasClients) return;
+      await _pageController.animateToPage(
+        nextPage,
+        duration: const Duration(milliseconds: 380),
+        curve: Curves.easeInOut,
+      );
+    } catch (_) {
+      // Ignore animation cancellation on user swipe
+    } finally {
+      if (mounted) {
+        _isAutoSliding = false;
+      }
+    }
+  }
 
   @override
   void dispose() {
+    _slideTimer.cancel();
     _pageController.dispose();
     super.dispose();
+  }
+
+  Widget _buildHeroSlide({
+    required BuildContext context,
+    required String title,
+    required String subtitle,
+    required String buttonText,
+    required String imagePath,
+    required VoidCallback onTap,
+    String? fallbackImagePath,
+  }) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: Material(
+        color: const Color(0xFFF7F2EC),
+        child: InkWell(
+          onTap: onTap,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Image.asset(
+                imagePath,
+                fit: BoxFit.cover,
+                alignment: Alignment.centerRight,
+                errorBuilder: (_, _, _) => fallbackImagePath != null
+                    ? Image.asset(
+                        fallbackImagePath,
+                        fit: BoxFit.cover,
+                        alignment: Alignment.centerRight,
+                      )
+                    : const SizedBox.shrink(),
+              ),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    stops: const [0.0, 0.48, 0.74, 1.0],
+                    colors: [
+                      const Color(0xFFF7F2EB).withValues(alpha: 0.98),
+                      const Color(0xFFF7F2EB).withValues(alpha: 0.88),
+                      const Color(0xFFF7F2EB).withValues(alpha: 0.30),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(22, 16, 16, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      title,
+                      style: GoogleFonts.playfairDisplay(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF2B1E17),
+                        height: 1.15,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      subtitle,
+                      style: GoogleFonts.urbanist(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF6E6862),
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                    const SizedBox(height: 13),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8.5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(
+                              alpha: 0.26,
+                            ),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            buttonText,
+                            style: GoogleFonts.urbanist(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const SizedBox(width: 5),
+                          const Icon(
+                            Icons.arrow_forward_rounded,
+                            size: 15,
+                            color: Colors.white,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -747,196 +889,49 @@ class _HeroDesignBannerState extends State<_HeroDesignBanner> {
             controller: _pageController,
             onPageChanged: (idx) => setState(() => _currentPage = idx),
             children: [
-              // Slide 1: Exact Design Your Dream Space banner matching the reference photo
-              ClipRRect(
-                borderRadius: BorderRadius.circular(24),
-                child: Material(
-                  color: const Color(0xFFF7F2EC),
-                  child: InkWell(
-                    onTap: () =>
-                        context.push(AppRoutes.categoryProducts, extra: 'All'),
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        // Clean HD living room background
-                        Image.asset(
-                          AppAssets.heroDreamSpaceCleanHd,
-                          fit: BoxFit.cover,
-                          alignment: Alignment.centerRight,
-                          errorBuilder: (_, _, _) => Image.asset(
-                            AppAssets.neutralSofaRoom,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                        // Crisp vector typography and pill button on the left
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(22, 16, 16, 16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                'Design Your\nDream Space',
-                                style: GoogleFonts.playfairDisplay(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF2B1E17),
-                                  height: 1.15,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                'Modern | Functional | Timeless',
-                                style: GoogleFonts.urbanist(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF6E6862),
-                                  letterSpacing: 0.2,
-                                ),
-                              ),
-                              const SizedBox(height: 13),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 8.5,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary,
-                                  borderRadius: BorderRadius.circular(24),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppColors.primary.withValues(
-                                        alpha: 0.26,
-                                      ),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 3),
-                                    ),
-                                  ],
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      'Explore Designs',
-                                      style: GoogleFonts.urbanist(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 5),
-                                    const Icon(
-                                      Icons.arrow_forward_rounded,
-                                      size: 15,
-                                      color: Colors.white,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+              // Slide 1: Design Your Dream Space
+              _buildHeroSlide(
+                context: context,
+                title: 'Design Your\nDream Space',
+                subtitle: 'Modern | Functional | Timeless',
+                buttonText: 'Explore Designs',
+                imagePath: AppAssets.heroDreamSpaceCleanHd,
+                fallbackImagePath: AppAssets.neutralSofaRoom,
+                onTap: () =>
+                    context.push(AppRoutes.categoryProducts, extra: 'All'),
               ),
-              // Slide 2: Minimalist Living Inspiration
-              ClipRRect(
-                borderRadius: BorderRadius.circular(24),
-                child: Material(
-                  color: const Color(0xFFF7F2EC),
-                  child: InkWell(
-                    onTap: () =>
-                        context.push(AppRoutes.categoryProducts, extra: 'Sofa'),
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        Image.asset(
-                          AppAssets.neutralSofaRoom,
-                          fit: BoxFit.cover,
-                          alignment: Alignment.centerRight,
-                        ),
-                        DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.centerLeft,
-                              end: Alignment.centerRight,
-                              stops: const [0.0, 0.48, 0.72, 1.0],
-                              colors: [
-                                const Color(0xFFF7F2EB).withValues(alpha: 0.98),
-                                const Color(0xFFF7F2EB).withValues(alpha: 0.90),
-                                const Color(0xFFF7F2EB).withValues(alpha: 0.35),
-                                Colors.transparent,
-                              ],
-                            ),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 16,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                'Elevate Your\nLiving Room',
-                                style: GoogleFonts.playfairDisplay(
-                                  fontSize: 23,
-                                  fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF281E17),
-                                  height: 1.15,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                'Crafted for comfort & elegance',
-                                style: GoogleFonts.urbanist(
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF6E6862),
-                                  letterSpacing: 0.2,
-                                ),
-                              ),
-                              const SizedBox(height: 14),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 8.5,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary,
-                                  borderRadius: BorderRadius.circular(24),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      'Shop Sofas',
-                                      style: GoogleFonts.urbanist(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 5),
-                                    const Icon(
-                                      Icons.arrow_forward_rounded,
-                                      size: 15,
-                                      color: Colors.white,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+              // Slide 2: Living Room / Sofas
+              _buildHeroSlide(
+                context: context,
+                title: 'Elevate Your\nLiving Room',
+                subtitle: 'Crafted for comfort & elegance',
+                buttonText: 'Shop Sofas',
+                imagePath: AppAssets.neutralSofaRoom,
+                fallbackImagePath: AppAssets.livingRoomImage,
+                onTap: () =>
+                    context.push(AppRoutes.categoryProducts, extra: 'Sofa'),
+              ),
+              // Slide 3: Bedroom Collection
+              _buildHeroSlide(
+                context: context,
+                title: 'Tranquil & Cozy\nBedrooms',
+                subtitle: 'Serene sanctuaries for restful sleep',
+                buttonText: 'Explore Beds',
+                imagePath: AppAssets.bedroomImage,
+                fallbackImagePath: AppAssets.neutralSofaRoom,
+                onTap: () =>
+                    context.push(AppRoutes.categoryProducts, extra: 'Bed'),
+              ),
+              // Slide 4: Dining & Gathering
+              _buildHeroSlide(
+                context: context,
+                title: 'Contemporary\nDining Spaces',
+                subtitle: 'Gather in style with curated sets',
+                buttonText: 'View Dining',
+                imagePath: AppAssets.diningCollectionImage,
+                fallbackImagePath: AppAssets.table,
+                onTap: () =>
+                    context.push(AppRoutes.categoryProducts, extra: 'Table'),
               ),
             ],
           ),
@@ -945,7 +940,7 @@ class _HeroDesignBannerState extends State<_HeroDesignBanner> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(
-            3,
+            _slidesCount,
             (index) => AnimatedContainer(
               duration: const Duration(milliseconds: 220),
               width: index == _currentPage ? 22 : 6,
@@ -1362,6 +1357,7 @@ class _HomeDrawer extends StatelessWidget {
     required this.onCartTap,
     required this.onSpecialOffersTap,
     required this.onCategoriesTap,
+    required this.onLogoutTap,
   });
 
   final String userName;
@@ -1374,131 +1370,576 @@ class _HomeDrawer extends StatelessWidget {
   final VoidCallback onCartTap;
   final VoidCallback onSpecialOffersTap;
   final VoidCallback onCategoriesTap;
+  final VoidCallback onLogoutTap;
+
+  Widget _buildAvatar(BuildContext context) {
+    ImageProvider? imageProvider;
+    if (userPhoto != null && userPhoto!.isNotEmpty) {
+      if (!kIsWeb && File(userPhoto!).existsSync()) {
+        imageProvider = FileImage(File(userPhoto!));
+      } else if (userPhoto!.startsWith('http://') ||
+          userPhoto!.startsWith('https://')) {
+        imageProvider = NetworkImage(userPhoto!);
+      }
+    }
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          width: 62,
+          height: 62,
+          decoration: const BoxDecoration(
+            color: Color(0xFFE5E7EB),
+            shape: BoxShape.circle,
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: imageProvider != null
+              ? Image(
+                  image: imageProvider,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => const Icon(
+                    Icons.person_rounded,
+                    size: 38,
+                    color: Color(0xFF9CA3AF),
+                  ),
+                )
+              : const Icon(
+                  Icons.person_rounded,
+                  size: 38,
+                  color: Color(0xFF9CA3AF),
+                ),
+        ),
+        Positioned(
+          right: -2,
+          bottom: -2,
+          child: GestureDetector(
+            onTap: () {
+              Navigator.pop(context);
+              onProfileTap();
+            },
+            child: Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE86F2D),
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.12),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.edit_rounded,
+                size: 13,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showAboutUs(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 44,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              const SizedBox(height: 20),
+              const _HouseBrandLogo(size: 48),
+              const SizedBox(height: 12),
+              Text(
+                'Future Interior',
+                style: GoogleFonts.urbanist(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Crafting timeless elegance & personalized spaces for modern living.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.urbanist(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(sheetContext);
+                  context.push(AppRoutes.privacyPolicy);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size.fromHeight(48),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: const Text('Privacy & Terms'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showThemeSelector(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 44,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                'Select Theme',
+                style: GoogleFonts.urbanist(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              ListTile(
+                leading: const Icon(Icons.light_mode_rounded, color: Color(0xFFD97706)),
+                title: Text('Light (Active)', style: GoogleFonts.urbanist(fontWeight: FontWeight.w600)),
+                trailing: const Icon(Icons.check_circle_rounded, color: AppColors.primary),
+                onTap: () => Navigator.pop(sheetContext),
+              ),
+              ListTile(
+                leading: const Icon(Icons.dark_mode_rounded, color: Color(0xFF6366F1)),
+                title: Text('Dark (Coming Soon)', style: GoogleFonts.urbanist(fontWeight: FontWeight.w600)),
+                onTap: () => Navigator.pop(sheetContext),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showAppointments(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 44,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              const SizedBox(height: 18),
+              Container(
+                width: 56,
+                height: 56,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF5E8FF),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.calendar_month_outlined,
+                  size: 30,
+                  color: Color(0xFF9333EA),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                'Interior Consultations',
+                style: GoogleFonts.urbanist(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Schedule a personalized session with our expert interior architects to design your dream space.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.urbanist(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(sheetContext);
+                  context.push(AppRoutes.estimator);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size.fromHeight(48),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: const Text('Book Consultation via Estimator'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final displayName = userName.isNotEmpty ? userName : 'Abhijeet Patil';
+    final displayEmail = (userEmail != null && userEmail!.isNotEmpty)
+        ? userEmail!
+        : 'abhijeetpatil@gmail.com';
+
     return Drawer(
-      backgroundColor: AppColors.background,
+      width: math.min(MediaQuery.sizeOf(context).width * 0.84, 390),
+      backgroundColor: const Color(0xFFF7F8FA),
+      elevation: 0,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.horizontal(right: Radius.circular(24)),
+      ),
       child: SafeArea(
         child: Column(
           children: [
-            // Header
-            Container(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
-              decoration: const BoxDecoration(
-                border: Border(bottom: BorderSide(color: AppColors.border)),
-              ),
+            // Top App Bar
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               child: Row(
                 children: [
-                  _ProfileAvatar(
-                    photoUrl: userPhoto,
-                    onTap: () {
-                      Navigator.pop(context);
-                      onProfileTap();
-                    },
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          userName.isEmpty ? 'Funica User' : userName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.urbanist(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        if (userEmail != null && userEmail!.isNotEmpty) ...[
-                          const SizedBox(height: 2),
-                          Text(
-                            userEmail!,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.urbanist(
-                              fontSize: 12.5,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ],
+                  IconButton(
+                    icon: const Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      size: 20,
+                      color: AppColors.textPrimary,
                     ),
+                    onPressed: () => Navigator.pop(context),
+                    tooltip: 'Back',
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        'Account & Settings',
+                        style: GoogleFonts.urbanist(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.close_rounded,
+                      size: 24,
+                      color: AppColors.textPrimary,
+                    ),
+                    onPressed: () => Navigator.pop(context),
+                    tooltip: 'Close',
                   ),
                 ],
               ),
             ),
 
-            // Navigation items
+            // Content
             Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                children: [
-                  _DrawerItem(
-                    icon: Icons.home_rounded,
-                    title: 'Home',
-                    onTap: () => Navigator.pop(context),
-                  ),
-                  _DrawerItem(
-                    icon: Icons.grid_view_rounded,
-                    title: 'All Categories',
-                    onTap: () {
-                      Navigator.pop(context);
-                      onCategoriesTap();
-                    },
-                  ),
-                  _DrawerItem(
-                    icon: Icons.local_offer_outlined,
-                    title: 'Special Offers',
-                    onTap: () {
-                      Navigator.pop(context);
-                      onSpecialOffersTap();
-                    },
-                  ),
-                  _DrawerItem(
-                    icon: Icons.favorite_border_rounded,
-                    title: 'My Wishlist',
-                    onTap: () {
-                      Navigator.pop(context);
-                      onWishlistTap();
-                    },
-                  ),
-                  _DrawerItem(
-                    icon: Icons.shopping_bag_outlined,
-                    title: 'My Cart',
-                    onTap: () {
-                      Navigator.pop(context);
-                      onCartTap();
-                    },
-                  ),
-                  _DrawerItem(
-                    icon: Icons.receipt_long_outlined,
-                    title: 'My Orders',
-                    onTap: () {
-                      Navigator.pop(context);
-                      onOrdersTap();
-                    },
-                  ),
-                  const Divider(color: AppColors.border, height: 24),
-                  _DrawerItem(
-                    icon: Icons.help_outline_rounded,
-                    title: 'Help Center',
-                    onTap: () {
-                      Navigator.pop(context);
-                      onHelpTap();
-                    },
-                  ),
-                  _DrawerItem(
-                    icon: Icons.person_outline_rounded,
-                    title: 'Profile Settings',
-                    onTap: () {
-                      Navigator.pop(context);
-                      onProfileTap();
-                    },
-                  ),
-                ],
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Profile Card
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.03),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          _buildAvatar(context),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        displayName,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: GoogleFonts.urbanist(
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.w800,
+                                          color: AppColors.textPrimary,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 7,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFFEF3DE),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        'Gold',
+                                        style: GoogleFonts.urbanist(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                          color: const Color(0xFFD4973B),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  displayEmail,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.urbanist(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: const Color(0xFF8C8F99),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Future Interior Member',
+                                  style: GoogleFonts.urbanist(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFFE86F2D),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // ACCOUNT Section
+                    const _SectionHeader(title: 'ACCOUNT'),
+                    _GroupedCard(
+                      children: [
+                        _SettingsTile(
+                          icon: Icons.person_outline_rounded,
+                          iconColor: const Color(0xFFE86F2D),
+                          iconBg: const Color(0xFFFFF2E8),
+                          title: 'Manage Profile',
+                          onTap: () {
+                            Navigator.pop(context);
+                            onProfileTap();
+                          },
+                        ),
+                        const _SettingsDivider(),
+                        _SettingsTile(
+                          icon: Icons.notifications_none_rounded,
+                          iconColor: const Color(0xFF10B981),
+                          iconBg: const Color(0xFFE8F8F0),
+                          title: 'Notifications',
+                          onTap: () {
+                            Navigator.pop(context);
+                            context.push(AppRoutes.notificationSettings);
+                          },
+                        ),
+                        const _SettingsDivider(),
+                        _SettingsTile(
+                          icon: Icons.language_rounded,
+                          iconColor: const Color(0xFF6366F1),
+                          iconBg: const Color(0xFFEEF0FE),
+                          title: 'Language',
+                          trailingText: 'English',
+                          onTap: () {
+                            Navigator.pop(context);
+                            context.push(AppRoutes.language);
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+
+                    // PREFERENCES Section
+                    const _SectionHeader(title: 'PREFERENCES'),
+                    _GroupedCard(
+                      children: [
+                        _SettingsTile(
+                          icon: Icons.article_outlined,
+                          iconColor: const Color(0xFF0D9488),
+                          iconBg: const Color(0xFFE3F7F6),
+                          title: 'About Us',
+                          onTap: () {
+                            Navigator.pop(context);
+                            _showAboutUs(context);
+                          },
+                        ),
+                        const _SettingsDivider(),
+                        _SettingsTile(
+                          icon: Icons.contrast_rounded,
+                          iconColor: const Color(0xFFD97706),
+                          iconBg: const Color(0xFFFEF7E6),
+                          title: 'Theme',
+                          trailingText: 'Light',
+                          onTap: () => _showThemeSelector(context),
+                        ),
+                        const _SettingsDivider(),
+                        _SettingsTile(
+                          icon: Icons.calendar_month_outlined,
+                          iconColor: const Color(0xFF9333EA),
+                          iconBg: const Color(0xFFF5E8FF),
+                          title: 'Appointments',
+                          onTap: () {
+                            Navigator.pop(context);
+                            _showAppointments(context);
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+
+                    // SUPPORT Section
+                    const _SectionHeader(title: 'SUPPORT'),
+                    _GroupedCard(
+                      children: [
+                        _SettingsTile(
+                          icon: Icons.help_outline_rounded,
+                          iconColor: const Color(0xFF0284C7),
+                          iconBg: const Color(0xFFE0F2FE),
+                          title: 'Help Center',
+                          onTap: () {
+                            Navigator.pop(context);
+                            onHelpTap();
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 22),
+
+                    // Logout Button
+                    Material(
+                      color: const Color(0xFFFFF1F1),
+                      borderRadius: BorderRadius.circular(16),
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.pop(context);
+                          onLogoutTap();
+                        },
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          height: 52,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: const Color(0xFFFFD4D4),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.logout_rounded,
+                                color: Color(0xFFE53935),
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Log Out',
+                                style: GoogleFonts.urbanist(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFFE53935),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // App Version Text
+                    Center(
+                      child: Text(
+                        'Future Interior v2.4.1 (iOS)',
+                        style: GoogleFonts.urbanist(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF9CA3AF),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -1508,75 +1949,140 @@ class _HomeDrawer extends StatelessWidget {
   }
 }
 
-class _DrawerItem extends StatelessWidget {
-  const _DrawerItem({
-    required this.icon,
-    required this.title,
-    required this.onTap,
-  });
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.title});
 
-  final IconData icon;
   final String title;
-  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(icon, color: AppColors.textPrimary, size: 22),
-      title: Text(
+    return Padding(
+      padding: const EdgeInsets.only(left: 6, bottom: 8),
+      child: Text(
         title,
         style: GoogleFonts.urbanist(
-          fontSize: 15,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textPrimary,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.8,
+          color: const Color(0xFF9CA3AF),
         ),
       ),
-      onTap: onTap,
-      dense: true,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20),
     );
   }
 }
 
-class _ProfileAvatar extends StatelessWidget {
-  const _ProfileAvatar({required this.photoUrl, this.onTap});
+class _GroupedCard extends StatelessWidget {
+  const _GroupedCard({required this.children});
 
-  final String? photoUrl;
-  final VoidCallback? onTap;
+  final List<Widget> children;
 
   @override
   Widget build(BuildContext context) {
-    ImageProvider? imageProvider;
-    if (photoUrl != null && photoUrl!.isNotEmpty) {
-      if (!kIsWeb && File(photoUrl!).existsSync()) {
-        imageProvider = FileImage(File(photoUrl!));
-      } else if (photoUrl!.startsWith('http://') ||
-          photoUrl!.startsWith('https://')) {
-        imageProvider = NetworkImage(photoUrl!);
-      }
-    }
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: children,
+      ),
+    );
+  }
+}
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 58,
-        height: 58,
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
-          shape: BoxShape.circle,
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: imageProvider != null
-            ? Image(
-                image: imageProvider,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => const Icon(
-                  Icons.person_rounded,
-                  size: 34,
-                  color: Colors.white70,
+class _SettingsDivider extends StatelessWidget {
+  const _SettingsDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Divider(
+      height: 1,
+      thickness: 1,
+      color: Color(0xFFF4F5F7),
+      indent: 62,
+      endIndent: 14,
+    );
+  }
+}
+
+class _SettingsTile extends StatelessWidget {
+  const _SettingsTile({
+    required this.icon,
+    required this.iconColor,
+    required this.iconBg,
+    required this.title,
+    required this.onTap,
+    this.trailingText,
+  });
+
+  final IconData icon;
+  final Color iconColor;
+  final Color iconBg;
+  final String title;
+  final VoidCallback onTap;
+  final String? trailingText;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: iconBg,
+                  borderRadius: BorderRadius.circular(10),
                 ),
-              )
-            : const Icon(Icons.person_rounded, size: 34, color: Colors.white70),
+                child: Icon(
+                  icon,
+                  size: 20,
+                  color: iconColor,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  title,
+                  style: GoogleFonts.urbanist(
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF23262F),
+                  ),
+                ),
+              ),
+              if (trailingText != null) ...[
+                Text(
+                  trailingText!,
+                  style: GoogleFonts.urbanist(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w500,
+                    color: const Color(0xFF9CA3AF),
+                  ),
+                ),
+                const SizedBox(width: 4),
+              ],
+              const Icon(
+                Icons.chevron_right_rounded,
+                size: 22,
+                color: Color(0xFFC4C4C4),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
