@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/constants/firestore_collections.dart';
+import '../../../shared/enums/user_role.dart';
 import '../../../shared/models/address.dart';
 import '../../../shared/models/payment_card.dart';
 import '../../../shared/models/user.dart';
@@ -169,9 +170,9 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
   Future<DocumentReference<Map<String, dynamic>>> _getUserDocRef(String uid) async {
     final collections = [
-      FirestoreCollections.customers,
-      FirestoreCollections.vendors,
       FirestoreCollections.staff,
+      FirestoreCollections.vendors,
+      FirestoreCollections.customers,
     ];
     for (final col in collections) {
       final docRef = FirebaseFirestore.instance.collection(col).doc(uid);
@@ -190,17 +191,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
     final uid = _currentUid;
     final prefs = await SharedPreferences.getInstance();
 
-    // 1. Try local cache first for quick initial load
-    UserProfile? localProfile;
-    final cachedStr = prefs.getString('$_profilePrefix$uid');
-    if (cachedStr != null && cachedStr.isNotEmpty) {
-      try {
-        final decoded = jsonDecode(cachedStr) as Map<String, dynamic>;
-        localProfile = UserProfile.fromMap(decoded, uid: uid);
-      } catch (_) {}
-    }
-
-    // 2. Fetch from Firestore if available
+    // 1. Fetch from Firestore if available
     if (Firebase.apps.isNotEmpty && FirebaseAuth.instance.currentUser != null) {
       try {
         final authUser = FirebaseAuth.instance.currentUser!;
@@ -230,7 +221,14 @@ class ProfileRepositoryImpl implements ProfileRepository {
       } catch (_) {}
     }
 
-    if (localProfile != null) return localProfile;
+    // 2. Try local cache
+    final cachedStr = prefs.getString('$_profilePrefix$uid');
+    if (cachedStr != null && cachedStr.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(cachedStr) as Map<String, dynamic>;
+        return UserProfile.fromMap(decoded, uid: uid);
+      } catch (_) {}
+    }
 
     return UserProfile(
       uid: uid,
@@ -244,10 +242,8 @@ class ProfileRepositoryImpl implements ProfileRepository {
     final uid = profile.uid.isNotEmpty ? profile.uid : _currentUid;
     final prefs = await SharedPreferences.getInstance();
 
-    // Cache locally
     await prefs.setString('$_profilePrefix$uid', jsonEncode(profile.toMap()));
 
-    // Update Firebase Auth & Firestore
     if (Firebase.apps.isNotEmpty && FirebaseAuth.instance.currentUser != null) {
       final authUser = FirebaseAuth.instance.currentUser!;
       try {
@@ -261,7 +257,10 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
       try {
         final docRef = await _getUserDocRef(uid);
-        await docRef.set(profile.toMap()..['updatedAt'] = FieldValue.serverTimestamp(), SetOptions(merge: true));
+        await docRef.set(
+          profile.toMap()..['updatedAt'] = FieldValue.serverTimestamp(),
+          SetOptions(merge: true),
+        );
       } catch (_) {}
     }
   }
@@ -271,8 +270,8 @@ class ProfileRepositoryImpl implements ProfileRepository {
   Future<List<Address>> fetchAddresses() async {
     final uid = _currentUid;
     final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString('$_addressPrefix$uid');
 
+    final raw = prefs.getString('$_addressPrefix$uid');
     if (raw != null && raw.isNotEmpty) {
       try {
         final list = jsonDecode(raw) as List;
@@ -283,7 +282,6 @@ class ProfileRepositoryImpl implements ProfileRepository {
       } catch (_) {}
     }
 
-    // 2. Fetch from Firestore if available
     if (Firebase.apps.isNotEmpty && FirebaseAuth.instance.currentUser != null) {
       try {
         final docRef = await _getUserDocRef(uid);
@@ -319,7 +317,6 @@ class ProfileRepositoryImpl implements ProfileRepository {
       updated = [...addresses, address];
     }
 
-    // If new or updated address is default, reset others
     if (address.isDefault) {
       updated = updated
           .map((a) => a.copyWith(isDefault: a.id == address.id))
@@ -334,7 +331,8 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
     if (Firebase.apps.isNotEmpty && FirebaseAuth.instance.currentUser != null) {
       try {
-        await (await _getUserDocRef(uid)).set({
+        final docRef = await _getUserDocRef(uid);
+        await docRef.set({
           'addresses': updated.map((e) => e.toMap()).toList(),
         }, SetOptions(merge: true));
       } catch (_) {}
@@ -347,7 +345,6 @@ class ProfileRepositoryImpl implements ProfileRepository {
     final addresses = await fetchAddresses();
     final updated = addresses.where((a) => a.id != addressId).toList();
 
-    // If we removed the default address and there are still addresses left, make the first one default
     if (updated.isNotEmpty && !updated.any((a) => a.isDefault)) {
       updated[0] = updated[0].copyWith(isDefault: true);
     }
@@ -360,7 +357,8 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
     if (Firebase.apps.isNotEmpty && FirebaseAuth.instance.currentUser != null) {
       try {
-        await (await _getUserDocRef(uid)).set({
+        final docRef = await _getUserDocRef(uid);
+        await docRef.set({
           'addresses': updated.map((e) => e.toMap()).toList(),
         }, SetOptions(merge: true));
       } catch (_) {}
@@ -383,7 +381,8 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
     if (Firebase.apps.isNotEmpty && FirebaseAuth.instance.currentUser != null) {
       try {
-        await (await _getUserDocRef(uid)).set({
+        final docRef = await _getUserDocRef(uid);
+        await docRef.set({
           'addresses': updated.map((e) => e.toMap()).toList(),
         }, SetOptions(merge: true));
       } catch (_) {}
@@ -395,8 +394,8 @@ class ProfileRepositoryImpl implements ProfileRepository {
   Future<List<PaymentCard>> fetchPaymentCards() async {
     final uid = _currentUid;
     final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString('$_cardsPrefix$uid');
 
+    final raw = prefs.getString('$_cardsPrefix$uid');
     if (raw != null && raw.isNotEmpty) {
       try {
         final list = jsonDecode(raw) as List;
@@ -407,7 +406,6 @@ class ProfileRepositoryImpl implements ProfileRepository {
       } catch (_) {}
     }
 
-    // 2. Fetch from Firestore if available
     if (Firebase.apps.isNotEmpty && FirebaseAuth.instance.currentUser != null) {
       try {
         final docRef = await _getUserDocRef(uid);
@@ -457,7 +455,8 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
     if (Firebase.apps.isNotEmpty && FirebaseAuth.instance.currentUser != null) {
       try {
-        await (await _getUserDocRef(uid)).set({
+        final docRef = await _getUserDocRef(uid);
+        await docRef.set({
           'paymentCards': updated.map((e) => e.toMap()).toList(),
         }, SetOptions(merge: true));
       } catch (_) {}
@@ -482,7 +481,8 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
     if (Firebase.apps.isNotEmpty && FirebaseAuth.instance.currentUser != null) {
       try {
-        await (await _getUserDocRef(uid)).set({
+        final docRef = await _getUserDocRef(uid);
+        await docRef.set({
           'paymentCards': updated.map((e) => e.toMap()).toList(),
         }, SetOptions(merge: true));
       } catch (_) {}
@@ -505,7 +505,8 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
     if (Firebase.apps.isNotEmpty && FirebaseAuth.instance.currentUser != null) {
       try {
-        await (await _getUserDocRef(uid)).set({
+        final docRef = await _getUserDocRef(uid);
+        await docRef.set({
           'paymentCards': updated.map((e) => e.toMap()).toList(),
         }, SetOptions(merge: true));
       } catch (_) {}
@@ -539,7 +540,8 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
     if (Firebase.apps.isNotEmpty && FirebaseAuth.instance.currentUser != null) {
       try {
-        await (await _getUserDocRef(uid)).set({
+        final docRef = await _getUserDocRef(uid);
+        await docRef.set({
           'notificationPreferences': preferences.toMap(),
         }, SetOptions(merge: true));
       } catch (_) {}
@@ -571,7 +573,8 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
     if (Firebase.apps.isNotEmpty && FirebaseAuth.instance.currentUser != null) {
       try {
-        await (await _getUserDocRef(uid)).set({
+        final docRef = await _getUserDocRef(uid);
+        await docRef.set({
           'securityPreferences': preferences.toMap(),
         }, SetOptions(merge: true));
       } catch (_) {}
