@@ -42,10 +42,8 @@ class _EnterPinScreenState extends ConsumerState<EnterPinScreen> {
       final pin = await ref.read(pinStorageProvider).readPin(userId);
       if (!mounted) return;
       if (pin == null) {
-        setState(() {
-          _isLoading = false;
-          _error = 'No saved PIN was found. Sign out and try again.';
-        });
+        // User has not created a PIN yet -> direct them to Create PIN
+        context.go(AppRoutes.createPin, extra: true);
         return;
       }
       setState(() {
@@ -56,7 +54,7 @@ class _EnterPinScreenState extends ConsumerState<EnterPinScreen> {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _error = 'Could not access your saved PIN. Please retry.';
+        _error = 'Could not access your saved PIN. Please retry or create a new PIN.';
       });
     }
   }
@@ -232,39 +230,73 @@ class _EnterPinScreenState extends ConsumerState<EnterPinScreen> {
                     ),
                   ),
                   if (_error != null && _savedPin == null)
-                    TextButton(
-                      onPressed: () {
-                        setState(() {
-                          _error = null;
-                          _isLoading = true;
-                        });
-                        _loadPin();
-                      },
-                      style: TextButton.styleFrom(
-                        foregroundColor: AppColors.primary,
-                      ),
-                      child: Text(
-                        'Retry',
-                        style: GoogleFonts.urbanist(
-                          fontWeight: FontWeight.w700,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            setState(() {
+                              _error = null;
+                              _isLoading = true;
+                            });
+                            _loadPin();
+                          },
+                          child: Text(
+                            'Retry',
+                            style: GoogleFonts.urbanist(
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primary,
+                            ),
+                          ),
                         ),
-                      ),
+                        const SizedBox(width: 12),
+                        ElevatedButton(
+                          onPressed: () => context.go(AppRoutes.createPin, extra: true),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: Text(
+                            'Create PIN',
+                            style: GoogleFonts.urbanist(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
                     )
                   else ...[
                     _buildKeypad(),
                     const SizedBox(height: 20),
                   ],
                   TextButton(
-                    onPressed: _onLogoutAndReset,
+                    onPressed: () => context.go(AppRoutes.createPin, extra: true),
                     style: TextButton.styleFrom(
                       foregroundColor: AppColors.primary,
                     ),
                     child: Text(
-                      'Forgot PIN? Sign out & log in again',
+                      'Forgot PIN? Reset PIN',
                       style: GoogleFonts.urbanist(
                         color: AppColors.primary,
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: _onLogoutAndReset,
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.textSecondary,
+                    ),
+                    child: Text(
+                      'Sign out',
+                      style: GoogleFonts.urbanist(
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),

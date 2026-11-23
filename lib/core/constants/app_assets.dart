@@ -66,6 +66,15 @@ class AppAssets {
   static const google = '$_icons/google.png';
   static const apple = '$_icons/apple.png';
 
+  // Estimator
+  static const floorplan1Bhk = '$_images/floorplan_1bhk_hd.png';
+  static const floorplanSample = '$_images/floorplan_sample.png';
+  static const pkgBasic = '$_images/pkg_basic.png';
+  static const pkgModern = '$_images/pkg_modern.png';
+  static const pkgDeluxe = '$_images/pkg_deluxe.png';
+  static const pkgPremium = '$_images/pkg_premium.png';
+  static const pkgLuxury = '$_images/pkg_luxury.png';
+
   // Illustrations
   static const emptyOrders = '$_illustrations/empty_orders.png';
   static const noResults = '$_illustrations/no_results.png';

@@ -841,9 +841,7 @@ class _HeroDesignBannerState extends State<_HeroDesignBanner> {
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.primary.withValues(
-                              alpha: 0.26,
-                            ),
+                            color: AppColors.primary.withValues(alpha: 0.26),
                             blurRadius: 8,
                             offset: const Offset(0, 3),
                           ),
@@ -1545,14 +1543,29 @@ class _HomeDrawer extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               ListTile(
-                leading: const Icon(Icons.light_mode_rounded, color: Color(0xFFD97706)),
-                title: Text('Light (Active)', style: GoogleFonts.urbanist(fontWeight: FontWeight.w600)),
-                trailing: const Icon(Icons.check_circle_rounded, color: AppColors.primary),
+                leading: const Icon(
+                  Icons.light_mode_rounded,
+                  color: Color(0xFFD97706),
+                ),
+                title: Text(
+                  'Light (Active)',
+                  style: GoogleFonts.urbanist(fontWeight: FontWeight.w600),
+                ),
+                trailing: const Icon(
+                  Icons.check_circle_rounded,
+                  color: AppColors.primary,
+                ),
                 onTap: () => Navigator.pop(sheetContext),
               ),
               ListTile(
-                leading: const Icon(Icons.dark_mode_rounded, color: Color(0xFF6366F1)),
-                title: Text('Dark (Coming Soon)', style: GoogleFonts.urbanist(fontWeight: FontWeight.w600)),
+                leading: const Icon(
+                  Icons.dark_mode_rounded,
+                  color: Color(0xFF6366F1),
+                ),
+                title: Text(
+                  'Dark (Coming Soon)',
+                  style: GoogleFonts.urbanist(fontWeight: FontWeight.w600),
+                ),
                 onTap: () => Navigator.pop(sheetContext),
               ),
             ],
@@ -1620,7 +1633,6 @@ class _HomeDrawer extends StatelessWidget {
               ElevatedButton(
                 onPressed: () {
                   Navigator.pop(sheetContext);
-                  context.push(AppRoutes.estimator);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
@@ -1630,7 +1642,7 @@ class _HomeDrawer extends StatelessWidget {
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                child: const Text('Book Consultation via Estimator'),
+                child: const Text('Estimator Coming Soon'),
               ),
             ],
           ),
@@ -1991,9 +2003,7 @@ class _GroupedCard extends StatelessWidget {
         ],
       ),
       clipBehavior: Clip.antiAlias,
-      child: Column(
-        children: children,
-      ),
+      child: Column(children: children),
     );
   }
 }
@@ -2047,11 +2057,7 @@ class _SettingsTile extends StatelessWidget {
                   color: iconBg,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(
-                  icon,
-                  size: 20,
-                  color: iconColor,
-                ),
+                child: Icon(icon, size: 20, color: iconColor),
               ),
               const SizedBox(width: 14),
               Expanded(

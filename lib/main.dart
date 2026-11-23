@@ -14,18 +14,28 @@ Future<void> main() async {
   if (kIsWeb ||
       defaultTargetPlatform == TargetPlatform.android ||
       defaultTargetPlatform == TargetPlatform.iOS) {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-    const googleClientId = String.fromEnvironment(
-      'GOOGLE_WEB_CLIENT_ID',
-      defaultValue: '655147824865-a7grii2oo0ra9ia0q7ef2glq0tpl1h7q.apps.googleusercontent.com',
-    );
-    await GoogleSignIn.instance.initialize(
-      clientId: kIsWeb && googleClientId.isNotEmpty ? googleClientId : null,
-      serverClientId:
-          !kIsWeb && googleClientId.isNotEmpty ? googleClientId : null,
-    );
+    try {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    } catch (e) {
+      debugPrint('Firebase initialization warning: $e');
+    }
+
+    try {
+      const googleClientId = String.fromEnvironment(
+        'GOOGLE_WEB_CLIENT_ID',
+        defaultValue:
+            '655147824865-a7grii2oo0ra9ia0q7ef2glq0tpl1h7q.apps.googleusercontent.com',
+      );
+      await GoogleSignIn.instance.initialize(
+        clientId: kIsWeb && googleClientId.isNotEmpty ? googleClientId : null,
+        serverClientId:
+            !kIsWeb && googleClientId.isNotEmpty ? googleClientId : null,
+      );
+    } catch (e) {
+      debugPrint('GoogleSignIn initialization warning: $e');
+    }
   }
   runApp(const ProviderScope(child: FunicaApp()));
 }

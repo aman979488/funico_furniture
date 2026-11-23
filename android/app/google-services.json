@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "655147824865-7aipd628bhpbtn0j7jfedc5q0lu6dpbg.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.atech.fi",
+            "certificate_hash": "ba7e9d2d1a47ef2ee2eb2404767f1c6ec5e81fa2"
+          }
+        },
+        {
           "client_id": "655147824865-a7grii2oo0ra9ia0q7ef2glq0tpl1h7q.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -31,10 +39,10 @@
               "client_type": 3
             },
             {
-              "client_id": "655147824865-465ltqt75smqfor7e0rpknvvaa7s0thg.apps.googleusercontent.com",
+              "client_id": "655147824865-05or66jh6u3r4pad98js7gkiccf5v89r.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.funica.funica"
+                "bundle_id": "com.atech.fi"
               }
             }
           ]
@@ -75,10 +83,10 @@
               "client_type": 3
             },
             {
-              "client_id": "655147824865-465ltqt75smqfor7e0rpknvvaa7s0thg.apps.googleusercontent.com",
+              "client_id": "655147824865-05or66jh6u3r4pad98js7gkiccf5v89r.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.funica.funica"
+                "bundle_id": "com.atech.fi"
               }
             }
           ]

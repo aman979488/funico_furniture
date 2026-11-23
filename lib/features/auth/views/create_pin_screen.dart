@@ -104,7 +104,11 @@ class _CreatePinScreenState extends ConsumerState<CreatePinScreen> {
         _error = null;
       });
     } else {
-      context.go(AppRoutes.fillProfile);
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      } else {
+        context.go(AppRoutes.letsYouIn);
+      }
     }
   }
 

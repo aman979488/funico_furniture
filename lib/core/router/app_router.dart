@@ -105,11 +105,6 @@ final GoRouter appRouter = GoRouter(
         return state.extra == true ? null : AppRoutes.enterPin;
       }
 
-      if (state.matchedLocation == AppRoutes.fillProfile &&
-          state.extra is! Map<String, String>) {
-        return AppRoutes.enterPin;
-      }
-
       // 2. Agar new user signup ke steps complete kar raha hai, uninterrupted aage badhne do
       if (setupRoutes.contains(state.matchedLocation)) return null;
 
@@ -176,8 +171,11 @@ final GoRouter appRouter = GoRouter(
       path: AppRoutes.fillProfile,
       builder: (context, state) {
         final extra = state.extra;
-        if (extra is Map<String, String>) {
-          return FillProfileScreen(name: extra['name'], email: extra['email']);
+        if (extra is Map) {
+          return FillProfileScreen(
+            name: extra['name']?.toString(),
+            email: extra['email']?.toString(),
+          );
         }
         return FillProfileScreen(email: extra is String ? extra : null);
       },

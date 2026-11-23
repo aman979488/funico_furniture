@@ -1,0 +1,204 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../models/estimator_model.dart';
+import '../repositories/estimator_repository.dart';
+
+class EstimatorState {
+  final int currentTabIndex; // 0: CALCULATE, 1: MY QUOTES, 2: PRODUCTS
+  final int calculateStep; // 1: Config & Purpose, 2: Select Package
+  final String quoteName;
+  final String selectedBhk;
+  final String selectedPurpose;
+  final String selectedPackageId;
+  final Map<String, int> packageImageIndices;
+  final List<EstimatorQuote> savedQuotes;
+  final EstimatorQuote? latestEstimate;
+  final bool isLoading;
+
+  const EstimatorState({
+    this.currentTabIndex = 0,
+    this.calculateStep = 1,
+    this.quoteName = 'Quote 1',
+    this.selectedBhk = '1BHK',
+    this.selectedPurpose = 'Renovate',
+    this.selectedPackageId = 'modern',
+    this.packageImageIndices = const {
+      'basic': 0,
+      'modern': 0,
+      'deluxe': 0,
+      'premium': 0,
+      'luxury': 0,
+    },
+    this.savedQuotes = const [],
+    this.latestEstimate,
+    this.isLoading = false,
+  });
+
+  BhkConfig get currentBhkConfig {
+    return BhkConfig.allConfigs.firstWhere(
+      (c) => c.bhk == selectedBhk,
+      orElse: () => BhkConfig.allConfigs.first,
+    );
+  }
+
+  EstimatorPurposeInfo get currentPurposeInfo {
+    return EstimatorPurposeInfo.allPurposes.firstWhere(
+      (p) => p.id == selectedPurpose,
+      orElse: () => EstimatorPurposeInfo.allPurposes.first,
+    );
+  }
+
+  PackageConfig get currentPackageConfig {
+    return PackageConfig.allPackages.firstWhere(
+      (p) => p.id == selectedPackageId,
+      orElse: () => PackageConfig.allPackages[1],
+    );
+  }
+
+  EstimatorState copyWith({
+    int? currentTabIndex,
+    int? calculateStep,
+    String? quoteName,
+    String? selectedBhk,
+    String? selectedPurpose,
+    String? selectedPackageId,
+    Map<String, int>? packageImageIndices,
+    List<EstimatorQuote>? savedQuotes,
+    EstimatorQuote? latestEstimate,
+    bool? isLoading,
+  }) {
+    return EstimatorState(
+      currentTabIndex: currentTabIndex ?? this.currentTabIndex,
+      calculateStep: calculateStep ?? this.calculateStep,
+      quoteName: quoteName ?? this.quoteName,
+      selectedBhk: selectedBhk ?? this.selectedBhk,
+      selectedPurpose: selectedPurpose ?? this.selectedPurpose,
+      selectedPackageId: selectedPackageId ?? this.selectedPackageId,
+      packageImageIndices: packageImageIndices ?? this.packageImageIndices,
+      savedQuotes: savedQuotes ?? this.savedQuotes,
+      latestEstimate: latestEstimate ?? this.latestEstimate,
+      isLoading: isLoading ?? this.isLoading,
+    );
+  }
+}
+
+class EstimatorViewModel extends Notifier<EstimatorState> {
+  late final EstimatorRepository _repository;
+
+  @override
+  EstimatorState build() {
+    _repository = ref.watch(estimatorRepositoryProvider);
+    _loadQuotes();
+    return const EstimatorState();
+  }
+
+  Future<void> _loadQuotes() async {
+    final quotes = await _repository.loadSavedQuotes();
+    state = state.copyWith(savedQuotes: quotes);
+  }
+
+  void setTab(int index) {
+    if (state.currentTabIndex != index) {
+      state = state.copyWith(currentTabIndex: index);
+    }
+  }
+
+  void goToPackageSelection() {
+    state = state.copyWith(calculateStep: 2);
+  }
+
+  bool handleBackStep() {
+    if (state.currentTabIndex == 0 && state.calculateStep == 2) {
+      state = state.copyWith(calculateStep: 1);
+      return true; // Handled internally
+    }
+    return false; // Let router/navigator handle
+  }
+
+  void setQuoteName(String name) {
+    state = state.copyWith(quoteName: name);
+  }
+
+  void selectBhk(String bhk) {
+    state = state.copyWith(selectedBhk: bhk);
+  }
+
+  void nextBhk() {
+    final configs = BhkConfig.allConfigs;
+    final currentIndex = configs.indexWhere((c) => c.bhk == state.selectedBhk);
+    if (currentIndex != -1 && currentIndex < configs.length - 1) {
+      state = state.copyWith(selectedBhk: configs[currentIndex + 1].bhk);
+    } else {
+      state = state.copyWith(selectedBhk: configs.first.bhk);
+    }
+  }
+
+  void prevBhk() {
+    final configs = BhkConfig.allConfigs;
+    final currentIndex = configs.indexWhere((c) => c.bhk == state.selectedBhk);
+    if (currentIndex > 0) {
+      state = state.copyWith(selectedBhk: configs[currentIndex - 1].bhk);
+    } else {
+      state = state.copyWith(selectedBhk: configs.last.bhk);
+    }
+  }
+
+  void selectPurpose(String purpose) {
+    state = state.copyWith(selectedPurpose: purpose);
+  }
+
+  void selectPackage(String packageId) {
+    state = state.copyWith(selectedPackageId: packageId);
+  }
+
+  void nextPackageImage(String packageId) {
+    final pkg = PackageConfig.allPackages.firstWhere(
+      (p) => p.id == packageId,
+      orElse: () => PackageConfig.allPackages.first,
+    );
+    final current = state.packageImageIndices[packageId] ?? 0;
+    final next = (current + 1) % pkg.images.length;
+    final updated = Map<String, int>.from(state.packageImageIndices);
+    updated[packageId] = next;
+    state = state.copyWith(packageImageIndices: updated);
+  }
+
+  void prevPackageImage(String packageId) {
+    final pkg = PackageConfig.allPackages.firstWhere(
+      (p) => p.id == packageId,
+      orElse: () => PackageConfig.allPackages.first,
+    );
+    final current = state.packageImageIndices[packageId] ?? 0;
+    final prev = (current - 1 + pkg.images.length) % pkg.images.length;
+    final updated = Map<String, int>.from(state.packageImageIndices);
+    updated[packageId] = prev;
+    state = state.copyWith(packageImageIndices: updated);
+  }
+
+  EstimatorQuote calculateEstimate() {
+    final estimate = _repository.calculateEstimate(
+      quoteName: state.quoteName,
+      bhk: state.selectedBhk,
+      purpose: state.selectedPurpose,
+      packageId: state.selectedPackageId,
+    );
+    state = state.copyWith(latestEstimate: estimate);
+    return estimate;
+  }
+
+  Future<void> saveCurrentQuote(EstimatorQuote quote) async {
+    await _repository.saveQuote(quote);
+    final updatedQuotes = await _repository.loadSavedQuotes();
+    state = state.copyWith(savedQuotes: updatedQuotes);
+  }
+
+  Future<void> deleteQuote(String quoteId) async {
+    await _repository.deleteQuote(quoteId);
+    final updatedQuotes = await _repository.loadSavedQuotes();
+    state = state.copyWith(savedQuotes: updatedQuotes);
+  }
+}
+
+final estimatorViewModelProvider =
+    NotifierProvider<EstimatorViewModel, EstimatorState>(
+      EstimatorViewModel.new,
+    );

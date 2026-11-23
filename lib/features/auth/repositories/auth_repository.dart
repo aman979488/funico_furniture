@@ -239,31 +239,41 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   Future<void> _ensureUserProfile(User user, {UserRole role = UserRole.customer}) async {
-    // Check across collections if exists, default to customers
-    final collectionsToCheck = [
-      FirestoreCollections.customers,
-      FirestoreCollections.vendors,
-      FirestoreCollections.staff,
-    ];
+    try {
+      final collectionsToCheck = [
+        FirestoreCollections.customers,
+        FirestoreCollections.vendors,
+        FirestoreCollections.staff,
+      ];
 
-    for (final col in collectionsToCheck) {
-      final doc = await FirebaseFirestore.instance.collection(col).doc(user.uid).get();
-      if (doc.exists) return;
+      for (final col in collectionsToCheck) {
+        try {
+          final doc = await FirebaseFirestore.instance
+              .collection(col)
+              .doc(user.uid)
+              .get()
+              .timeout(const Duration(seconds: 4));
+          if (doc.exists) return;
+        } catch (_) {}
+      }
+
+      final targetCollection = FirestoreCollections.getCollectionForRole(role);
+      await FirebaseFirestore.instance
+          .collection(targetCollection)
+          .doc(user.uid)
+          .set({
+        'uid': user.uid,
+        'name': user.displayName ?? '',
+        'email': user.email,
+        'phoneNumber': user.phoneNumber ?? '',
+        'photoUrl': user.photoURL,
+        'role': role.value,
+        'createdAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true))
+          .timeout(const Duration(seconds: 5));
+    } catch (_) {
+      // Do not abort authentication if Firestore profile sync is slow or offline
     }
-
-    final targetCollection = FirestoreCollections.getCollectionForRole(role);
-    await FirebaseFirestore.instance
-        .collection(targetCollection)
-        .doc(user.uid)
-        .set({
-      'uid': user.uid,
-      'name': user.displayName ?? '',
-      'email': user.email,
-      'phoneNumber': user.phoneNumber ?? '',
-      'photoUrl': user.photoURL,
-      'role': role.value,
-      'createdAt': FieldValue.serverTimestamp(),
-    });
   }
 }
 
