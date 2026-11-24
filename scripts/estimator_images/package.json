@@ -1,0 +1,11 @@
+{
+  "name": "funica-estimator-image-uploader",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "upload": "node upload-images.mjs"
+  },
+  "dependencies": {
+    "firebase-admin": "^14.5.1"
+  }
+}

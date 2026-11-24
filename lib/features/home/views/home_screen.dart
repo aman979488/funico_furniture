@@ -28,7 +28,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   String _selectedCategory = 'All';
-  String _selectedTier = 'Basic';
+  String _selectedRoom = '';
 
   void _handleMoreMenu(BuildContext context, String value) {
     switch (value) {
@@ -128,27 +128,47 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               selectedProductCategory.toLowerCase();
     }).toList();
 
-    if (_selectedTier == 'Basic') return categoryFiltered;
+    if (_selectedRoom.isEmpty) return categoryFiltered;
 
-    final tierFiltered = categoryFiltered.where((product) {
-      if (_selectedTier == 'Deluxe') return product.rating >= 4.7;
-      if (_selectedTier == 'Modern') {
-        final text = '${product.name} ${product.description}'.toLowerCase();
-        return text.contains('modern') ||
-            text.contains('century') ||
-            text.contains('nordic');
+    return categoryFiltered.where((product) {
+      final category = product.category.toLowerCase();
+      final details =
+          '${product.name} ${product.description} ${product.category}'
+              .toLowerCase();
+
+      switch (_selectedRoom) {
+        case 'Hall':
+          return {'sofa', 'tv unit', 'chair', 'table'}.contains(category) ||
+              details.contains('living room');
+        case 'Kitchen':
+          return category.contains('kitchen') ||
+              details.contains('kitchen') ||
+              category == 'table';
+        case 'Bedroom':
+          return category == 'bed' ||
+              details.contains('bedroom') ||
+              details.contains('wardrobe');
+        case 'Bathroom':
+          return category.contains('bathroom') ||
+              details.contains('bathroom') ||
+              details.contains('vanity');
+        case 'Others':
+          return !{
+                'sofa',
+                'tv unit',
+                'chair',
+                'table',
+                'bed',
+              }.contains(category) &&
+              !details.contains('kitchen') &&
+              !details.contains('bedroom') &&
+              !details.contains('bathroom') &&
+              !details.contains('wardrobe') &&
+              !details.contains('vanity');
+        default:
+          return true;
       }
-      if (_selectedTier == 'Premium') return product.price >= 100;
-      if (_selectedTier == 'Luxury') {
-        final text = '${product.name} ${product.description}'.toLowerCase();
-        return product.price >= 150 ||
-            text.contains('luxury') ||
-            text.contains('premium');
-      }
-      return true;
     }).toList();
-
-    return tierFiltered.isNotEmpty ? tierFiltered : categoryFiltered;
   }
 
   @override
@@ -212,15 +232,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       sliver: SliverToBoxAdapter(child: _HeroDesignBanner()),
                     ),
 
-                    // Tier / Collection Filter Bar (Basic, Deluxe, Modern, Premium, Luxury)
+                    // Room category shortcuts
                     SliverPadding(
                       padding: const EdgeInsets.fromLTRB(18, 16, 18, 0),
                       sliver: SliverToBoxAdapter(
-                        child: _TierCollectionBar(
-                          selectedTier: _selectedTier,
-                          onTierSelected: (tier) {
+                        child: _RoomCategoryBar(
+                          selectedRoom: _selectedRoom,
+                          onRoomSelected: (room) {
                             setState(() {
-                              _selectedTier = tier;
+                              _selectedRoom = _selectedRoom == room ? '' : room;
                             });
                           },
                         ),
@@ -958,16 +978,16 @@ class _HeroDesignBannerState extends State<_HeroDesignBanner> {
   }
 }
 
-class _TierCollectionBar extends StatelessWidget {
-  const _TierCollectionBar({
-    required this.selectedTier,
-    required this.onTierSelected,
+class _RoomCategoryBar extends StatelessWidget {
+  const _RoomCategoryBar({
+    required this.selectedRoom,
+    required this.onRoomSelected,
   });
 
-  final String selectedTier;
-  final ValueChanged<String> onTierSelected;
+  final String selectedRoom;
+  final ValueChanged<String> onRoomSelected;
 
-  static const tiers = ['Basic', 'Deluxe', 'Modern', 'Premium', 'Luxury'];
+  static const rooms = ['Hall', 'Kitchen', 'Bedroom', 'Bathroom', 'Others'];
 
   @override
   Widget build(BuildContext context) {
@@ -977,13 +997,13 @@ class _TierCollectionBar extends StatelessWidget {
         constraints: const BoxConstraints(maxWidth: 520),
         child: Row(
           children: [
-            for (int i = 0; i < tiers.length; i++) ...[
+            for (int i = 0; i < rooms.length; i++) ...[
               if (i > 0) const SizedBox(width: 8),
               Expanded(
-                child: _TierItemCard(
-                  tier: tiers[i],
-                  isSelected: selectedTier == tiers[i],
-                  onTap: () => onTierSelected(tiers[i]),
+                child: _RoomCategoryCard(
+                  room: rooms[i],
+                  isSelected: selectedRoom == rooms[i],
+                  onTap: () => onRoomSelected(rooms[i]),
                 ),
               ),
             ],
@@ -994,20 +1014,20 @@ class _TierCollectionBar extends StatelessWidget {
   }
 }
 
-class _TierItemCard extends StatelessWidget {
-  const _TierItemCard({
-    required this.tier,
+class _RoomCategoryCard extends StatelessWidget {
+  const _RoomCategoryCard({
+    required this.room,
     required this.isSelected,
     required this.onTap,
   });
 
-  final String tier;
+  final String room;
   final bool isSelected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = isSelected ? AppColors.primary : const Color(0xFFFAF2EB);
+    final bgColor = isSelected ? AppColors.primary : Colors.white;
     final iconColor = isSelected ? Colors.white : AppColors.primary;
     final textColor = isSelected ? Colors.white : AppColors.textPrimary;
 
@@ -1023,6 +1043,9 @@ class _TierItemCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: bgColor,
             borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isSelected ? AppColors.primary : const Color(0xFFF1F5F9),
+            ),
             boxShadow: isSelected
                 ? [
                     BoxShadow(
@@ -1037,12 +1060,12 @@ class _TierItemCard extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _TierIcon(tier: tier, color: iconColor, size: 26),
+              _RoomCategoryIcon(room: room, color: iconColor, size: 26),
               const SizedBox(height: 5),
               FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Text(
-                  tier,
+                  room,
                   maxLines: 1,
                   style: GoogleFonts.urbanist(
                     fontSize: 12.5,
@@ -1060,287 +1083,28 @@ class _TierItemCard extends StatelessWidget {
   }
 }
 
-class _TierIcon extends StatelessWidget {
-  const _TierIcon({required this.tier, required this.color, this.size = 26});
+class _RoomCategoryIcon extends StatelessWidget {
+  const _RoomCategoryIcon({
+    required this.room,
+    required this.color,
+    this.size = 26,
+  });
 
-  final String tier;
+  final String room;
   final Color color;
   final double size;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: size,
-      height: size,
-      child: CustomPaint(
-        painter: switch (tier) {
-          'Basic' => _SofaIconPainter(color: color),
-          'Deluxe' => _CrownIconPainter(color: color),
-          'Modern' => _LayersIconPainter(color: color),
-          'Premium' => _StarIconPainter(color: color),
-          'Luxury' => _DiamondIconPainter(color: color),
-          _ => _SofaIconPainter(color: color),
-        },
-      ),
-    );
+    final icon = switch (room) {
+      'Hall' => Icons.weekend_outlined,
+      'Kitchen' => Icons.kitchen_outlined,
+      'Bedroom' => Icons.bed_outlined,
+      'Bathroom' => Icons.bathtub_outlined,
+      _ => Icons.grid_view_rounded,
+    };
+    return Icon(icon, size: size, color: color);
   }
-}
-
-class _SofaIconPainter extends CustomPainter {
-  const _SofaIconPainter({required this.color});
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.8
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-
-    final w = size.width;
-    final h = size.height;
-
-    // Backrest (center top)
-    final backRect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(w * 0.16, h * 0.12, w * 0.68, h * 0.46),
-      const Radius.circular(4),
-    );
-    canvas.drawRRect(backRect, paint);
-
-    // Left armrest
-    final leftArm = RRect.fromRectAndRadius(
-      Rect.fromLTWH(w * 0.04, h * 0.28, w * 0.18, h * 0.50),
-      const Radius.circular(3),
-    );
-    canvas.drawRRect(leftArm, paint);
-
-    // Right armrest
-    final rightArm = RRect.fromRectAndRadius(
-      Rect.fromLTWH(w * 0.78, h * 0.28, w * 0.18, h * 0.50),
-      const Radius.circular(3),
-    );
-    canvas.drawRRect(rightArm, paint);
-
-    // Seat cushion between armrests
-    final seatRect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(w * 0.22, h * 0.52, w * 0.56, h * 0.26),
-      const Radius.circular(2),
-    );
-    canvas.drawRRect(seatRect, paint);
-
-    // Two small legs at bottom
-    canvas.drawLine(
-      Offset(w * 0.18, h * 0.78),
-      Offset(w * 0.14, h * 0.92),
-      paint,
-    );
-    canvas.drawLine(
-      Offset(w * 0.82, h * 0.78),
-      Offset(w * 0.86, h * 0.92),
-      paint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _SofaIconPainter oldDelegate) =>
-      oldDelegate.color != color;
-}
-
-class _CrownIconPainter extends CustomPainter {
-  const _CrownIconPainter({required this.color});
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.8
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-
-    final dotPaint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-
-    final w = size.width;
-    final h = size.height;
-
-    // Crown outline path (matching reference photo: 3 peaks with dots)
-    final path = Path()
-      ..moveTo(w * 0.12, h * 0.82)
-      ..lineTo(w * 0.14, h * 0.38)
-      ..lineTo(w * 0.36, h * 0.58)
-      ..lineTo(w * 0.50, h * 0.22)
-      ..lineTo(w * 0.64, h * 0.58)
-      ..lineTo(w * 0.86, h * 0.38)
-      ..lineTo(w * 0.88, h * 0.82)
-      ..close();
-
-    canvas.drawPath(path, paint);
-
-    // Bottom base band line
-    canvas.drawLine(
-      Offset(w * 0.12, h * 0.74),
-      Offset(w * 0.88, h * 0.74),
-      paint,
-    );
-
-    // Small circles on 3 peak tips
-    final r = w * 0.055;
-    canvas.drawCircle(Offset(w * 0.14, h * 0.32), r, dotPaint);
-    canvas.drawCircle(Offset(w * 0.50, h * 0.16), r, dotPaint);
-    canvas.drawCircle(Offset(w * 0.86, h * 0.32), r, dotPaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _CrownIconPainter oldDelegate) =>
-      oldDelegate.color != color;
-}
-
-class _LayersIconPainter extends CustomPainter {
-  const _LayersIconPainter({required this.color});
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.8
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-
-    final w = size.width;
-    final h = size.height;
-
-    // Top rhombus (diamond tilted in isometric view)
-    final topRhombus = Path()
-      ..moveTo(w * 0.50, h * 0.12)
-      ..lineTo(w * 0.88, h * 0.32)
-      ..lineTo(w * 0.50, h * 0.52)
-      ..lineTo(w * 0.12, h * 0.32)
-      ..close();
-    canvas.drawPath(topRhombus, paint);
-
-    // Middle layer chevron
-    final midChevron = Path()
-      ..moveTo(w * 0.12, h * 0.50)
-      ..lineTo(w * 0.50, h * 0.70)
-      ..lineTo(w * 0.88, h * 0.50);
-    canvas.drawPath(midChevron, paint);
-
-    // Bottom layer chevron
-    final botChevron = Path()
-      ..moveTo(w * 0.12, h * 0.68)
-      ..lineTo(w * 0.50, h * 0.88)
-      ..lineTo(w * 0.88, h * 0.68);
-    canvas.drawPath(botChevron, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _LayersIconPainter oldDelegate) =>
-      oldDelegate.color != color;
-}
-
-class _StarIconPainter extends CustomPainter {
-  const _StarIconPainter({required this.color});
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.8
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-
-    final w = size.width;
-    final h = size.height;
-    final cx = w / 2;
-    final cy = h / 2;
-    final outerR = w * 0.44;
-    final innerR = outerR * 0.42;
-
-    final path = Path();
-    for (int i = 0; i < 10; i++) {
-      final r = i.isEven ? outerR : innerR;
-      final angle = (i * 36 - 90) * math.pi / 180;
-      final x = cx + r * math.cos(angle);
-      final y = cy + r * math.sin(angle);
-      if (i == 0) {
-        path.moveTo(x, y);
-      } else {
-        path.lineTo(x, y);
-      }
-    }
-    path.close();
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _StarIconPainter oldDelegate) =>
-      oldDelegate.color != color;
-}
-
-class _DiamondIconPainter extends CustomPainter {
-  const _DiamondIconPainter({required this.color});
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.8
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-
-    final w = size.width;
-    final h = size.height;
-
-    // Diamond outer outline
-    final outer = Path()
-      ..moveTo(w * 0.28, h * 0.18)
-      ..lineTo(w * 0.72, h * 0.18)
-      ..lineTo(w * 0.90, h * 0.44)
-      ..lineTo(w * 0.50, h * 0.88)
-      ..lineTo(w * 0.10, h * 0.44)
-      ..close();
-    canvas.drawPath(outer, paint);
-
-    // Inner facet lines: inverted triangle in top half
-    final innerTriangle = Path()
-      ..moveTo(w * 0.28, h * 0.18)
-      ..lineTo(w * 0.50, h * 0.44)
-      ..lineTo(w * 0.72, h * 0.18);
-    canvas.drawPath(innerTriangle, paint);
-
-    // Lines from facet points
-    canvas.drawLine(
-      Offset(w * 0.50, h * 0.44),
-      Offset(w * 0.50, h * 0.88),
-      paint,
-    );
-    canvas.drawLine(
-      Offset(w * 0.10, h * 0.44),
-      Offset(w * 0.50, h * 0.44),
-      paint,
-    );
-    canvas.drawLine(
-      Offset(w * 0.90, h * 0.44),
-      Offset(w * 0.50, h * 0.44),
-      paint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _DiamondIconPainter oldDelegate) =>
-      oldDelegate.color != color;
 }
 
 class _HomeDrawer extends StatelessWidget {

@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../models/estimator_model.dart';
 import '../repositories/estimator_repository.dart';
 
@@ -13,6 +15,8 @@ class EstimatorState {
   final List<EstimatorQuote> savedQuotes;
   final EstimatorQuote? latestEstimate;
   final bool isLoading;
+  final List<PackageConfig> packages;
+  final bool packagesLoading;
 
   const EstimatorState({
     this.currentTabIndex = 0,
@@ -31,6 +35,8 @@ class EstimatorState {
     this.savedQuotes = const [],
     this.latestEstimate,
     this.isLoading = false,
+    this.packages = const [],
+    this.packagesLoading = true,
   });
 
   BhkConfig get currentBhkConfig {
@@ -48,9 +54,11 @@ class EstimatorState {
   }
 
   PackageConfig get currentPackageConfig {
-    return PackageConfig.allPackages.firstWhere(
+    return packages.firstWhere(
       (p) => p.id == selectedPackageId,
-      orElse: () => PackageConfig.allPackages[1],
+      orElse: () => packages.isNotEmpty
+          ? packages[1 % packages.length]
+          : PackageConfig.allPackages[1],
     );
   }
 
@@ -65,6 +73,8 @@ class EstimatorState {
     List<EstimatorQuote>? savedQuotes,
     EstimatorQuote? latestEstimate,
     bool? isLoading,
+    List<PackageConfig>? packages,
+    bool? packagesLoading,
   }) {
     return EstimatorState(
       currentTabIndex: currentTabIndex ?? this.currentTabIndex,
@@ -77,6 +87,8 @@ class EstimatorState {
       savedQuotes: savedQuotes ?? this.savedQuotes,
       latestEstimate: latestEstimate ?? this.latestEstimate,
       isLoading: isLoading ?? this.isLoading,
+      packages: packages ?? this.packages,
+      packagesLoading: packagesLoading ?? this.packagesLoading,
     );
   }
 }
@@ -88,12 +100,43 @@ class EstimatorViewModel extends Notifier<EstimatorState> {
   EstimatorState build() {
     _repository = ref.watch(estimatorRepositoryProvider);
     _loadQuotes();
-    return const EstimatorState();
+    _loadPackages();
+    return EstimatorState(
+      packages: List<PackageConfig>.from(PackageConfig.allPackages),
+    );
   }
 
   Future<void> _loadQuotes() async {
     final quotes = await _repository.loadSavedQuotes();
     state = state.copyWith(savedQuotes: quotes);
+  }
+
+  Future<void> _loadPackages() async {
+    List<PackageConfig> pkgs;
+    try {
+      pkgs = await _repository.fetchPackages();
+    } catch (error, stackTrace) {
+      debugPrint(
+        'Estimator package loading failed; using bundled packages: $error',
+      );
+      debugPrintStack(stackTrace: stackTrace);
+      pkgs = List<PackageConfig>.from(PackageConfig.allPackages);
+    }
+
+    if (pkgs.isEmpty) {
+      pkgs = List<PackageConfig>.from(PackageConfig.allPackages);
+    }
+
+    // Build default image indices for fetched packages
+    final indices = <String, int>{};
+    for (final p in pkgs) {
+      indices[p.id] = 0;
+    }
+    state = state.copyWith(
+      packages: pkgs,
+      packageImageIndices: indices,
+      packagesLoading: false,
+    );
   }
 
   void setTab(int index) {
@@ -151,10 +194,13 @@ class EstimatorViewModel extends Notifier<EstimatorState> {
   }
 
   void nextPackageImage(String packageId) {
-    final pkg = PackageConfig.allPackages.firstWhere(
+    final pkg = state.packages.firstWhere(
       (p) => p.id == packageId,
-      orElse: () => PackageConfig.allPackages.first,
+      orElse: () => state.packages.isNotEmpty
+          ? state.packages.first
+          : PackageConfig.allPackages.first,
     );
+    if (pkg.images.isEmpty) return;
     final current = state.packageImageIndices[packageId] ?? 0;
     final next = (current + 1) % pkg.images.length;
     final updated = Map<String, int>.from(state.packageImageIndices);
@@ -163,10 +209,13 @@ class EstimatorViewModel extends Notifier<EstimatorState> {
   }
 
   void prevPackageImage(String packageId) {
-    final pkg = PackageConfig.allPackages.firstWhere(
+    final pkg = state.packages.firstWhere(
       (p) => p.id == packageId,
-      orElse: () => PackageConfig.allPackages.first,
+      orElse: () => state.packages.isNotEmpty
+          ? state.packages.first
+          : PackageConfig.allPackages.first,
     );
+    if (pkg.images.isEmpty) return;
     final current = state.packageImageIndices[packageId] ?? 0;
     final prev = (current - 1 + pkg.images.length) % pkg.images.length;
     final updated = Map<String, int>.from(state.packageImageIndices);
@@ -180,6 +229,7 @@ class EstimatorViewModel extends Notifier<EstimatorState> {
       bhk: state.selectedBhk,
       purpose: state.selectedPurpose,
       packageId: state.selectedPackageId,
+      packages: state.packages,
     );
     state = state.copyWith(latestEstimate: estimate);
     return estimate;

@@ -33,27 +33,30 @@ void main() {
       expect(find.text('Modern | Functional | Timeless'), findsOneWidget);
       expect(find.text('Explore Designs'), findsOneWidget);
 
-      // Verify Tier Collection Bar above Special Offers
-      expect(find.text('Basic'), findsOneWidget);
-      expect(find.text('Deluxe'), findsOneWidget);
-      expect(find.text('Modern'), findsOneWidget);
-      expect(find.text('Premium'), findsOneWidget);
-      expect(find.text('Luxury'), findsOneWidget);
+      // Verify room categories above Special Offers
+      expect(find.text('Hall'), findsOneWidget);
+      expect(find.text('Kitchen'), findsOneWidget);
+      expect(find.text('Bedroom'), findsOneWidget);
+      expect(find.text('Bathroom'), findsOneWidget);
+      expect(find.text('Others'), findsOneWidget);
+      expect(find.text('Basic'), findsNothing);
+      expect(find.text('Deluxe'), findsNothing);
+      expect(find.text('Modern'), findsNothing);
 
       // Verify Special Offers is removed from home screen
       expect(find.text('Special Offers'), findsNothing);
 
-      // Verify relative vertical position: Hero banner < Tier bar
+      // Verify relative vertical position: Hero banner < room categories
       final heroLocation = tester.getTopLeft(
         find.text('Design Your\nDream Space'),
       );
-      final tierLocation = tester.getTopLeft(find.text('Basic'));
-      expect(heroLocation.dy, lessThan(tierLocation.dy));
+      final roomCategoryLocation = tester.getTopLeft(find.text('Hall'));
+      expect(heroLocation.dy, lessThan(roomCategoryLocation.dy));
 
-      // Tap Deluxe tier button
-      await tester.tap(find.text('Deluxe'));
+      // Tap Kitchen category
+      await tester.tap(find.text('Kitchen'));
       await tester.pumpAndSettle();
-      expect(find.text('Deluxe'), findsOneWidget);
+      expect(find.text('Kitchen'), findsOneWidget);
     },
   );
 

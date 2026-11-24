@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
@@ -209,6 +210,7 @@ class _EstimatorScreenState extends ConsumerState<EstimatorScreen> {
                   // Tab 2: PRODUCTS
                   _ProductsTabContent(
                     selectedPackageId: state.selectedPackageId,
+                    packages: state.packages,
                     onPackageSelected: (id) => vm.selectPackage(id),
                     onProductTap: (product) =>
                         context.push(AppRoutes.productDetails, extra: product),
@@ -271,25 +273,25 @@ class _EstimatorTabsBar extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 11),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
                         child: Text(
                           _tabTitles[index],
                           style: GoogleFonts.urbanist(
-                            fontSize: 13,
+                            fontSize: 13.5,
                             fontWeight: isSelected
                                 ? FontWeight.w800
                                 : FontWeight.w600,
                             color: isSelected
                                 ? AppColors.primary
                                 : const Color(0xFF8C8681),
-                            letterSpacing: 0.3,
+                            letterSpacing: 0.4,
                           ),
                         ),
                       ),
                       Container(
-                        height: 2.5,
+                        height: 3.0,
                         width: double.infinity,
-                        margin: const EdgeInsets.symmetric(horizontal: 8),
+                        margin: const EdgeInsets.symmetric(horizontal: 10),
                         decoration: BoxDecoration(
                           color: isSelected
                               ? AppColors.primary
@@ -417,15 +419,34 @@ class _CalculateStep1Content extends StatelessWidget {
                   Center(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(40, 12, 40, 22),
-                      child: Image.asset(
-                        bhkConfig.imageAsset,
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) =>
-                            Image.asset(
-                              AppAssets.floorplanSample,
+                      child: bhkConfig.imageAsset.startsWith('http://') ||
+                              bhkConfig.imageAsset.startsWith('https://')
+                          ? CachedNetworkImage(
+                              imageUrl: bhkConfig.imageAsset,
                               fit: BoxFit.contain,
+                              placeholder: (context, url) => const Center(
+                                child: SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              ),
+                              errorWidget: (context, url, error) => Image.asset(
+                                AppAssets.floorplanSample,
+                                fit: BoxFit.contain,
+                              ),
+                            )
+                          : Image.asset(
+                              bhkConfig.imageAsset,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Image.asset(
+                                AppAssets.floorplanSample,
+                                fit: BoxFit.contain,
+                              ),
                             ),
-                      ),
                     ),
                   ),
 
@@ -637,9 +658,41 @@ class _CalculateStep2PackagesContent extends StatelessWidget {
   final ValueChanged<String> onNextImage;
   final VoidCallback onCalculateCostTap;
 
+  Widget _packageImage(String image) {
+    if (image.startsWith('http://') || image.startsWith('https://')) {
+      return CachedNetworkImage(
+        imageUrl: image,
+        fit: BoxFit.cover,
+        placeholder: (context, url) => const ColoredBox(
+          color: Color(0xFFE2E8F0),
+          child: Center(
+            child: SizedBox(
+              width: 22,
+              height: 22,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ),
+        ),
+        errorWidget: (context, url, error) {
+          debugPrint('Failed to load estimator image $url: $error');
+          return Image.asset(AppAssets.livingRoomImage, fit: BoxFit.cover);
+        },
+      );
+    }
+
+    return Image.asset(
+      image,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) =>
+          Image.asset(AppAssets.livingRoomImage, fit: BoxFit.cover),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final packages = PackageConfig.allPackages;
+    final packages = state.packages.isNotEmpty
+        ? state.packages
+        : PackageConfig.allPackages;
 
     return Column(
       children: [
@@ -687,13 +740,26 @@ class _CalculateStep2PackagesContent extends StatelessWidget {
                         width: 1,
                       ),
                     ),
-                    child: Text(
-                      '${packages.length} Packages Available',
-                      style: GoogleFonts.urbanist(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '${packages.length} Packages Available',
+                          style: GoogleFonts.urbanist(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        if (state.packagesLoading) ...[
+                          const SizedBox(width: 6),
+                          const SizedBox(
+                            width: 11,
+                            height: 11,
+                            child: CircularProgressIndicator(strokeWidth: 1.5),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                 ],
@@ -749,15 +815,7 @@ class _CalculateStep2PackagesContent extends StatelessWidget {
                           fit: StackFit.expand,
                           children: [
                             // Background package image
-                            Image.asset(
-                              imageAsset,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  Image.asset(
-                                    AppAssets.livingRoomImage,
-                                    fit: BoxFit.cover,
-                                  ),
-                            ),
+                            _packageImage(imageAsset),
 
                             // Top subtle dark gradient for badges
                             Container(
@@ -874,24 +932,16 @@ class _CalculateStep2PackagesContent extends StatelessWidget {
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
-                                  children: List.generate(3, (dotIndex) {
-                                    final isActive = dotIndex == imageIndex;
-                                    return Container(
-                                      margin: const EdgeInsets.symmetric(
-                                        horizontal: 2,
+                                  children: [
+                                    Text(
+                                      '${imageIndex + 1}/${pkg.images.length}',
+                                      style: GoogleFonts.urbanist(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white,
                                       ),
-                                      width: isActive ? 12 : 5,
-                                      height: 5,
-                                      decoration: BoxDecoration(
-                                        color: isActive
-                                            ? Colors.white
-                                            : Colors.white.withValues(
-                                                alpha: 0.45,
-                                              ),
-                                        borderRadius: BorderRadius.circular(3),
-                                      ),
-                                    );
-                                  }),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
@@ -1239,18 +1289,51 @@ class _MyQuotesTabContentState extends State<_MyQuotesTabContent> {
   }) {
     return OutlinedButton.icon(
       onPressed: onPressed,
-      icon: Icon(icon, size: 13),
+      icon: Icon(icon, size: 14),
       label: Text(label),
       style: OutlinedButton.styleFrom(
         foregroundColor: AppColors.primary,
         side: const BorderSide(color: Color(0xFFF0D7C8)),
-        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
-        minimumSize: const Size(0, 30),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        minimumSize: const Size(0, 36),
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        visualDensity: VisualDensity.compact,
         textStyle: GoogleFonts.urbanist(
-          fontSize: 10.5,
+          fontSize: 12,
           fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
+  Widget _generateAllPackagesButton() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      child: SizedBox(
+        width: double.infinity,
+        height: 44,
+        child: OutlinedButton.icon(
+          onPressed: _showPdfComingSoon,
+          icon: const Icon(
+            Icons.picture_as_pdf_outlined,
+            size: 18,
+            color: AppColors.primary,
+          ),
+          label: Text(
+            'Generate All Packages PDFs',
+            style: GoogleFonts.urbanist(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w700,
+              color: AppColors.primary,
+            ),
+          ),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppColors.primary,
+            backgroundColor: Colors.white,
+            side: const BorderSide(color: Color(0xFFFFD4B8), width: 1.2),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
         ),
       ),
     );
@@ -1266,70 +1349,86 @@ class _MyQuotesTabContentState extends State<_MyQuotesTabContent> {
         Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
               child: Row(
                 children: [
                   Expanded(
                     child: SizedBox(
-                      height: 40,
+                      height: 46,
                       child: TextField(
                         key: const ValueKey('saved-quotes-search'),
                         onChanged: (value) => setState(() => _query = value),
                         textInputAction: TextInputAction.search,
-                        style: GoogleFonts.urbanist(fontSize: 12.5),
+                        style: GoogleFonts.urbanist(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF1E293B),
+                        ),
                         decoration: InputDecoration(
                           hintText: 'Search saved quotes',
                           hintStyle: GoogleFonts.urbanist(
-                            fontSize: 12,
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w500,
                             color: const Color(0xFF94A3B8),
                           ),
                           prefixIcon: const Icon(
                             Icons.search_rounded,
-                            size: 17,
+                            size: 21,
+                            color: Color(0xFF94A3B8),
                           ),
                           isDense: true,
                           filled: true,
                           fillColor: Colors.white,
                           contentPadding: const EdgeInsets.symmetric(
-                            vertical: 8,
+                            vertical: 11,
                           ),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(14),
                             borderSide: const BorderSide(
                               color: Color(0xFFE2E8F0),
+                              width: 1.2,
                             ),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(14),
                             borderSide: const BorderSide(
                               color: Color(0xFFE2E8F0),
+                              width: 1.2,
                             ),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(14),
                             borderSide: const BorderSide(
                               color: AppColors.primary,
+                              width: 1.4,
                             ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 10),
                   SizedBox(
-                    width: 40,
-                    height: 40,
+                    width: 46,
+                    height: 46,
                     child: OutlinedButton(
                       onPressed: _showFilters,
                       style: OutlinedButton.styleFrom(
                         padding: EdgeInsets.zero,
                         foregroundColor: const Color(0xFF475569),
-                        side: const BorderSide(color: Color(0xFFE2E8F0)),
+                        side: const BorderSide(
+                          color: Color(0xFFE2E8F0),
+                          width: 1.2,
+                        ),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(14),
                         ),
                       ),
-                      child: const Icon(Icons.filter_list_rounded, size: 18),
+                      child: const Icon(
+                        Icons.filter_list_rounded,
+                        size: 22,
+                        color: Color(0xFF475569),
+                      ),
                     ),
                   ),
                 ],
@@ -1339,67 +1438,62 @@ class _MyQuotesTabContentState extends State<_MyQuotesTabContent> {
               child: widget.quotes.isEmpty
                   ? _emptyQuotes()
                   : filteredQuotes.isEmpty
-                  ? Center(
-                      child: Text(
-                        'No quotes match your search.',
-                        style: GoogleFonts.urbanist(
-                          fontSize: 14,
-                          color: const Color(0xFF64748B),
+                  ? Column(
+                      children: [
+                        Expanded(
+                          child: Center(
+                            child: Text(
+                              'No quotes match your search.',
+                              style: GoogleFonts.urbanist(
+                                fontSize: 14.5,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF64748B),
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
+                        _generateAllPackagesButton(),
+                        if (selectedQuotes.isNotEmpty)
+                          _selectionSummary(selectedQuotes),
+                        const SizedBox(height: 4),
+                      ],
                     )
-                  : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(10, 2, 10, 16),
-                      itemCount: filteredQuotes.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 8),
-                      itemBuilder: (context, index) =>
+                  : ListView(
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 88),
+                      children: [
+                        for (
+                          var index = 0;
+                          index < filteredQuotes.length;
+                          index++
+                        ) ...[
+                          if (index > 0) const SizedBox(height: 14),
                           _quoteCard(filteredQuotes[index]),
+                        ],
+                        _generateAllPackagesButton(),
+                        if (selectedQuotes.isNotEmpty)
+                          _selectionSummary(selectedQuotes),
+                        const SizedBox(height: 4),
+                      ],
                     ),
             ),
-            if (widget.quotes.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(10, 4, 10, 6),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 36,
-                  child: OutlinedButton.icon(
-                    onPressed: _showPdfComingSoon,
-                    icon: const Icon(Icons.picture_as_pdf_outlined, size: 15),
-                    label: Text(
-                      'Generate All Packages PDFs',
-                      style: GoogleFonts.urbanist(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.primary,
-                      side: const BorderSide(color: Color(0xFFF0D7C8)),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            if (selectedQuotes.isNotEmpty) _selectionSummary(selectedQuotes),
-            const SizedBox(height: 4),
           ],
         ),
         Positioned(
-          right: 12,
-          bottom: selectedQuotes.isNotEmpty ? 88 : 12,
+          right: 16,
+          bottom: selectedQuotes.isNotEmpty ? 92 : 16,
           child: FloatingActionButton.extended(
             heroTag: 'my-quotes-add-products',
             onPressed: widget.onAddProductsTap,
             backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,
-            icon: const Icon(Icons.add_shopping_cart_rounded, size: 16),
+            elevation: 4,
+            icon: const Icon(Icons.add_rounded, size: 20),
             label: Text(
               'Add Products',
               style: GoogleFonts.urbanist(
-                fontSize: 11,
+                fontSize: 13.5,
                 fontWeight: FontWeight.w700,
+                color: Colors.white,
               ),
             ),
           ),
@@ -1417,14 +1511,14 @@ class _MyQuotesTabContentState extends State<_MyQuotesTabContent> {
           children: [
             const Icon(
               Icons.receipt_long_rounded,
-              size: 44,
+              size: 48,
               color: AppColors.primary,
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 16),
             Text(
               'No Saved Quotes Yet',
               style: GoogleFonts.urbanist(
-                fontSize: 18,
+                fontSize: 19,
                 fontWeight: FontWeight.w700,
                 color: const Color(0xFF1E293B),
               ),
@@ -1434,18 +1528,31 @@ class _MyQuotesTabContentState extends State<_MyQuotesTabContent> {
               'Configure your flat, select a package, and calculate to save interior estimates.',
               textAlign: TextAlign.center,
               style: GoogleFonts.urbanist(
-                fontSize: 13,
+                fontSize: 14,
                 color: const Color(0xFF64748B),
               ),
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 20),
             ElevatedButton.icon(
               onPressed: widget.onCreateNewQuoteTap,
-              icon: const Icon(Icons.calculate_rounded, size: 17),
-              label: const Text('Calculate Cost Now'),
+              icon: const Icon(Icons.calculate_rounded, size: 19),
+              label: Text(
+                'Calculate Cost Now',
+                style: GoogleFonts.urbanist(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
               ),
             ),
           ],
@@ -1456,140 +1563,304 @@ class _MyQuotesTabContentState extends State<_MyQuotesTabContent> {
 
   Widget _quoteCard(EstimatorQuote quote) {
     final isSelected = _selectedQuoteIds.contains(quote.id);
-    final date = quote.createdAt;
-    final updatedLabel = 'Updated ${date.month}/${date.day}/${date.year}';
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isSelected ? AppColors.primary : const Color(0xFFF0A16B),
-          width: isSelected ? 1.3 : 1,
+          color: isSelected ? AppColors.primary : const Color(0xFFE2E8F0),
+          width: isSelected ? 2.0 : 1.2,
         ),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Color(0x08000000),
-            blurRadius: 5,
-            offset: Offset(0, 2),
+            color: isSelected
+                ? AppColors.primary.withValues(alpha: 0.12)
+                : const Color(0x0A000000),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(8, 7, 8, 8),
+        padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Top Row: Checkbox, Title, Price & Date
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SizedBox(
                   width: 22,
-                  height: 24,
+                  height: 22,
                   child: Checkbox(
                     value: isSelected,
                     onChanged: (_) => _toggleSelection(quote),
                     activeColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    side: const BorderSide(
+                      color: Color(0xFFCBD5E1),
+                      width: 1.5,
+                    ),
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     visualDensity: VisualDensity.compact,
                   ),
                 ),
-                const SizedBox(width: 5),
+                const SizedBox(width: 10),
                 Expanded(
-                  child: Text(
-                    quote.quoteName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.urbanist(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFF1E293B),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        quote.quoteName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.urbanist(
+                          fontSize: 15.5,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF1E293B),
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        '${quote.bhk} • ${quote.packageTitle}',
+                        style: GoogleFonts.urbanist(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          quote.formattedCostRange,
+                          style: GoogleFonts.urbanist(
+                            fontSize: 15.5,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF1E293B),
+                          ),
+                        ),
+                        PopupMenuButton<String>(
+                          tooltip: 'Quote options',
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(minWidth: 40),
+                          iconSize: 18,
+                          onSelected: (value) {
+                            if (value == 'delete') {
+                              setState(
+                                () => _selectedQuoteIds.remove(quote.id),
+                              );
+                              widget.onDeleteQuote(quote.id);
+                            }
+                          },
+                          itemBuilder: (context) => const [
+                            PopupMenuItem(
+                              value: 'delete',
+                              child: Text('Delete quote'),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  quote.formattedCostRange,
-                  style: GoogleFonts.urbanist(
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.primary,
-                  ),
-                ),
-                PopupMenuButton<String>(
-                  tooltip: 'Quote options',
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 40),
-                  iconSize: 17,
-                  onSelected: (value) {
-                    if (value == 'delete') {
-                      setState(() => _selectedQuoteIds.remove(quote.id));
-                      widget.onDeleteQuote(quote.id);
-                    }
-                  },
-                  itemBuilder: (context) => const [
-                    PopupMenuItem(value: 'delete', child: Text('Delete quote')),
+                    Text(
+                      quote.formattedUpdatedTime,
+                      style: GoogleFonts.urbanist(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF94A3B8),
+                      ),
+                    ),
                   ],
                 ),
               ],
             ),
-            Padding(
-              padding: const EdgeInsets.only(left: 27),
-              child: Text(
-                '${quote.bhk} • ${quote.packageTitle}',
-                style: GoogleFonts.urbanist(
-                  fontSize: 9.5,
-                  color: const Color(0xFF64748B),
-                ),
+
+            const SizedBox(height: 12),
+
+            // Middle Pill Container: items breakdown & detailed
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 8.5,
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(left: 27, top: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFF1F5F9)),
+              ),
               child: Row(
                 children: [
                   Expanded(
                     child: Text(
-                      '${quote.roomBreakdown.length} room categories • ${quote.approxAreaSqFt} sqft',
+                      quote.itemsSummary,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.urbanist(
-                        fontSize: 9,
-                        color: const Color(0xFF64748B),
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF475569),
                       ),
                     ),
                   ),
-                  Text(
-                    updatedLabel,
-                    style: GoogleFonts.urbanist(
-                      fontSize: 8.5,
-                      color: const Color(0xFF94A3B8),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: () => widget.onQuoteTap(quote),
+                    child: Text(
+                      'Detailed',
+                      style: GoogleFonts.urbanist(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF64748B),
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 7),
-            Wrap(
-              spacing: 4,
-              runSpacing: 4,
+
+            const SizedBox(height: 14),
+
+            // Action Buttons Row: [View Details] [Compare] [Share] [Generate PDF]
+            Row(
               children: [
-                _actionButton(
-                  icon: Icons.visibility_outlined,
-                  label: 'View Details',
-                  onPressed: () => widget.onQuoteTap(quote),
+                Expanded(
+                  flex: 12,
+                  child: SizedBox(
+                    height: 36,
+                    child: ElevatedButton(
+                      onPressed: () => widget.onQuoteTap(quote),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: Text(
+                        'View Details',
+                        maxLines: 1,
+                        style: GoogleFonts.urbanist(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-                _actionButton(
-                  icon: Icons.compare_arrows_rounded,
-                  label: 'Compare',
-                  onPressed: () => _toggleSelection(quote),
+                const SizedBox(width: 6),
+                Expanded(
+                  flex: 9,
+                  child: SizedBox(
+                    height: 36,
+                    child: OutlinedButton(
+                      onPressed: () => _toggleSelection(quote),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: isSelected
+                            ? AppColors.primary
+                            : const Color(0xFF475569),
+                        backgroundColor: Colors.white,
+                        side: BorderSide(
+                          color: isSelected
+                              ? AppColors.primary
+                              : const Color(0xFFE2E8F0),
+                          width: 1.2,
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: Text(
+                        'Compare',
+                        maxLines: 1,
+                        style: GoogleFonts.urbanist(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-                _actionButton(
-                  icon: Icons.share_outlined,
-                  label: 'Share',
-                  onPressed: () => _shareQuote(quote),
+                const SizedBox(width: 6),
+                Expanded(
+                  flex: 8,
+                  child: SizedBox(
+                    height: 36,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _shareQuote(quote),
+                      icon: const Icon(Icons.share_outlined, size: 14),
+                      label: Text(
+                        'Share',
+                        maxLines: 1,
+                        style: GoogleFonts.urbanist(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF475569),
+                        backgroundColor: Colors.white,
+                        side: const BorderSide(
+                          color: Color(0xFFE2E8F0),
+                          width: 1.2,
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-                _actionButton(
-                  icon: Icons.picture_as_pdf_outlined,
-                  label: 'Generate PDF',
-                  onPressed: _showPdfComingSoon,
+                const SizedBox(width: 6),
+                Expanded(
+                  flex: 13,
+                  child: SizedBox(
+                    height: 36,
+                    child: OutlinedButton.icon(
+                      onPressed: _showPdfComingSoon,
+                      icon: const Icon(
+                        Icons.picture_as_pdf_outlined,
+                        size: 14,
+                        color: AppColors.primary,
+                      ),
+                      label: Text(
+                        'Generate PDF',
+                        maxLines: 1,
+                        style: GoogleFonts.urbanist(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        backgroundColor: Colors.white,
+                        side: const BorderSide(
+                          color: Color(0xFFFFD4B8),
+                          width: 1.2,
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -1601,16 +1872,16 @@ class _MyQuotesTabContentState extends State<_MyQuotesTabContent> {
 
   Widget _selectionSummary(List<EstimatorQuote> selectedQuotes) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(10, 2, 10, 4),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: const Color(0xFF111827),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x22000000),
-            blurRadius: 8,
-            offset: Offset(0, 3),
+            color: Color(0x33000000),
+            blurRadius: 10,
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -1623,38 +1894,44 @@ class _MyQuotesTabContentState extends State<_MyQuotesTabContent> {
                 Text(
                   '${widget.quotes.length} Saved Quotes',
                   style: GoogleFonts.urbanist(
-                    fontSize: 10,
+                    fontSize: 13.5,
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
                   ),
                 ),
+                const SizedBox(height: 2),
                 Text(
-                  '${selectedQuotes.length} selected for comparison',
+                  '${selectedQuotes.length} Selected for Comparison',
                   style: GoogleFonts.urbanist(
-                    fontSize: 9,
-                    color: const Color(0xFFCBD5E1),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFFFF9F1C),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 10),
           ElevatedButton(
             onPressed: selectedQuotes.length >= 2 ? _showComparison : null,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
-              disabledBackgroundColor: const Color(0xFF475569),
-              disabledForegroundColor: Colors.white70,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              minimumSize: const Size(0, 30),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              textStyle: GoogleFonts.urbanist(
-                fontSize: 9,
+              disabledBackgroundColor: const Color(0xFF334155),
+              disabledForegroundColor: Colors.white54,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              elevation: 0,
+            ),
+            child: Text(
+              'Get all Packages Quote → 5 Tiers >',
+              style: GoogleFonts.urbanist(
+                fontSize: 11.5,
                 fontWeight: FontWeight.w800,
               ),
             ),
-            child: const Text('Compare Selected'),
           ),
         ],
       ),
@@ -1668,6 +1945,7 @@ class _MyQuotesTabContentState extends State<_MyQuotesTabContent> {
 class _ProductsTabContent extends StatefulWidget {
   const _ProductsTabContent({
     required this.selectedPackageId,
+    required this.packages,
     required this.onPackageSelected,
     required this.onProductTap,
     required this.onAddToCart,
@@ -1675,6 +1953,7 @@ class _ProductsTabContent extends StatefulWidget {
   });
 
   final String selectedPackageId;
+  final List<PackageConfig> packages;
   final ValueChanged<String> onPackageSelected;
   final ValueChanged<Product> onProductTap;
   final void Function(Product product, int quantity) onAddToCart;
@@ -1692,27 +1971,33 @@ class _ProductsTabContentState extends State<_ProductsTabContent> {
   final Map<String, int> _quoteQuantities = {};
   final Set<String> _comparedProductIds = {};
 
-  List<Product> get _products => Product.sampleProducts.where((product) {
+  List<Product> get _allProducts => Product.estimatorProducts;
+
+  List<Product> get _products => _allProducts.where((product) {
     final matchesQuery =
         _query.trim().isEmpty ||
         product.name.toLowerCase().contains(_query.trim().toLowerCase()) ||
         product.category.toLowerCase().contains(_query.trim().toLowerCase());
     final matchesCategory =
         _selectedCategory == 'All Items' ||
-        product.category == _selectedCategory;
-    return matchesQuery && matchesCategory;
+        product.category.toLowerCase() == _selectedCategory.toLowerCase();
+    final matchesPackage =
+        _packageFilter == 'All Packages' ||
+        product.packageId.toLowerCase() == _packageFilter.toLowerCase();
+    return matchesQuery && matchesCategory && matchesPackage;
   }).toList();
 
-  double get _quoteTotal {
+  double get _currentEstimateTotal {
     var total = 0.0;
-    for (final product in Product.sampleProducts) {
-      total += product.price * (_quoteQuantities[product.id] ?? 0);
+    for (final product in _products) {
+      final qty = _quantities[product.id] ?? 1;
+      total += product.price * qty;
     }
     return total;
   }
 
   void _showComparison() {
-    final products = Product.sampleProducts
+    final products = _allProducts
         .where((product) => _comparedProductIds.contains(product.id))
         .toList();
     if (products.length < 2) return;
@@ -1746,81 +2031,130 @@ class _ProductsTabContentState extends State<_ProductsTabContent> {
   @override
   Widget build(BuildContext context) {
     final products = _products;
-    final productCategories =
-        Product.sampleProducts
-            .map((product) => product.category)
-            .toSet()
-            .toList()
-          ..sort();
-    final categories = ['All Items', ...productCategories];
-    final selectedPackage = PackageConfig.allPackages.firstWhere(
+    const categories = [
+      'All Items',
+      'TV Unit',
+      'Sofa',
+      'Bed',
+      'Kitchen Cabinet',
+      'Dinning Table',
+      'Wardrobe',
+      'Temple',
+      'Center Table',
+      'Dressing Table',
+    ];
+    final packages = widget.packages.isNotEmpty
+        ? widget.packages
+        : PackageConfig.allPackages;
+    final selectedPackage = packages.firstWhere(
       (package) => package.id == widget.selectedPackageId,
-      orElse: () => PackageConfig.allPackages[1],
+      orElse: () => packages.length > 1 ? packages[1] : packages.first,
     );
 
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(10, 7, 10, 4),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
           child: Row(
             children: [
               Expanded(
                 child: SizedBox(
-                  height: 36,
+                  height: 46,
                   child: TextField(
                     key: const ValueKey('estimator-products-search'),
                     onChanged: (value) => setState(() => _query = value),
                     textInputAction: TextInputAction.search,
-                    style: GoogleFonts.urbanist(fontSize: 11),
+                    style: GoogleFonts.urbanist(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF1E293B),
+                    ),
                     decoration: InputDecoration(
                       hintText: 'Search products...',
                       hintStyle: GoogleFonts.urbanist(
-                        fontSize: 10,
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w500,
                         color: const Color(0xFF94A3B8),
                       ),
-                      prefixIcon: const Icon(Icons.search_rounded, size: 16),
+                      prefixIcon: const Icon(
+                        Icons.search_rounded,
+                        size: 21,
+                        color: Color(0xFF94A3B8),
+                      ),
                       isDense: true,
                       filled: true,
                       fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 7),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 11),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(11),
-                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(
+                          color: Color(0xFFE2E8F0),
+                          width: 1.2,
+                        ),
                       ),
                       enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(11),
-                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(
+                          color: Color(0xFFE2E8F0),
+                          width: 1.2,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(
+                          color: AppColors.primary,
+                          width: 1.4,
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 6),
-              IconButton(
-                key: const ValueKey('estimator-products-filter'),
-                onPressed: () => setState(() {
-                  _selectedCategory = 'All Items';
-                  _packageFilter = 'All Packages';
-                }),
-                icon: const Icon(Icons.tune_rounded, size: 17),
-                visualDensity: VisualDensity.compact,
-                tooltip: 'Clear filters',
+              const SizedBox(width: 10),
+              SizedBox(
+                width: 46,
+                height: 46,
+                child: OutlinedButton(
+                  key: const ValueKey('estimator-products-filter'),
+                  onPressed: () => setState(() {
+                    _selectedCategory = 'All Items';
+                    _packageFilter = 'All Packages';
+                  }),
+                  style: OutlinedButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    foregroundColor: const Color(0xFF475569),
+                    side: const BorderSide(
+                      color: Color(0xFFE2E8F0),
+                      width: 1.2,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.tune_rounded,
+                    size: 22,
+                    color: Color(0xFF475569),
+                  ),
+                ),
               ),
             ],
           ),
         ),
+        // Row 1: Package Filters
         SizedBox(
-          height: 31,
+          height: 38,
           child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             scrollDirection: Axis.horizontal,
             children: [
               _catalogChip(
                 label: 'All Packages',
                 selected: _packageFilter == 'All Packages',
+                showCheckmarkOnSelected: true,
                 onTap: () => setState(() => _packageFilter = 'All Packages'),
               ),
-              for (final package in PackageConfig.allPackages)
+              for (final package in packages)
                 _catalogChip(
                   label: package.title,
                   selected: _packageFilter == package.id,
@@ -1832,10 +2166,12 @@ class _ProductsTabContentState extends State<_ProductsTabContent> {
             ],
           ),
         ),
+        const SizedBox(height: 8),
+        // Row 2: Category Filters
         SizedBox(
-          height: 31,
+          height: 38,
           child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             scrollDirection: Axis.horizontal,
             children: [
               for (final category in categories)
@@ -1848,16 +2184,18 @@ class _ProductsTabContentState extends State<_ProductsTabContent> {
             ],
           ),
         ),
+        const SizedBox(height: 8),
         if (_comparedProductIds.isNotEmpty)
           Padding(
-            padding: const EdgeInsets.fromLTRB(10, 2, 10, 2),
+            padding: const EdgeInsets.fromLTRB(16, 2, 16, 4),
             child: Row(
               children: [
                 Expanded(
                   child: Text(
                     '${_comparedProductIds.length} selected for comparison',
                     style: GoogleFonts.urbanist(
-                      fontSize: 9,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
                       color: const Color(0xFF64748B),
                     ),
                   ),
@@ -1866,7 +2204,14 @@ class _ProductsTabContentState extends State<_ProductsTabContent> {
                   onPressed: _comparedProductIds.length >= 2
                       ? _showComparison
                       : null,
-                  child: const Text('Compare'),
+                  child: Text(
+                    'Compare',
+                    style: GoogleFonts.urbanist(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -1877,15 +2222,16 @@ class _ProductsTabContentState extends State<_ProductsTabContent> {
                   child: Text(
                     'No products found.',
                     style: GoogleFonts.urbanist(
-                      fontSize: 13,
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w600,
                       color: const Color(0xFF64748B),
                     ),
                   ),
                 )
               : ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(8, 3, 8, 8),
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
                   itemCount: products.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 7),
+                  separatorBuilder: (_, _) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     final product = products[index];
                     final quantity = _quantities[product.id] ?? 1;
@@ -1914,7 +2260,7 @@ class _ProductsTabContentState extends State<_ProductsTabContent> {
                 ),
         ),
         Container(
-          padding: const EdgeInsets.fromLTRB(10, 7, 10, 8),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
           decoration: const BoxDecoration(
             color: Colors.white,
             border: Border(top: BorderSide(color: Color(0xFFF1EDE9))),
@@ -1926,17 +2272,19 @@ class _ProductsTabContentState extends State<_ProductsTabContent> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Total Sale Estimate',
+                      'Total Rate Estimate',
                       style: GoogleFonts.urbanist(
-                        fontSize: 9,
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
                         color: const Color(0xFF64748B),
                       ),
                     ),
+                    const SizedBox(height: 2),
                     Text(
-                      EstimatorQuote.formatCurrency(_quoteTotal),
+                      '${EstimatorQuote.formatCurrency(_currentEstimateTotal)} / sq.ft',
                       style: GoogleFonts.urbanist(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 16.5,
+                        fontWeight: FontWeight.w900,
                         color: AppColors.primary,
                       ),
                     ),
@@ -1946,25 +2294,41 @@ class _ProductsTabContentState extends State<_ProductsTabContent> {
               Expanded(
                 flex: 2,
                 child: SizedBox(
-                  height: 38,
+                  height: 48,
                   child: ElevatedButton(
                     onPressed: widget.onSelectPackage,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(24),
                       ),
+                      elevation: 1,
                     ),
-                    child: Text(
-                      'Select ${selectedPackage.title}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.urbanist(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                      ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            _packageFilter == 'All Packages'
+                                ? 'Select ${selectedPackage.title}'
+                                : 'Select ${packages.firstWhere((p) => p.id == _packageFilter, orElse: () => selectedPackage).title}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.urbanist(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        const Icon(
+                          Icons.arrow_forward_rounded,
+                          size: 18,
+                          color: Colors.white,
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -1981,33 +2345,58 @@ class _ProductsTabContentState extends State<_ProductsTabContent> {
     required bool selected,
     required VoidCallback onTap,
     bool filled = false,
+    bool showCheckmarkOnSelected = false,
   }) {
+    final isFilledStyle = filled && selected;
     return Padding(
-      padding: const EdgeInsets.only(right: 5),
-      child: ChoiceChip(
-        label: Text(label),
-        selected: selected,
-        onSelected: (_) => onTap(),
-        showCheckmark: false,
-        visualDensity: VisualDensity.compact,
-        labelStyle: GoogleFonts.urbanist(
-          fontSize: 9,
-          fontWeight: FontWeight.w700,
-          color: selected ? Colors.white : const Color(0xFF475569),
+      padding: const EdgeInsets.only(right: 8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+          decoration: BoxDecoration(
+            color: isFilledStyle
+                ? AppColors.primary
+                : (selected ? const Color(0xFFFFF7F2) : Colors.white),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: selected ? AppColors.primary : const Color(0xFFE2E8F0),
+              width: selected ? 1.4 : 1.0,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (selected && showCheckmarkOnSelected) ...[
+                const Icon(
+                  Icons.check_circle_outline_rounded,
+                  size: 15,
+                  color: AppColors.primary,
+                ),
+                const SizedBox(width: 5),
+              ],
+              Text(
+                label,
+                style: GoogleFonts.urbanist(
+                  fontSize: 13,
+                  fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                  color: isFilledStyle
+                      ? Colors.white
+                      : (selected
+                            ? AppColors.primary
+                            : const Color(0xFF475569)),
+                ),
+              ),
+            ],
+          ),
         ),
-        backgroundColor: Colors.white,
-        selectedColor: filled ? AppColors.primary : AppColors.primary,
-        side: BorderSide(
-          color: selected ? AppColors.primary : const Color(0xFFE2E8F0),
-        ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        padding: const EdgeInsets.symmetric(horizontal: 2),
       ),
     );
   }
 }
 
-class _EstimatorProductCard extends StatelessWidget {
+class _EstimatorProductCard extends StatefulWidget {
   const _EstimatorProductCard({
     required this.product,
     required this.package,
@@ -2033,18 +2422,65 @@ class _EstimatorProductCard extends StatelessWidget {
   final VoidCallback onAddToCart;
 
   @override
+  State<_EstimatorProductCard> createState() => _EstimatorProductCardState();
+}
+
+class _EstimatorProductCardState extends State<_EstimatorProductCard> {
+  int _imageIndex = 0;
+
+  List<String> get _images {
+    if (widget.product.images.isNotEmpty) {
+      return widget.product.images;
+    }
+    return [widget.product.image];
+  }
+
+  void _nextImage() {
+    if (_images.length <= 1) return;
+    setState(() {
+      _imageIndex = (_imageIndex + 1) % _images.length;
+    });
+  }
+
+  void _selectBhk(int index) {
+    if (index >= 0 && index < _images.length) {
+      setState(() {
+        _imageIndex = index;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final product = widget.product;
+    final package = widget.package;
+    final quantity = widget.quantity;
+    final quoteQuantity = widget.quoteQuantity;
+    final isCompared = widget.isCompared;
+
+    final materialText = product.material.isNotEmpty
+        ? product.material
+        : (product.description.isNotEmpty
+              ? product.description
+              : product.category);
+    final dimensionsText = product.dimensions.isNotEmpty
+        ? product.dimensions
+        : '(L × H) 8.5 ft × 4.0 ft';
+
+    final images = _images;
+    final currentImageUrl = images[_imageIndex % images.length];
+
     return Container(
-      padding: const EdgeInsets.all(7),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(11),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x08000000),
-            blurRadius: 4,
-            offset: Offset(0, 1),
+            color: Color(0x0A000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -2053,33 +2489,96 @@ class _EstimatorProductCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Product Thumbnail Image with BHK switcher badge
               InkWell(
-                onTap: onTap,
-                borderRadius: BorderRadius.circular(8),
+                onTap: images.length > 1 ? _nextImage : widget.onTap,
+                borderRadius: BorderRadius.circular(12),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
                   child: SizedBox(
-                    width: 72,
-                    height: 68,
-                    child: Image.asset(
-                      product.image,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => const ColoredBox(
-                        color: Color(0xFFF1F5F9),
-                        child: Icon(
-                          Icons.chair_alt_outlined,
-                          color: Color(0xFF94A3B8),
-                        ),
-                      ),
+                    width: 86,
+                    height: 86,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        currentImageUrl.startsWith('http://') ||
+                                currentImageUrl.startsWith('https://')
+                            ? CachedNetworkImage(
+                                imageUrl: currentImageUrl,
+                                fit: BoxFit.cover,
+                                placeholder: (context, url) => const ColoredBox(
+                                  color: Color(0xFFF1F5F9),
+                                  child: Center(
+                                    child: SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    ),
+                                  ),
+                                ),
+                                errorWidget: (context, url, error) => Image.asset(
+                                  AppAssets.livingRoomImage,
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                            : Image.asset(
+                                currentImageUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, _, _) => const ColoredBox(
+                                  color: Color(0xFFF1F5F9),
+                                  child: Icon(
+                                    Icons.chair_alt_outlined,
+                                    size: 34,
+                                    color: Color(0xFF94A3B8),
+                                  ),
+                                ),
+                              ),
+
+                        // BHK badge on thumbnail
+                        if (images.length > 1)
+                          Positioned(
+                            bottom: 3,
+                            left: 3,
+                            right: 3,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.65),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    '${_imageIndex + 1}BHK',
+                                    style: GoogleFonts.urbanist(
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 2),
+                                  const Icon(
+                                    Icons.touch_app_rounded,
+                                    size: 9,
+                                    color: Colors.white70,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
+              // Details
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Title and Price
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -2089,100 +2588,256 @@ class _EstimatorProductCard extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.urbanist(
-                              fontSize: 11,
+                              fontSize: 15,
                               fontWeight: FontWeight.w800,
                               color: const Color(0xFF1E293B),
+                              letterSpacing: -0.2,
                             ),
                           ),
                         ),
                         const SizedBox(width: 4),
-                        Text(
-                          EstimatorQuote.formatCurrency(product.price),
-                          style: GoogleFonts.urbanist(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            color: const Color(0xFF1E293B),
-                          ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              EstimatorQuote.formatCurrency(product.price * quantity),
+                              style: GoogleFonts.urbanist(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w800,
+                                color: const Color(0xFF1E293B),
+                              ),
+                            ),
+                            if (quantity > 1)
+                              Text(
+                                '${EstimatorQuote.formatCurrency(product.price)} each',
+                                style: GoogleFonts.urbanist(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF94A3B8),
+                                ),
+                              ),
+                          ],
                         ),
                       ],
                     ),
                     const SizedBox(height: 2),
+                    // Material / Subtitle
                     Text(
-                      product.description.isEmpty
-                          ? product.category
-                          : product.description,
+                      materialText,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.urbanist(
-                        fontSize: 8.5,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
                         color: const Color(0xFF64748B),
                       ),
                     ),
-                    const SizedBox(height: 3),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 5,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFF2EB),
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                      child: Text(
-                        package.title,
-                        style: GoogleFonts.urbanist(
-                          fontSize: 8,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.primary,
-                        ),
+                    const SizedBox(height: 2),
+                    // Package Title tag
+                    Text(
+                      product.packageTitle.isNotEmpty
+                          ? product.packageTitle
+                          : package.title,
+                      style: GoogleFonts.urbanist(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
                       ),
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(height: 5),
+                    // Dimensions Box + Qty Control
                     Row(
                       children: [
-                        Text(
-                          product.category,
-                          style: GoogleFonts.urbanist(
-                            fontSize: 8,
-                            color: const Color(0xFF64748B),
+                        Flexible(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: const Color(0xFFE2E8F0),
+                                width: 1,
+                              ),
+                            ),
+                            child: Text(
+                              dimensionsText,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.urbanist(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF334155),
+                              ),
+                            ),
                           ),
                         ),
-                        const Spacer(),
+                        const SizedBox(width: 6),
                         _QuantityControl(
                           quantity: quantity,
-                          onChanged: onQuantityChanged,
+                          onChanged: widget.onQuantityChanged,
                         ),
                       ],
                     ),
+                    // BHK variant pills
+                    if (images.length > 1) ...[
+                      const SizedBox(height: 5),
+                      Row(
+                        children: [
+                          for (int i = 0; i < images.length; i++) ...[
+                            InkWell(
+                              onTap: () => _selectBhk(i),
+                              borderRadius: BorderRadius.circular(4),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: _imageIndex == i
+                                      ? AppColors.primary.withValues(alpha: 0.12)
+                                      : const Color(0xFFF8FAFC),
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(
+                                    color: _imageIndex == i
+                                        ? AppColors.primary
+                                        : const Color(0xFFE2E8F0),
+                                    width: _imageIndex == i ? 1.2 : 0.8,
+                                  ),
+                                ),
+                                child: Text(
+                                  '${i + 1}BHK',
+                                  style: GoogleFonts.urbanist(
+                                    fontSize: 9.5,
+                                    fontWeight: _imageIndex == i
+                                        ? FontWeight.w800
+                                        : FontWeight.w600,
+                                    color: _imageIndex == i
+                                        ? AppColors.primary
+                                        : const Color(0xFF64748B),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            if (i < images.length - 1) const SizedBox(width: 4),
+                          ],
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 12),
+          // Action Buttons: [Compare] [Add to Quote v] [Add to Cart]
           Row(
             children: [
               Expanded(
-                child: _ProductActionButton(
-                  label: isCompared ? 'Compared' : 'Compare',
-                  onPressed: onCompare,
-                  selected: isCompared,
+                child: SizedBox(
+                  height: 38,
+                  child: OutlinedButton(
+                    onPressed: widget.onCompare,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: isCompared
+                          ? AppColors.primary
+                          : const Color(0xFF475569),
+                      backgroundColor: isCompared
+                          ? const Color(0xFFFFF7F2)
+                          : Colors.white,
+                      side: BorderSide(
+                        color: isCompared
+                            ? AppColors.primary
+                            : const Color(0xFFE2E8F0),
+                        width: 1.2,
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: Text(
+                      isCompared ? 'Compared' : 'Compare',
+                      maxLines: 1,
+                      style: GoogleFonts.urbanist(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
                 ),
               ),
-              const SizedBox(width: 5),
+              const SizedBox(width: 8),
               Expanded(
-                child: _ProductActionButton(
-                  label: quoteQuantity > 0 ? 'Added to Quote' : 'Add to Quote',
-                  onPressed: onAddToQuote,
-                  selected: quoteQuantity > 0,
+                child: SizedBox(
+                  height: 38,
+                  child: OutlinedButton(
+                    onPressed: widget.onAddToQuote,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      backgroundColor: Colors.white,
+                      side: const BorderSide(
+                        color: Color(0xFFFFD4B8),
+                        width: 1.2,
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            quoteQuantity > 0
+                                ? 'Added ($quoteQuantity)'
+                                : 'Add to Quote',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.urbanist(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 2),
+                        const Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          size: 17,
+                          color: AppColors.primary,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-              const SizedBox(width: 5),
+              const SizedBox(width: 8),
               Expanded(
-                child: _ProductActionButton(
-                  label: 'Add to Cart',
-                  onPressed: onAddToCart,
-                  primary: true,
+                child: SizedBox(
+                  height: 38,
+                  child: ElevatedButton(
+                    onPressed: widget.onAddToCart,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: Text(
+                      'Add to Cart',
+                      maxLines: 1,
+                      style: GoogleFonts.urbanist(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -2202,25 +2857,39 @@ class _QuantityControl extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 22,
+      height: 28,
+      padding: const EdgeInsets.symmetric(horizontal: 2),
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        color: Colors.white,
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
         borderRadius: BorderRadius.circular(7),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            child: Text(
+              'Qty',
+              style: GoogleFonts.urbanist(
+                fontSize: 10.5,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF64748B),
+              ),
+            ),
+          ),
           _QuantityButton(
             icon: Icons.remove,
             onTap: quantity > 1 ? () => onChanged(quantity - 1) : null,
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 3),
             child: Text(
               '$quantity',
               style: GoogleFonts.urbanist(
-                fontSize: 9,
+                fontSize: 12,
                 fontWeight: FontWeight.w700,
+                color: const Color(0xFF1E293B),
               ),
             ),
           ),
@@ -2244,9 +2913,16 @@ class _QuantityButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(4),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: Icon(icon, size: 11, color: const Color(0xFF475569)),
+        padding: const EdgeInsets.all(3),
+        child: Icon(
+          icon,
+          size: 13,
+          color: onTap != null
+              ? const Color(0xFF475569)
+              : const Color(0xFFCBD5E1),
+        ),
       ),
     );
   }
@@ -2268,11 +2944,11 @@ class _ProductActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 25,
+      height: 38,
       child: OutlinedButton(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 3),
+          padding: const EdgeInsets.symmetric(horizontal: 4),
           minimumSize: Size.zero,
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           foregroundColor: primary || selected
@@ -2285,10 +2961,13 @@ class _ProductActionButton extends StatelessWidget {
             color: primary || selected
                 ? AppColors.primary
                 : const Color(0xFFE2E8F0),
+            width: 1.2,
           ),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
           textStyle: GoogleFonts.urbanist(
-            fontSize: 8,
+            fontSize: 12,
             fontWeight: FontWeight.w700,
           ),
         ),
