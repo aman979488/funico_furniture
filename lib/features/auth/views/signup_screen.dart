@@ -7,7 +7,6 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/router/app_router.dart';
 import '../../../core/services/pin_session.dart';
-import '../../../core/services/pin_storage.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/app_brand_logo.dart';
 import '../../../shared/widgets/auth_input_field.dart';
@@ -137,14 +136,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         extra: {'name': user.displayName ?? '', 'email': user.email ?? ''},
       );
     } else {
-      final savedPin = await ref.read(pinStorageProvider).readPin(user.uid);
-      if (!mounted) return;
-      if (savedPin == null) {
-        context.go(AppRoutes.createPin, extra: true);
-      } else {
-        PinSession.lock();
-        context.go(AppRoutes.enterPin);
-      }
+      PinSession.unlock(user.uid);
+      context.go(AppRoutes.home);
     }
   }
 
@@ -302,8 +295,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                       Row(
                         children: [
                           const Expanded(
-                            child:
-                                Divider(color: AppColors.border, thickness: 1),
+                            child: Divider(
+                              color: AppColors.border,
+                              thickness: 1,
+                            ),
                           ),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -317,8 +312,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                             ),
                           ),
                           const Expanded(
-                            child:
-                                Divider(color: AppColors.border, thickness: 1),
+                            child: Divider(
+                              color: AppColors.border,
+                              thickness: 1,
+                            ),
                           ),
                         ],
                       ),

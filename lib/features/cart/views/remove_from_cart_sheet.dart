@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/formatters.dart';
 import '../../../shared/models/cart_item.dart';
 import '../viewmodels/cart_viewmodel.dart';
 
@@ -116,7 +117,7 @@ class RemoveFromCartSheet extends ConsumerWidget {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          '\$${item.totalPrice.toStringAsFixed(2)}',
+                          CurrencyFormatter.inRupees(item.totalPrice),
                           style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,

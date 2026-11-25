@@ -488,7 +488,11 @@ class EstimatorRepository {
           .toList();
 
       await prefs.setStringList(_quotesKey, encoded);
-    } catch (_) {}
+    } catch (error, stackTrace) {
+      debugPrint('Failed to save estimator quote: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      rethrow;
+    }
   }
 
   Future<void> deleteQuote(String quoteId) async {

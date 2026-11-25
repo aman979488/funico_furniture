@@ -11,7 +11,6 @@ import '../../../core/constants/app_assets.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/services/pin_session.dart';
-import '../../../core/services/pin_storage.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/app_brand_logo.dart';
 import '../../../shared/widgets/primary_button.dart';
@@ -84,14 +83,8 @@ class _LetsYouInScreenState extends ConsumerState<LetsYouInScreen> {
         extra: {'name': user.displayName ?? '', 'email': user.email ?? ''},
       );
     } else {
-      final savedPin = await ref.read(pinStorageProvider).readPin(user.uid);
-      if (!mounted) return;
-      if (savedPin == null) {
-        context.go(AppRoutes.createPin, extra: true);
-      } else {
-        PinSession.lock();
-        context.go(AppRoutes.enterPin);
-      }
+      PinSession.unlock(user.uid);
+      context.go(AppRoutes.home);
     }
   }
 
@@ -144,9 +137,8 @@ class _LetsYouInScreenState extends ConsumerState<LetsYouInScreen> {
                             child: Image.asset(
                               AppAssets.onboarding1,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, _, _) => const Center(
-                                child: AppBrandLogo(size: 90),
-                              ),
+                              errorBuilder: (_, _, _) =>
+                                  const Center(child: AppBrandLogo(size: 90)),
                             ),
                           ),
                         ),

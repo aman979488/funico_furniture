@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/utils/formatters.dart';
 import '../models/product.dart';
 
 class ProductCard extends StatelessWidget {
@@ -118,7 +119,7 @@ class ProductCard extends StatelessWidget {
           if (product.price > 0) ...[
             const SizedBox(height: 4),
             Text(
-              '\$${product.price.toStringAsFixed(2)}',
+              CurrencyFormatter.inRupees(product.price),
               style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
             ),
           ],

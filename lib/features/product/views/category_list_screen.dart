@@ -247,7 +247,9 @@ class CategoryListScreen extends StatelessWidget {
           id: '${category.toLowerCase()}-${type.name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-')}',
           name: type.name,
           category: category,
-          price: type.price,
+          price: type.price < Product.minimumPrice
+              ? Product.minimumPrice
+              : type.price,
           image: '',
           description: type.description,
         ),

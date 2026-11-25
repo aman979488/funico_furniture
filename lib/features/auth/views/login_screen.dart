@@ -7,7 +7,6 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/router/app_router.dart';
 import '../../../core/services/pin_session.dart';
-import '../../../core/services/pin_storage.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/app_brand_logo.dart';
 import '../../../shared/widgets/auth_input_field.dart';
@@ -71,16 +70,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     if (signedIn) {
       final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        final savedPin = await ref.read(pinStorageProvider).readPin(user.uid);
-        if (!mounted) return;
-        if (savedPin == null) {
-          context.go(AppRoutes.createPin, extra: true);
-          return;
-        }
+      if (user == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not complete sign-in.')),
+        );
+        return;
       }
-      PinSession.lock();
-      context.go(AppRoutes.enterPin);
+      PinSession.unlock(user.uid);
+      context.go(AppRoutes.home);
       return;
     }
 
@@ -128,14 +125,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         extra: {'name': user.displayName ?? '', 'email': user.email ?? ''},
       );
     } else {
-      final savedPin = await ref.read(pinStorageProvider).readPin(user.uid);
-      if (!mounted) return;
-      if (savedPin == null) {
-        context.go(AppRoutes.createPin, extra: true);
-      } else {
-        PinSession.lock();
-        context.go(AppRoutes.enterPin);
-      }
+      PinSession.unlock(user.uid);
+      context.go(AppRoutes.home);
     }
   }
 
@@ -252,7 +243,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           height: 56,
                           width: double.infinity,
                           decoration: BoxDecoration(
-                            color: filled ? AppColors.primary : AppColors.disabled,
+                            color: filled
+                                ? AppColors.primary
+                                : AppColors.disabled,
                             borderRadius: BorderRadius.circular(30),
                             boxShadow: filled
                                 ? const [

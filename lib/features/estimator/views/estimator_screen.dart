@@ -22,17 +22,22 @@ class EstimatorScreen extends ConsumerStatefulWidget {
 
 class _EstimatorScreenState extends ConsumerState<EstimatorScreen> {
   late final TextEditingController _quoteNameController;
+  late final PageController _tabPageController;
 
   @override
   void initState() {
     super.initState();
     final currentQuoteName = ref.read(estimatorViewModelProvider).quoteName;
     _quoteNameController = TextEditingController(text: currentQuoteName);
+    _tabPageController = PageController(
+      initialPage: ref.read(estimatorViewModelProvider).currentTabIndex,
+    );
   }
 
   @override
   void dispose() {
     _quoteNameController.dispose();
+    _tabPageController.dispose();
     super.dispose();
   }
 
@@ -57,9 +62,19 @@ class _EstimatorScreenState extends ConsumerState<EstimatorScreen> {
         return _EstimateResultBottomSheet(
           quote: quote,
           onSaveQuote: () async {
-            await ref
-                .read(estimatorViewModelProvider.notifier)
-                .saveCurrentQuote(quote);
+            try {
+              await ref
+                  .read(estimatorViewModelProvider.notifier)
+                  .saveCurrentQuote(quote);
+            } catch (error, stackTrace) {
+              debugPrint('Failed to save estimator quote: $error');
+              debugPrintStack(stackTrace: stackTrace);
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Could not save this quote.')),
+              );
+              return;
+            }
             if (!mounted) return;
             if (sheetContext.mounted) {
               Navigator.of(sheetContext).pop();
@@ -88,10 +103,59 @@ class _EstimatorScreenState extends ConsumerState<EstimatorScreen> {
     );
   }
 
+  Future<void> _addProductToQuote(Product product, int quantity) async {
+    try {
+      await ref
+          .read(estimatorViewModelProvider.notifier)
+          .addProductToQuote(product, quantity);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${product.name} added to My Quotes.')),
+      );
+    } catch (error, stackTrace) {
+      debugPrint('Failed to add product to estimator quote: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not add product to My Quotes.')),
+      );
+    }
+  }
+
+  void _openEstimateDetailsScreen({
+    required EstimatorQuote quote,
+    required PackageConfig package,
+    required String imageAsset,
+  }) {
+    Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => _EstimateDetailsScreen(
+          quote: quote,
+          package: package,
+          imageAsset: imageAsset,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(estimatorViewModelProvider);
     final vm = ref.read(estimatorViewModelProvider.notifier);
+    ref.listen(
+      estimatorViewModelProvider.select((value) => value.currentTabIndex),
+      (_, nextIndex) {
+        if (!_tabPageController.hasClients) return;
+        final currentPage = _tabPageController.page;
+        if (currentPage == null || currentPage.round() != nextIndex) {
+          _tabPageController.animateToPage(
+            nextIndex,
+            duration: const Duration(milliseconds: 150),
+            curve: Curves.easeInOut,
+          );
+        }
+      },
+    );
 
     return PopScope(
       canPop: false,
@@ -164,13 +228,16 @@ class _EstimatorScreenState extends ConsumerState<EstimatorScreen> {
             // Top Navigation Tabs: CALCULATE | MY QUOTES | PRODUCTS
             _EstimatorTabsBar(
               activeTabIndex: state.currentTabIndex,
-              onTabSelected: (index) => vm.setTab(index),
+              onTabSelected: vm.setTab,
             ),
 
             // Body per tab
             Expanded(
-              child: IndexedStack(
-                index: state.currentTabIndex,
+              child: PageView(
+                key: const ValueKey('estimator-tab-pages'),
+                controller: _tabPageController,
+                physics: const _EstimatorTabSwipePhysics(),
+                onPageChanged: vm.setTab,
                 children: [
                   // Tab 0: CALCULATE (Step 1 vs Step 2)
                   state.calculateStep == 1
@@ -192,7 +259,17 @@ class _EstimatorScreenState extends ConsumerState<EstimatorScreen> {
                           onNextImage: (id) => vm.nextPackageImage(id),
                           onCalculateCostTap: () {
                             final quote = vm.calculateEstimate();
-                            _showEstimateSummarySheet(quote);
+                            final package = state.currentPackageConfig;
+                            final images = package.images.isNotEmpty
+                                ? package.images
+                                : [package.imageAsset];
+                            final imageIndex =
+                                state.packageImageIndices[package.id] ?? 0;
+                            _openEstimateDetailsScreen(
+                              quote: quote,
+                              package: package,
+                              imageAsset: images[imageIndex % images.length],
+                            );
                           },
                         ),
 
@@ -214,6 +291,7 @@ class _EstimatorScreenState extends ConsumerState<EstimatorScreen> {
                     onPackageSelected: (id) => vm.selectPackage(id),
                     onProductTap: (product) =>
                         context.push(AppRoutes.productDetails, extra: product),
+                    onAddToQuote: _addProductToQuote,
                     onSelectPackage: () {
                       vm.setTab(0);
                       vm.goToPackageSelection();
@@ -222,12 +300,7 @@ class _EstimatorScreenState extends ConsumerState<EstimatorScreen> {
                       ref
                           .read(cartViewModelProvider.notifier)
                           .addToCart(product, quantity: quantity);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('${product.name} added to cart.'),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
+                      context.push(AppRoutes.cart);
                     },
                   ),
                 ],
@@ -236,6 +309,56 @@ class _EstimatorScreenState extends ConsumerState<EstimatorScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _EstimatorTabSwipePhysics extends PageScrollPhysics {
+  const _EstimatorTabSwipePhysics({super.parent});
+
+  @override
+  SpringDescription get spring =>
+      const SpringDescription(mass: 1, stiffness: 700, damping: 54);
+
+  @override
+  _EstimatorTabSwipePhysics applyTo(ScrollPhysics? ancestor) {
+    return _EstimatorTabSwipePhysics(parent: buildParent(ancestor));
+  }
+
+  @override
+  Simulation? createBallisticSimulation(
+    ScrollMetrics position,
+    double velocity,
+  ) {
+    if (position.viewportDimension <= 0) {
+      return super.createBallisticSimulation(position, velocity);
+    }
+
+    final tolerance = toleranceFor(position);
+    final page = position.pixels / position.viewportDimension;
+    final lowerPage = page.floorToDouble();
+    final upperPage = page.ceilToDouble();
+    late final double targetPage;
+
+    if (velocity > 0) {
+      targetPage = lowerPage + 1;
+    } else if (velocity < 0) {
+      targetPage = upperPage - 1;
+    } else {
+      targetPage = page.roundToDouble();
+    }
+
+    final targetPixels = (targetPage * position.viewportDimension)
+        .clamp(position.minScrollExtent, position.maxScrollExtent)
+        .toDouble();
+    if (targetPixels == position.pixels) return null;
+
+    return ScrollSpringSimulation(
+      spring,
+      position.pixels,
+      targetPixels,
+      velocity,
+      tolerance: tolerance,
     );
   }
 }
@@ -419,7 +542,8 @@ class _CalculateStep1Content extends StatelessWidget {
                   Center(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(40, 12, 40, 22),
-                      child: bhkConfig.imageAsset.startsWith('http://') ||
+                      child:
+                          bhkConfig.imageAsset.startsWith('http://') ||
                               bhkConfig.imageAsset.startsWith('https://')
                           ? CachedNetworkImage(
                               imageUrl: bhkConfig.imageAsset,
@@ -443,9 +567,9 @@ class _CalculateStep1Content extends StatelessWidget {
                               fit: BoxFit.contain,
                               errorBuilder: (context, error, stackTrace) =>
                                   Image.asset(
-                                AppAssets.floorplanSample,
-                                fit: BoxFit.contain,
-                              ),
+                                    AppAssets.floorplanSample,
+                                    fit: BoxFit.contain,
+                                  ),
                             ),
                     ),
                   ),
@@ -1122,6 +1246,183 @@ class _PurposeChip extends StatelessWidget {
   }
 }
 
+class _EstimateDetailsScreen extends StatelessWidget {
+  const _EstimateDetailsScreen({
+    required this.quote,
+    required this.package,
+    required this.imageAsset,
+  });
+
+  final EstimatorQuote quote;
+  final PackageConfig package;
+  final String imageAsset;
+
+  Widget _buildImage() {
+    if (imageAsset.startsWith('http://') || imageAsset.startsWith('https://')) {
+      return CachedNetworkImage(
+        key: const ValueKey('estimate-selected-package-image'),
+        imageUrl: imageAsset,
+        fit: BoxFit.cover,
+        placeholder: (context, url) => const ColoredBox(
+          color: Color(0xFFE2E8F0),
+          child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+        ),
+        errorWidget: (context, url, error) =>
+            Image.asset(AppAssets.livingRoomImage, fit: BoxFit.cover),
+      );
+    }
+
+    return Image.asset(
+      imageAsset,
+      key: const ValueKey('estimate-selected-package-image'),
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) =>
+          Image.asset(AppAssets.livingRoomImage, fit: BoxFit.cover),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      key: const ValueKey('estimate-details-screen'),
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        title: Text(
+          'Estimate Details',
+          style: GoogleFonts.urbanist(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF1E293B),
+          ),
+        ),
+        leading: IconButton(
+          key: const ValueKey('estimate-details-back'),
+          icon: const Icon(
+            Icons.chevron_left_rounded,
+            size: 28,
+            color: Color(0xFF1E293B),
+          ),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          AspectRatio(
+            aspectRatio: 16 / 9,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: _buildImage(),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  package.title,
+                  style: GoogleFonts.urbanist(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF1E293B),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                package.formattedRate,
+                style: GoogleFonts.urbanist(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.primary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            package.description,
+            style: GoogleFonts.urbanist(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: const Color(0xFF64748B),
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'Estimate details',
+            style: GoogleFonts.urbanist(
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF1E293B),
+            ),
+          ),
+          const SizedBox(height: 8),
+          _EstimateDetailRow(label: 'Quote name', value: quote.quoteName),
+          _EstimateDetailRow(label: 'Configuration', value: quote.bhk),
+          _EstimateDetailRow(label: 'Purpose', value: quote.purpose),
+          _EstimateDetailRow(
+            label: 'Area',
+            value: '${quote.approxAreaSqFt} sq.ft',
+          ),
+          _EstimateDetailRow(
+            label: 'Estimated cost',
+            value: quote.formattedCostRange,
+            emphasize: true,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EstimateDetailRow extends StatelessWidget {
+  const _EstimateDetailRow({
+    required this.label,
+    required this.value,
+    this.emphasize = false,
+  });
+
+  final String label;
+  final String value;
+  final bool emphasize;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: GoogleFonts.urbanist(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF64748B),
+              ),
+            ),
+          ),
+          Text(
+            value,
+            textAlign: TextAlign.right,
+            style: GoogleFonts.urbanist(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: emphasize ? AppColors.primary : const Color(0xFF1E293B),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 // -----------------------------------------------------------------------------
 // Tab 1: MY QUOTES Content
 // -----------------------------------------------------------------------------
@@ -1156,7 +1457,8 @@ class _MyQuotesTabContentState extends State<_MyQuotesTabContent> {
         quote.quoteName.toLowerCase().contains(normalizedQuery) ||
         quote.bhk.toLowerCase().contains(normalizedQuery) ||
         quote.packageTitle.toLowerCase().contains(normalizedQuery) ||
-        quote.purpose.toLowerCase().contains(normalizedQuery);
+        quote.purpose.toLowerCase().contains(normalizedQuery) ||
+        quote.itemsSummary.toLowerCase().contains(normalizedQuery);
     final matchesBhk = _bhkFilter == 'All' || quote.bhk == _bhkFilter;
     return matchesQuery && matchesBhk;
   }).toList();
@@ -1948,6 +2250,7 @@ class _ProductsTabContent extends StatefulWidget {
     required this.packages,
     required this.onPackageSelected,
     required this.onProductTap,
+    required this.onAddToQuote,
     required this.onAddToCart,
     required this.onSelectPackage,
   });
@@ -1956,6 +2259,7 @@ class _ProductsTabContent extends StatefulWidget {
   final List<PackageConfig> packages;
   final ValueChanged<String> onPackageSelected;
   final ValueChanged<Product> onProductTap;
+  final Future<void> Function(Product product, int quantity) onAddToQuote;
   final void Function(Product product, int quantity) onAddToCart;
   final VoidCallback onSelectPackage;
 
@@ -1989,8 +2293,8 @@ class _ProductsTabContentState extends State<_ProductsTabContent> {
 
   double get _currentEstimateTotal {
     var total = 0.0;
-    for (final product in _products) {
-      final qty = _quantities[product.id] ?? 1;
+    for (final product in _allProducts) {
+      final qty = _quoteQuantities[product.id] ?? 0;
       total += product.price * qty;
     }
     return total;
@@ -2053,191 +2357,207 @@ class _ProductsTabContentState extends State<_ProductsTabContent> {
 
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-          child: Row(
-            children: [
-              Expanded(
-                child: SizedBox(
-                  height: 46,
-                  child: TextField(
-                    key: const ValueKey('estimator-products-search'),
-                    onChanged: (value) => setState(() => _query = value),
-                    textInputAction: TextInputAction.search,
-                    style: GoogleFonts.urbanist(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF1E293B),
-                    ),
-                    decoration: InputDecoration(
-                      hintText: 'Search products...',
-                      hintStyle: GoogleFonts.urbanist(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w500,
-                        color: const Color(0xFF94A3B8),
-                      ),
-                      prefixIcon: const Icon(
-                        Icons.search_rounded,
-                        size: 21,
-                        color: Color(0xFF94A3B8),
-                      ),
-                      isDense: true,
-                      filled: true,
-                      fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 11),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: const BorderSide(
-                          color: Color(0xFFE2E8F0),
-                          width: 1.2,
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: const BorderSide(
-                          color: Color(0xFFE2E8F0),
-                          width: 1.2,
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: const BorderSide(
-                          color: AppColors.primary,
-                          width: 1.4,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              SizedBox(
-                width: 46,
-                height: 46,
-                child: OutlinedButton(
-                  key: const ValueKey('estimator-products-filter'),
-                  onPressed: () => setState(() {
-                    _selectedCategory = 'All Items';
-                    _packageFilter = 'All Packages';
-                  }),
-                  style: OutlinedButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    foregroundColor: const Color(0xFF475569),
-                    side: const BorderSide(
-                      color: Color(0xFFE2E8F0),
-                      width: 1.2,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.tune_rounded,
-                    size: 22,
-                    color: Color(0xFF475569),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        // Row 1: Package Filters
-        SizedBox(
-          height: 38,
-          child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            scrollDirection: Axis.horizontal,
-            children: [
-              _catalogChip(
-                label: 'All Packages',
-                selected: _packageFilter == 'All Packages',
-                showCheckmarkOnSelected: true,
-                onTap: () => setState(() => _packageFilter = 'All Packages'),
-              ),
-              for (final package in packages)
-                _catalogChip(
-                  label: package.title,
-                  selected: _packageFilter == package.id,
-                  onTap: () {
-                    setState(() => _packageFilter = package.id);
-                    widget.onPackageSelected(package.id);
-                  },
-                ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        // Row 2: Category Filters
-        SizedBox(
-          height: 38,
-          child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            scrollDirection: Axis.horizontal,
-            children: [
-              for (final category in categories)
-                _catalogChip(
-                  label: category,
-                  selected: _selectedCategory == category,
-                  onTap: () => setState(() => _selectedCategory = category),
-                  filled: true,
-                ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        if (_comparedProductIds.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 2, 16, 4),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    '${_comparedProductIds.length} selected for comparison',
-                    style: GoogleFonts.urbanist(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF64748B),
-                    ),
-                  ),
-                ),
-                TextButton(
-                  onPressed: _comparedProductIds.length >= 2
-                      ? _showComparison
-                      : null,
-                  child: Text(
-                    'Compare',
-                    style: GoogleFonts.urbanist(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
         Expanded(
-          child: products.isEmpty
-              ? Center(
-                  child: Text(
-                    'No products found.',
-                    style: GoogleFonts.urbanist(
-                      fontSize: 14.5,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF64748B),
+          child: ListView(
+            key: const ValueKey('estimator-products-scroll'),
+            padding: EdgeInsets.zero,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 46,
+                        child: TextField(
+                          key: const ValueKey('estimator-products-search'),
+                          onChanged: (value) => setState(() => _query = value),
+                          textInputAction: TextInputAction.search,
+                          style: GoogleFonts.urbanist(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF1E293B),
+                          ),
+                          decoration: InputDecoration(
+                            hintText: 'Search products...',
+                            hintStyle: GoogleFonts.urbanist(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w500,
+                              color: const Color(0xFF94A3B8),
+                            ),
+                            prefixIcon: const Icon(
+                              Icons.search_rounded,
+                              size: 21,
+                              color: Color(0xFF94A3B8),
+                            ),
+                            isDense: true,
+                            filled: true,
+                            fillColor: Colors.white,
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 11,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFE2E8F0),
+                                width: 1.2,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFE2E8F0),
+                                width: 1.2,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: const BorderSide(
+                                color: AppColors.primary,
+                                width: 1.4,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    SizedBox(
+                      width: 46,
+                      height: 46,
+                      child: OutlinedButton(
+                        key: const ValueKey('estimator-products-filter'),
+                        onPressed: () => setState(() {
+                          _selectedCategory = 'All Items';
+                          _packageFilter = 'All Packages';
+                        }),
+                        style: OutlinedButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          foregroundColor: const Color(0xFF475569),
+                          side: const BorderSide(
+                            color: Color(0xFFE2E8F0),
+                            width: 1.2,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.tune_rounded,
+                          size: 22,
+                          color: Color(0xFF475569),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Row 1: Package Filters
+              SizedBox(
+                height: 38,
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    _catalogChip(
+                      label: 'All Packages',
+                      selected: _packageFilter == 'All Packages',
+                      showCheckmarkOnSelected: true,
+                      onTap: () =>
+                          setState(() => _packageFilter = 'All Packages'),
+                    ),
+                    for (final package in packages)
+                      _catalogChip(
+                        label: package.title,
+                        selected: _packageFilter == package.id,
+                        onTap: () {
+                          setState(() => _packageFilter = package.id);
+                          widget.onPackageSelected(package.id);
+                        },
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Row 2: Category Filters
+              SizedBox(
+                height: 38,
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    for (final category in categories)
+                      _catalogChip(
+                        label: category,
+                        selected: _selectedCategory == category,
+                        onTap: () =>
+                            setState(() => _selectedCategory = category),
+                        filled: true,
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              if (_comparedProductIds.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 2, 16, 4),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '${_comparedProductIds.length} selected for comparison',
+                          style: GoogleFonts.urbanist(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF64748B),
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: _comparedProductIds.length >= 2
+                            ? _showComparison
+                            : null,
+                        child: Text(
+                          'Compare',
+                          style: GoogleFonts.urbanist(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              if (products.isEmpty)
+                SizedBox(
+                  height: 180,
+                  child: Center(
+                    child: Text(
+                      'No products found.',
+                      style: GoogleFonts.urbanist(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF64748B),
+                      ),
                     ),
                   ),
                 )
-              : ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-                  itemCount: products.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 12),
-                  itemBuilder: (context, index) {
-                    final product = products[index];
-                    final quantity = _quantities[product.id] ?? 1;
-                    final quoteQuantity = _quoteQuantities[product.id] ?? 0;
-                    final isCompared = _comparedProductIds.contains(product.id);
-                    return _EstimatorProductCard(
+              else
+                ...products.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final product = entry.value;
+                  final quantity = _quantities[product.id] ?? 1;
+                  final quoteQuantity = _quoteQuantities[product.id] ?? 0;
+                  final isCompared = _comparedProductIds.contains(product.id);
+                  return Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      index == 0 ? 4 : 0,
+                      16,
+                      index == products.length - 1 ? 16 : 12,
+                    ),
+                    child: _EstimatorProductCard(
                       product: product,
                       package: selectedPackage,
                       quantity: quantity,
@@ -2251,13 +2571,19 @@ class _ProductsTabContentState extends State<_ProductsTabContent> {
                           _comparedProductIds.remove(product.id);
                         }
                       }),
-                      onAddToQuote: () => setState(() {
-                        _quoteQuantities[product.id] = quoteQuantity + quantity;
-                      }),
+                      onAddToQuote: () {
+                        setState(() {
+                          _quoteQuantities[product.id] =
+                              quoteQuantity + quantity;
+                        });
+                        widget.onAddToQuote(product, quantity);
+                      },
                       onAddToCart: () => widget.onAddToCart(product, quantity),
-                    );
-                  },
-                ),
+                    ),
+                  );
+                }),
+            ],
+          ),
         ),
         Container(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
@@ -2427,6 +2753,35 @@ class _EstimatorProductCard extends StatefulWidget {
 
 class _EstimatorProductCardState extends State<_EstimatorProductCard> {
   int _imageIndex = 0;
+  bool _dimensionsSwapped = false;
+  late final TextEditingController _dimensionController;
+
+  String get _productDimensions => widget.product.dimensions.isNotEmpty
+      ? widget.product.dimensions
+      : '(L × H) 8.5 ft × 4.0 ft';
+
+  @override
+  void initState() {
+    super.initState();
+    _dimensionController = TextEditingController(
+      text: _dimensionValue(_productDimensions),
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant _EstimatorProductCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.product.id != widget.product.id) {
+      _dimensionsSwapped = false;
+      _dimensionController.text = _dimensionValue(_productDimensions);
+    }
+  }
+
+  @override
+  void dispose() {
+    _dimensionController.dispose();
+    super.dispose();
+  }
 
   List<String> get _images {
     if (widget.product.images.isNotEmpty) {
@@ -2442,14 +2797,6 @@ class _EstimatorProductCardState extends State<_EstimatorProductCard> {
     });
   }
 
-  void _selectBhk(int index) {
-    if (index >= 0 && index < _images.length) {
-      setState(() {
-        _imageIndex = index;
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final product = widget.product;
@@ -2463,9 +2810,10 @@ class _EstimatorProductCardState extends State<_EstimatorProductCard> {
         : (product.description.isNotEmpty
               ? product.description
               : product.category);
-    final dimensionsText = product.dimensions.isNotEmpty
-        ? product.dimensions
-        : '(L × H) 8.5 ft × 4.0 ft';
+    final dimensionLabel = _dimensionLabel(_productDimensions);
+    final displayedDimensionLabel = _dimensionsSwapped
+        ? _swapDimensionParts(dimensionLabel)
+        : dimensionLabel;
 
     final images = _images;
     final currentImageUrl = images[_imageIndex % images.length];
@@ -2489,7 +2837,7 @@ class _EstimatorProductCardState extends State<_EstimatorProductCard> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Product Thumbnail Image with BHK switcher badge
+              // Product Thumbnail Image
               InkWell(
                 onTap: images.length > 1 ? _nextImage : widget.onTap,
                 borderRadius: BorderRadius.circular(12),
@@ -2498,77 +2846,41 @@ class _EstimatorProductCardState extends State<_EstimatorProductCard> {
                   child: SizedBox(
                     width: 86,
                     height: 86,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
+                    child:
                         currentImageUrl.startsWith('http://') ||
-                                currentImageUrl.startsWith('https://')
-                            ? CachedNetworkImage(
-                                imageUrl: currentImageUrl,
-                                fit: BoxFit.cover,
-                                placeholder: (context, url) => const ColoredBox(
-                                  color: Color(0xFFF1F5F9),
-                                  child: Center(
-                                    child: SizedBox(
-                                      width: 18,
-                                      height: 18,
-                                      child: CircularProgressIndicator(strokeWidth: 2),
-                                    ),
-                                  ),
-                                ),
-                                errorWidget: (context, url, error) => Image.asset(
-                                  AppAssets.livingRoomImage,
-                                  fit: BoxFit.cover,
-                                ),
-                              )
-                            : Image.asset(
-                                currentImageUrl,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, _, _) => const ColoredBox(
-                                  color: Color(0xFFF1F5F9),
-                                  child: Icon(
-                                    Icons.chair_alt_outlined,
-                                    size: 34,
-                                    color: Color(0xFF94A3B8),
+                            currentImageUrl.startsWith('https://')
+                        ? CachedNetworkImage(
+                            imageUrl: currentImageUrl,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => const ColoredBox(
+                              color: Color(0xFFF1F5F9),
+                              child: Center(
+                                child: SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
                                   ),
                                 ),
                               ),
-
-                        // BHK badge on thumbnail
-                        if (images.length > 1)
-                          Positioned(
-                            bottom: 3,
-                            left: 3,
-                            right: 3,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.65),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    '${_imageIndex + 1}BHK',
-                                    style: GoogleFonts.urbanist(
-                                      fontSize: 9.5,
-                                      fontWeight: FontWeight.w800,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 2),
-                                  const Icon(
-                                    Icons.touch_app_rounded,
-                                    size: 9,
-                                    color: Colors.white70,
-                                  ),
-                                ],
+                            ),
+                            errorWidget: (context, url, error) => Image.asset(
+                              AppAssets.livingRoomImage,
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        : Image.asset(
+                            currentImageUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => const ColoredBox(
+                              color: Color(0xFFF1F5F9),
+                              child: Icon(
+                                Icons.chair_alt_outlined,
+                                size: 34,
+                                color: Color(0xFF94A3B8),
                               ),
                             ),
                           ),
-                      ],
-                    ),
                   ),
                 ),
               ),
@@ -2600,7 +2912,9 @@ class _EstimatorProductCardState extends State<_EstimatorProductCard> {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(
-                              EstimatorQuote.formatCurrency(product.price * quantity),
+                              EstimatorQuote.formatCurrency(
+                                product.price * quantity,
+                              ),
                               style: GoogleFonts.urbanist(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w800,
@@ -2645,86 +2959,40 @@ class _EstimatorProductCardState extends State<_EstimatorProductCard> {
                       ),
                     ),
                     const SizedBox(height: 5),
-                    // Dimensions Box + Qty Control
+                    // Dimensions and quantity controls
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Flexible(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 3,
+                          child: _DimensionControl(
+                            key: ValueKey(
+                              'estimator-product-dimensions-${product.id}',
                             ),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(
-                                color: const Color(0xFFE2E8F0),
-                                width: 1,
-                              ),
-                            ),
-                            child: Text(
-                              dimensionsText,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.urbanist(
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF334155),
-                              ),
-                            ),
+                            label: displayedDimensionLabel,
+                            controller: _dimensionController,
+                            onSwap: () {
+                              setState(() {
+                                _dimensionsSwapped = !_dimensionsSwapped;
+                                final swappedValue = _swapDimensionParts(
+                                  _dimensionController.text,
+                                );
+                                _dimensionController.value = TextEditingValue(
+                                  text: swappedValue,
+                                  selection: TextSelection.collapsed(
+                                    offset: swappedValue.length,
+                                  ),
+                                );
+                              });
+                            },
                           ),
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 8),
                         _QuantityControl(
                           quantity: quantity,
                           onChanged: widget.onQuantityChanged,
                         ),
                       ],
                     ),
-                    // BHK variant pills
-                    if (images.length > 1) ...[
-                      const SizedBox(height: 5),
-                      Row(
-                        children: [
-                          for (int i = 0; i < images.length; i++) ...[
-                            InkWell(
-                              onTap: () => _selectBhk(i),
-                              borderRadius: BorderRadius.circular(4),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: _imageIndex == i
-                                      ? AppColors.primary.withValues(alpha: 0.12)
-                                      : const Color(0xFFF8FAFC),
-                                  borderRadius: BorderRadius.circular(4),
-                                  border: Border.all(
-                                    color: _imageIndex == i
-                                        ? AppColors.primary
-                                        : const Color(0xFFE2E8F0),
-                                    width: _imageIndex == i ? 1.2 : 0.8,
-                                  ),
-                                ),
-                                child: Text(
-                                  '${i + 1}BHK',
-                                  style: GoogleFonts.urbanist(
-                                    fontSize: 9.5,
-                                    fontWeight: _imageIndex == i
-                                        ? FontWeight.w800
-                                        : FontWeight.w600,
-                                    color: _imageIndex == i
-                                        ? AppColors.primary
-                                        : const Color(0xFF64748B),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            if (i < images.length - 1) const SizedBox(width: 4),
-                          ],
-                        ],
-                      ),
-                    ],
                   ],
                 ),
               ),
@@ -2848,6 +3116,119 @@ class _EstimatorProductCardState extends State<_EstimatorProductCard> {
   }
 }
 
+String _swapDimensionParts(String value) {
+  final parts = value.split(RegExp(r'\s*[×xX]\s*'));
+  return parts.length == 2 ? '${parts[1]} × ${parts[0]}' : value;
+}
+
+String _dimensionLabel(String dimensions) {
+  final match = RegExp(r'^\((.*?)\)\s*(.*)$').firstMatch(dimensions);
+  return match?.group(1) ?? 'L × H';
+}
+
+String _dimensionValue(String dimensions) {
+  final match = RegExp(r'^\((.*?)\)\s*(.*)$').firstMatch(dimensions);
+  return match?.group(2) ?? dimensions;
+}
+
+class _DimensionControl extends StatelessWidget {
+  const _DimensionControl({
+    super.key,
+    required this.label,
+    required this.controller,
+    required this.onSwap,
+  });
+
+  final String label;
+  final TextEditingController controller;
+  final VoidCallback onSwap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 38,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned(
+            top: 5,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              padding: const EdgeInsets.only(left: 7, right: 2),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border.all(color: const Color(0xFFCBD5E1), width: 1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: controller,
+                      maxLines: 1,
+                      textAlignVertical: TextAlignVertical.center,
+                      style: GoogleFonts.urbanist(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF334155),
+                      ),
+                      decoration: const InputDecoration(
+                        isDense: true,
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 20,
+                    child: VerticalDivider(
+                      width: 8,
+                      thickness: 1,
+                      color: Color(0xFFE2E8F0),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 24,
+                    height: 26,
+                    child: IconButton(
+                      tooltip: 'Swap dimensions',
+                      onPressed: onSwap,
+                      padding: EdgeInsets.zero,
+                      icon: const Icon(
+                        Icons.sync_rounded,
+                        size: 15,
+                        color: Color(0xFF475569),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Positioned(
+            top: 0,
+            left: 7,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 3),
+              color: Colors.white,
+              child: Text(
+                '($label)',
+                style: GoogleFonts.urbanist(
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF64748B),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _QuantityControl extends StatelessWidget {
   const _QuantityControl({required this.quantity, required this.onChanged});
 
@@ -2856,46 +3237,65 @@ class _QuantityControl extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 28,
-      padding: const EdgeInsets.symmetric(horizontal: 2),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
-        borderRadius: BorderRadius.circular(7),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+    return SizedBox(
+      width: 102,
+      height: 38,
+      child: Stack(
+        clipBehavior: Clip.none,
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 2),
-            child: Text(
-              'Qty',
-              style: GoogleFonts.urbanist(
-                fontSize: 10.5,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF64748B),
+          Positioned(
+            top: 5,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border.all(color: const Color(0xFFCBD5E1), width: 1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  _QuantityButton(
+                    icon: Icons.remove,
+                    onTap: quantity > 1 ? () => onChanged(quantity - 1) : null,
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        '$quantity',
+                        style: GoogleFonts.urbanist(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF1E293B),
+                        ),
+                      ),
+                    ),
+                  ),
+                  _QuantityButton(
+                    icon: Icons.add,
+                    onTap: () => onChanged(quantity + 1),
+                  ),
+                ],
               ),
             ),
           ),
-          _QuantityButton(
-            icon: Icons.remove,
-            onTap: quantity > 1 ? () => onChanged(quantity - 1) : null,
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 3),
-            child: Text(
-              '$quantity',
-              style: GoogleFonts.urbanist(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF1E293B),
+          Positioned(
+            top: 0,
+            left: 7,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 3),
+              color: Colors.white,
+              child: Text(
+                'Qty',
+                style: GoogleFonts.urbanist(
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF64748B),
+                ),
               ),
             ),
-          ),
-          _QuantityButton(
-            icon: Icons.add,
-            onTap: () => onChanged(quantity + 1),
           ),
         ],
       ),

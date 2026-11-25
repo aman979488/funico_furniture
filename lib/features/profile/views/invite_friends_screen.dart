@@ -94,7 +94,7 @@ class _InviteFriendsScreenState extends State<InviteFriendsScreen> {
                       ),
                       const SizedBox(height: 14),
                       Text(
-                        'Invite Friends & Get \$20 OFF',
+                        'Invite Friends & Get ₹20 OFF',
                         style: GoogleFonts.urbanist(
                           fontSize: 20,
                           fontWeight: FontWeight.w800,

@@ -34,7 +34,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
     {
       'id': '3',
       'title': 'Payment Confirmed',
-      'description': 'Payment of \$420.00 via MasterCard has been verified and processed securely.',
+      'description': 'Payment of ₹420 via MasterCard has been verified and processed securely.',
       'time': 'Yesterday, 18:30',
       'section': 'Yesterday',
       'icon': Icons.payment_rounded,

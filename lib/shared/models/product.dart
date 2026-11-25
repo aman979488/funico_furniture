@@ -2,6 +2,8 @@
 import '../../core/constants/app_assets.dart';
 
 class Product {
+  static const double minimumPrice = 1600;
+
   const Product({
     required this.id,
     required this.name,
@@ -36,11 +38,12 @@ class Product {
 
   /// Firestore document se Product banane ke liye.
   factory Product.fromMap(Map<String, dynamic> map, {String? id}) {
+    final price = (map['price'] as num?)?.toDouble() ?? 0;
     return Product(
       id: id ?? (map['id'] as String? ?? ''),
       name: map['name'] as String? ?? '',
       category: map['category'] as String? ?? '',
-      price: (map['price'] as num?)?.toDouble() ?? 0,
+      price: price > 0 && price < minimumPrice ? minimumPrice : price,
       image: map['image'] as String? ?? '',
       images: List<String>.from(map['images'] as List? ?? const []),
       rating: (map['rating'] as num?)?.toDouble() ?? 0,
@@ -76,7 +79,7 @@ class Product {
       id: 'sofa-2-seater',
       name: '2 Seater Sofa',
       category: 'Sofa',
-      price: 399,
+      price: 1600,
       image: AppAssets.twoSeaterSofa,
       images: [AppAssets.sofaAlternateView],
       description: 'Small families ke liye',
@@ -85,7 +88,7 @@ class Product {
       id: 'sofa-3-seater',
       name: '3 Seater Sofa',
       category: 'Sofa',
-      price: 599,
+      price: 1200,
       image: AppAssets.threeSeaterSofa,
       images: [AppAssets.neutralSofaRoom],
       description: 'Medium living room',
@@ -94,7 +97,7 @@ class Product {
       id: 'sofa-l-shaped',
       name: 'L-Shaped Sofa',
       category: 'Sofa',
-      price: 999,
+      price: 1800,
       image: AppAssets.lShapedSofa,
       description: 'Large living room',
     ),
@@ -102,7 +105,7 @@ class Product {
       id: 'sofa-sectional',
       name: 'Sectional Sofa',
       category: 'Sofa',
-      price: 1299,
+      price: 1000,
       image: AppAssets.recliningSectionalSofa,
       description: 'Multiple seating sections',
     ),
@@ -110,7 +113,7 @@ class Product {
       id: 'sofa-recliner',
       name: 'Recliner Sofa',
       category: 'Sofa',
-      price: 799,
+      price: 2000,
       image: AppAssets.recliningSectionalSofa,
       description: 'Relaxation ke liye',
     ),
@@ -118,7 +121,7 @@ class Product {
       id: 'sofa-cum-bed',
       name: 'Sofa Cum Bed',
       category: 'Sofa',
-      price: 699,
+      price: 1600,
       image: AppAssets.sleeperSofa,
       description: 'Sofa + Bed',
     ),
@@ -126,7 +129,7 @@ class Product {
       id: 'sofa-chesterfield',
       name: 'Chesterfield Sofa',
       category: 'Sofa',
-      price: 1199,
+      price: 1700,
       image: AppAssets.chesterfieldSofa,
       description: 'Premium luxury look',
     ),
@@ -134,7 +137,7 @@ class Product {
       id: 'sofa-loveseat',
       name: 'Loveseat Sofa',
       category: 'Sofa',
-      price: 349,
+      price: 2100,
       image: AppAssets.loveseatSofa,
       description: 'Compact seating',
     ),
@@ -713,7 +716,7 @@ class Product {
       id: '1',
       name: 'Mid Century Sofa',
       category: 'Sofa',
-      price: 280.00,
+      price: 1600,
       image: AppAssets.sofa,
       images: [
         AppAssets.midCenturySofa1,
@@ -746,7 +749,7 @@ class Product {
       id: '2',
       name: 'Modern Wingback',
       category: 'Chair',
-      price: 140.00,
+      price: 1600,
       image: AppAssets.chair,
       rating: 4.7,
       soldCount: 6120,
@@ -759,7 +762,7 @@ class Product {
       id: '3',
       name: 'Mini Wooden Table',
       category: 'Table',
-      price: 64.00,
+      price: 1600,
       image: AppAssets.table,
       rating: 4.6,
       soldCount: 4210,
@@ -772,7 +775,7 @@ class Product {
       id: '4',
       name: 'Parabolic Reflector',
       category: 'Lamp',
-      price: 70.00,
+      price: 1600,
       image: AppAssets.lamp,
       rating: 4.9,
       soldCount: 3920,
@@ -785,7 +788,7 @@ class Product {
       id: '5',
       name: 'Cozy Master Bed',
       category: 'Bed',
-      price: 490.00,
+      price: 1600,
       image: AppAssets.bedroomImage,
       rating: 4.9,
       soldCount: 2150,
@@ -799,7 +802,7 @@ class Product {
       id: '6',
       name: 'Mini Bookshelf',
       category: 'Cupboard',
-      price: 165.00,
+      price: 1600,
       image: AppAssets.cupboard,
       images: [
         AppAssets.cupboard,

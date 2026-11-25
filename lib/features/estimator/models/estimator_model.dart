@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../core/constants/app_assets.dart';
+import '../../../core/utils/formatters.dart';
 
 @immutable
 class BhkConfig {
@@ -360,16 +361,6 @@ class EstimatorQuote {
   }
 
   static String formatCurrency(double amount) {
-    final rounded = amount.round();
-    final s = rounded.toString();
-    if (s.length <= 3) return '₹$s';
-
-    final lastThree = s.substring(s.length - 3);
-    final otherNumbers = s.substring(0, s.length - 3);
-    final formattedOther = otherNumbers.replaceAllMapped(
-      RegExp(r'\B(?=(\d{2})+(?!\d))'),
-      (match) => ',',
-    );
-    return '₹$formattedOther,$lastThree';
+    return CurrencyFormatter.inRupees(amount);
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../shared/models/product.dart';
 import '../models/estimator_model.dart';
 import '../repositories/estimator_repository.dart';
 
@@ -233,6 +234,66 @@ class EstimatorViewModel extends Notifier<EstimatorState> {
     );
     state = state.copyWith(latestEstimate: estimate);
     return estimate;
+  }
+
+  Future<void> addProductToQuote(Product product, int quantity) async {
+    if (quantity <= 0) {
+      throw ArgumentError.value(quantity, 'quantity', 'Must be greater than 0');
+    }
+
+    const quoteId = 'estimator_product_quote';
+    EstimatorQuote? existingQuote;
+    for (final quote in state.savedQuotes) {
+      if (quote.id == quoteId) {
+        existingQuote = quote;
+        break;
+      }
+    }
+
+    final packages = state.packages.isNotEmpty
+        ? state.packages
+        : PackageConfig.allPackages;
+    final package = packages.firstWhere(
+      (item) => item.id == product.packageId,
+      orElse: () => state.currentPackageConfig,
+    );
+    final packageTitle = product.packageTitle.isNotEmpty
+        ? product.packageTitle
+        : package.title;
+    final itemKey = '$packageTitle - ${product.name}';
+    final breakdown = Map<String, double>.from(
+      existingQuote?.roomBreakdown ?? const {},
+    );
+    breakdown[itemKey] =
+        (breakdown[itemKey] ?? 0) + product.price * quantity;
+
+    final packageTitles = breakdown.keys
+        .map((item) => item.split(' - ').first)
+        .toSet();
+    final total = breakdown.values.fold<double>(0, (sum, price) => sum + price);
+    final itemNames = breakdown.keys.take(2).join(', ');
+    final moreItems = breakdown.length > 2 ? ', ...' : '';
+    final quote = EstimatorQuote(
+      id: quoteId,
+      quoteName: 'Product Quote',
+      bhk: state.selectedBhk,
+      purpose: state.selectedPurpose,
+      packageTitle: packageTitles.length == 1
+          ? packageTitles.first
+          : 'Multiple Packages',
+      ratePerSqFt: package.ratePerSqFt,
+      approxAreaSqFt: state.currentBhkConfig.approxAreaSqFt,
+      estimatedCostMin: total,
+      estimatedCostMax: total,
+      createdAt: DateTime.now(),
+      itemsSummaryText:
+          '${breakdown.length} items ($itemNames$moreItems)',
+      roomBreakdown: breakdown,
+    );
+
+    await _repository.saveQuote(quote);
+    final updatedQuotes = await _repository.loadSavedQuotes();
+    state = state.copyWith(savedQuotes: updatedQuotes);
   }
 
   Future<void> saveCurrentQuote(EstimatorQuote quote) async {
