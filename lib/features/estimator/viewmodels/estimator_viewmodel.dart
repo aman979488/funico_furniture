@@ -18,6 +18,7 @@ class EstimatorState {
   final bool isLoading;
   final List<PackageConfig> packages;
   final bool packagesLoading;
+  final List<BhkConfig> bhkConfigs;
 
   const EstimatorState({
     this.currentTabIndex = 0,
@@ -38,12 +39,14 @@ class EstimatorState {
     this.isLoading = false,
     this.packages = const [],
     this.packagesLoading = true,
+    this.bhkConfigs = const [],
   });
 
   BhkConfig get currentBhkConfig {
-    return BhkConfig.allConfigs.firstWhere(
+    final list = bhkConfigs.isNotEmpty ? bhkConfigs : BhkConfig.allConfigs;
+    return list.firstWhere(
       (c) => c.bhk == selectedBhk,
-      orElse: () => BhkConfig.allConfigs.first,
+      orElse: () => list.first,
     );
   }
 
@@ -76,6 +79,7 @@ class EstimatorState {
     bool? isLoading,
     List<PackageConfig>? packages,
     bool? packagesLoading,
+    List<BhkConfig>? bhkConfigs,
   }) {
     return EstimatorState(
       currentTabIndex: currentTabIndex ?? this.currentTabIndex,
@@ -90,21 +94,36 @@ class EstimatorState {
       isLoading: isLoading ?? this.isLoading,
       packages: packages ?? this.packages,
       packagesLoading: packagesLoading ?? this.packagesLoading,
+      bhkConfigs: bhkConfigs ?? this.bhkConfigs,
     );
   }
 }
 
 class EstimatorViewModel extends Notifier<EstimatorState> {
   late final EstimatorRepository _repository;
+  int _productQuoteSequence = 0;
 
   @override
   EstimatorState build() {
     _repository = ref.watch(estimatorRepositoryProvider);
     _loadQuotes();
     _loadPackages();
+    _loadBhkConfigs();
     return EstimatorState(
       packages: List<PackageConfig>.from(PackageConfig.allPackages),
+      bhkConfigs: List<BhkConfig>.from(BhkConfig.allConfigs),
     );
+  }
+
+  Future<void> _loadBhkConfigs() async {
+    try {
+      final configs = await _repository.fetchBhkConfigs();
+      if (configs.isNotEmpty) {
+        state = state.copyWith(bhkConfigs: configs);
+      }
+    } catch (e) {
+      debugPrint('Failed to load BHK 3D configs: $e');
+    }
   }
 
   Future<void> _loadQuotes() async {
@@ -167,7 +186,8 @@ class EstimatorViewModel extends Notifier<EstimatorState> {
   }
 
   void nextBhk() {
-    final configs = BhkConfig.allConfigs;
+    final configs =
+        state.bhkConfigs.isNotEmpty ? state.bhkConfigs : BhkConfig.allConfigs;
     final currentIndex = configs.indexWhere((c) => c.bhk == state.selectedBhk);
     if (currentIndex != -1 && currentIndex < configs.length - 1) {
       state = state.copyWith(selectedBhk: configs[currentIndex + 1].bhk);
@@ -177,7 +197,8 @@ class EstimatorViewModel extends Notifier<EstimatorState> {
   }
 
   void prevBhk() {
-    final configs = BhkConfig.allConfigs;
+    final configs =
+        state.bhkConfigs.isNotEmpty ? state.bhkConfigs : BhkConfig.allConfigs;
     final currentIndex = configs.indexWhere((c) => c.bhk == state.selectedBhk);
     if (currentIndex > 0) {
       state = state.copyWith(selectedBhk: configs[currentIndex - 1].bhk);
@@ -241,59 +262,63 @@ class EstimatorViewModel extends Notifier<EstimatorState> {
       throw ArgumentError.value(quantity, 'quantity', 'Must be greater than 0');
     }
 
-    const quoteId = 'estimator_product_quote';
-    EstimatorQuote? existingQuote;
-    for (final quote in state.savedQuotes) {
-      if (quote.id == quoteId) {
-        existingQuote = quote;
+    final savedQuotes = await _repository.loadSavedQuotes();
+    EstimatorQuote? legacyProductQuote;
+    for (final quote in savedQuotes) {
+      if (quote.id == EstimatorQuote.productQuoteId) {
+        legacyProductQuote = quote;
         break;
       }
     }
+    final productQuotes = <EstimatorQuote>[];
 
-    final packages = state.packages.isNotEmpty
-        ? state.packages
-        : PackageConfig.allPackages;
-    final package = packages.firstWhere(
-      (item) => item.id == product.packageId,
-      orElse: () => state.currentPackageConfig,
-    );
-    final packageTitle = product.packageTitle.isNotEmpty
-        ? product.packageTitle
-        : package.title;
-    final itemKey = '$packageTitle - ${product.name}';
-    final breakdown = Map<String, double>.from(
-      existingQuote?.roomBreakdown ?? const {},
-    );
-    breakdown[itemKey] =
-        (breakdown[itemKey] ?? 0) + product.price * quantity;
+    if (legacyProductQuote != null) {
+      for (final entry in legacyProductQuote.roomBreakdown.entries) {
+        final productName = legacyProductQuote.productNameForBreakdownKey(
+          entry.key,
+        );
+        productQuotes.add(
+          _createProductQuote(
+            productName,
+            entry.value,
+            createdAt: legacyProductQuote.createdAt,
+          ),
+        );
+      }
+    }
 
-    final packageTitles = breakdown.keys
-        .map((item) => item.split(' - ').first)
-        .toSet();
-    final total = breakdown.values.fold<double>(0, (sum, price) => sum + price);
-    final itemNames = breakdown.keys.take(2).join(', ');
-    final moreItems = breakdown.length > 2 ? ', ...' : '';
-    final quote = EstimatorQuote(
-      id: quoteId,
-      quoteName: 'Product Quote',
-      bhk: state.selectedBhk,
-      purpose: state.selectedPurpose,
-      packageTitle: packageTitles.length == 1
-          ? packageTitles.first
-          : 'Multiple Packages',
-      ratePerSqFt: package.ratePerSqFt,
-      approxAreaSqFt: state.currentBhkConfig.approxAreaSqFt,
-      estimatedCostMin: total,
-      estimatedCostMax: total,
-      createdAt: DateTime.now(),
-      itemsSummaryText:
-          '${breakdown.length} items ($itemNames$moreItems)',
-      roomBreakdown: breakdown,
+    productQuotes.add(
+      _createProductQuote(product.name, product.price * quantity),
     );
-
-    await _repository.saveQuote(quote);
+    await _repository.saveProductQuotes(
+      productQuotes,
+      removeQuoteId: legacyProductQuote?.id,
+    );
     final updatedQuotes = await _repository.loadSavedQuotes();
     state = state.copyWith(savedQuotes: updatedQuotes);
+  }
+
+  EstimatorQuote _createProductQuote(
+    String productName,
+    double total, {
+    DateTime? createdAt,
+  }) {
+    final now = DateTime.now();
+    final id =
+        '${EstimatorQuote.productQuoteIdPrefix}${now.microsecondsSinceEpoch}_${_productQuoteSequence++}';
+    return EstimatorQuote(
+      id: id,
+      quoteName: productName,
+      bhk: '',
+      purpose: '',
+      packageTitle: '',
+      ratePerSqFt: 0,
+      approxAreaSqFt: 0,
+      estimatedCostMin: total,
+      estimatedCostMax: total,
+      createdAt: createdAt ?? now,
+      roomBreakdown: {productName: total},
+    );
   }
 
   Future<void> saveCurrentQuote(EstimatorQuote quote) async {

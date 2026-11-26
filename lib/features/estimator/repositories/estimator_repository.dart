@@ -341,6 +341,82 @@ class EstimatorRepository {
     }
   }
 
+  /// Fetches real 3D BHK configuration images from Firebase Storage folder (such as `3Dimg` or `3d image`).
+  /// Automatically resolves download URLs and updates [BhkConfig] items.
+  /// Falls back to [BhkConfig.allConfigs] if unavailable or offline.
+  Future<List<BhkConfig>> fetchBhkConfigs() async {
+    if (!Firebase.apps.any((app) => app.name == '[DEFAULT]')) {
+      return BhkConfig.allConfigs;
+    }
+
+    try {
+      final storage = FirebaseStorage.instance;
+      final candidateFolderNames = [
+        '3Dimg',
+        '3d image',
+        '3d images',
+        '3D image',
+        '3D images',
+        '3d_image',
+        '3D_img',
+      ];
+
+      Reference? targetFolder;
+      for (final name in candidateFolderNames) {
+        try {
+          final ref = storage.ref(name);
+          final res = await ref.list(const ListOptions(maxResults: 5));
+          if (res.items.isNotEmpty || res.prefixes.isNotEmpty) {
+            targetFolder = ref;
+            break;
+          }
+        } catch (_) {}
+      }
+
+      if (targetFolder == null) {
+        try {
+          final root = await storage.ref().listAll().timeout(const Duration(seconds: 5));
+          for (final prefix in root.prefixes) {
+            if (prefix.name.toLowerCase().contains('3d')) {
+              targetFolder = prefix;
+              break;
+            }
+          }
+        } catch (_) {}
+      }
+
+      if (targetFolder == null) {
+        return BhkConfig.allConfigs;
+      }
+
+      final listResult = await targetFolder.listAll().timeout(const Duration(seconds: 8));
+      final items = listResult.items;
+
+      return await Future.wait(
+        BhkConfig.allConfigs.map((config) async {
+          final bhkKey = config.bhk.toLowerCase();
+          final matchingItem = items.cast<Reference?>().firstWhere(
+            (item) => item != null && item.name.toLowerCase().contains(bhkKey),
+            orElse: () => null,
+          );
+
+          if (matchingItem != null) {
+            try {
+              final url = await matchingItem.getDownloadURL();
+              return config.copyWith(imageAsset: url);
+            } catch (e) {
+              debugPrint('Failed to get download URL for BHK ${config.bhk}: $e');
+            }
+          }
+          return config;
+        }),
+      );
+    } catch (e) {
+      debugPrint('Failed to fetch BHK configs from Storage: $e');
+      return BhkConfig.allConfigs;
+    }
+  }
+
   EstimatorQuote calculateEstimate({
     required String quoteName,
     required String bhk,
@@ -462,32 +538,14 @@ class EstimatorRepository {
 
   Future<void> saveQuote(EstimatorQuote quote) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
       final quotes = await loadSavedQuotes();
-      // Remove any with same id
       quotes.removeWhere((q) => q.id == quote.id);
-      quotes.insert(0, quote);
-
-      final encoded = quotes
-          .map(
-            (q) => jsonEncode({
-              'id': q.id,
-              'quoteName': q.quoteName,
-              'bhk': q.bhk,
-              'purpose': q.purpose,
-              'packageTitle': q.packageTitle,
-              'ratePerSqFt': q.ratePerSqFt,
-              'approxAreaSqFt': q.approxAreaSqFt,
-              'estimatedCostMin': q.estimatedCostMin,
-              'estimatedCostMax': q.estimatedCostMax,
-              'createdAt': q.createdAt.toIso8601String(),
-              'itemsSummaryText': q.itemsSummaryText,
-              'roomBreakdown': q.roomBreakdown,
-            }),
-          )
-          .toList();
-
-      await prefs.setStringList(_quotesKey, encoded);
+      if (quote.isProductQuote) {
+        quotes.add(quote);
+      } else {
+        quotes.insert(0, quote);
+      }
+      await _persistSavedQuotes(quotes);
     } catch (error, stackTrace) {
       debugPrint('Failed to save estimator quote: $error');
       debugPrintStack(stackTrace: stackTrace);
@@ -495,33 +553,56 @@ class EstimatorRepository {
     }
   }
 
+  Future<void> saveProductQuotes(
+    List<EstimatorQuote> productQuotes, {
+    String? removeQuoteId,
+  }) async {
+    try {
+      final quotes = await loadSavedQuotes();
+      if (removeQuoteId != null) {
+        quotes.removeWhere((quote) => quote.id == removeQuoteId);
+      }
+      for (final quote in productQuotes) {
+        quotes.removeWhere((savedQuote) => savedQuote.id == quote.id);
+        quotes.add(quote);
+      }
+      await _persistSavedQuotes(quotes);
+    } catch (error, stackTrace) {
+      debugPrint('Failed to save product quotes: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      rethrow;
+    }
+  }
+
   Future<void> deleteQuote(String quoteId) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
       final quotes = await loadSavedQuotes();
       quotes.removeWhere((q) => q.id == quoteId);
-
-      final encoded = quotes
-          .map(
-            (q) => jsonEncode({
-              'id': q.id,
-              'quoteName': q.quoteName,
-              'bhk': q.bhk,
-              'purpose': q.purpose,
-              'packageTitle': q.packageTitle,
-              'ratePerSqFt': q.ratePerSqFt,
-              'approxAreaSqFt': q.approxAreaSqFt,
-              'estimatedCostMin': q.estimatedCostMin,
-              'estimatedCostMax': q.estimatedCostMax,
-              'createdAt': q.createdAt.toIso8601String(),
-              'itemsSummaryText': q.itemsSummaryText,
-              'roomBreakdown': q.roomBreakdown,
-            }),
-          )
-          .toList();
-
-      await prefs.setStringList(_quotesKey, encoded);
+      await _persistSavedQuotes(quotes);
     } catch (_) {}
+  }
+
+  Future<void> _persistSavedQuotes(List<EstimatorQuote> quotes) async {
+    final prefs = await SharedPreferences.getInstance();
+    final encoded = quotes
+        .map(
+          (quote) => jsonEncode({
+            'id': quote.id,
+            'quoteName': quote.quoteName,
+            'bhk': quote.bhk,
+            'purpose': quote.purpose,
+            'packageTitle': quote.packageTitle,
+            'ratePerSqFt': quote.ratePerSqFt,
+            'approxAreaSqFt': quote.approxAreaSqFt,
+            'estimatedCostMin': quote.estimatedCostMin,
+            'estimatedCostMax': quote.estimatedCostMax,
+            'createdAt': quote.createdAt.toIso8601String(),
+            'itemsSummaryText': quote.itemsSummaryText,
+            'roomBreakdown': quote.roomBreakdown,
+          }),
+        )
+        .toList();
+    await prefs.setStringList(_quotesKey, encoded);
   }
 }
 

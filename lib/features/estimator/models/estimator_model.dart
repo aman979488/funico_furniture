@@ -27,8 +27,32 @@ class BhkConfig {
     required this.roomHighlights,
   });
 
-  static const String _storageFloorplanBase =
-      'https://firebasestorage.googleapis.com/v0/b/funica-9a16a.firebasestorage.app/o/packages%2Ffloorplans%2F';
+  BhkConfig copyWith({
+    String? bhk,
+    String? title,
+    String? subtitle,
+    int? approxAreaSqFt,
+    double? baseCostMin,
+    double? baseCostMax,
+    String? samplePlanText,
+    String? imageAsset,
+    List<String>? roomHighlights,
+  }) {
+    return BhkConfig(
+      bhk: bhk ?? this.bhk,
+      title: title ?? this.title,
+      subtitle: subtitle ?? this.subtitle,
+      approxAreaSqFt: approxAreaSqFt ?? this.approxAreaSqFt,
+      baseCostMin: baseCostMin ?? this.baseCostMin,
+      baseCostMax: baseCostMax ?? this.baseCostMax,
+      samplePlanText: samplePlanText ?? this.samplePlanText,
+      imageAsset: imageAsset ?? this.imageAsset,
+      roomHighlights: roomHighlights ?? this.roomHighlights,
+    );
+  }
+
+  static const String _storage3dBase =
+      'https://firebasestorage.googleapis.com/v0/b/funica-9a16a.firebasestorage.app/o/3Dimg%2F';
 
   static const List<BhkConfig> allConfigs = [
     BhkConfig(
@@ -38,8 +62,8 @@ class BhkConfig {
       approxAreaSqFt: 580,
       baseCostMin: 180000,
       baseCostMax: 260000,
-      samplePlanText: '1BHK Sample Plan',
-      imageAsset: '${_storageFloorplanBase}1BHK.png?alt=media',
+      samplePlanText: '1BHK 3D View',
+      imageAsset: '${_storage3dBase}1BHK.webp?alt=media',
       roomHighlights: [
         '1 Master Bedroom',
         'Living Room & Dining',
@@ -54,8 +78,8 @@ class BhkConfig {
       approxAreaSqFt: 960,
       baseCostMin: 320000,
       baseCostMax: 450000,
-      samplePlanText: '2BHK Sample Plan',
-      imageAsset: '${_storageFloorplanBase}2BHK.png?alt=media',
+      samplePlanText: '2BHK 3D View',
+      imageAsset: '${_storage3dBase}2BHK.webp?alt=media',
       roomHighlights: [
         '2 Bedrooms (Master + Guest)',
         'Spacious Living & Dining Area',
@@ -70,8 +94,8 @@ class BhkConfig {
       approxAreaSqFt: 1480,
       baseCostMin: 490000,
       baseCostMax: 680000,
-      samplePlanText: '3BHK Sample Plan',
-      imageAsset: '${_storageFloorplanBase}3BHK.png?alt=media',
+      samplePlanText: '3BHK 3D View',
+      imageAsset: '${_storage3dBase}3BHK.webp?alt=media',
       roomHighlights: [
         '3 Bedrooms with Custom Wardrobes',
         'Grand Living Room with TV Unit',
@@ -86,8 +110,8 @@ class BhkConfig {
       approxAreaSqFt: 2150,
       baseCostMin: 720000,
       baseCostMax: 990000,
-      samplePlanText: '4BHK Sample Plan',
-      imageAsset: '${_storageFloorplanBase}4BHK.png?alt=media',
+      samplePlanText: '4BHK 3D View',
+      imageAsset: '${_storage3dBase}4BHK.webp?alt=media',
       roomHighlights: [
         '4 Bedrooms with Ensuite Facilities',
         'Luxury Living & Formal Dining',
@@ -102,8 +126,8 @@ class BhkConfig {
       approxAreaSqFt: 3200,
       baseCostMin: 1050000,
       baseCostMax: 1480000,
-      samplePlanText: '5BHK Sample Plan',
-      imageAsset: '${_storageFloorplanBase}5BHK.png?alt=media',
+      samplePlanText: '5BHK 3D View',
+      imageAsset: '${_storage3dBase}5BHK.webp?alt=media',
       roomHighlights: [
         '5 Deluxe Suites / Bedrooms',
         'Double Height Living Lounge',
@@ -285,6 +309,9 @@ class PackageConfig {
 
 @immutable
 class EstimatorQuote {
+  static const productQuoteId = 'estimator_product_quote';
+  static const productQuoteIdPrefix = '${productQuoteId}_';
+
   final String id;
   final String quoteName;
   final String bhk;
@@ -312,6 +339,25 @@ class EstimatorQuote {
     required this.roomBreakdown,
     this.itemsSummaryText,
   });
+
+  bool get isProductQuote =>
+      id == productQuoteId || id.startsWith(productQuoteIdPrefix);
+
+  List<String> get productNames =>
+      roomBreakdown.keys.map(productNameForBreakdownKey).toList();
+
+  String productNameForBreakdownKey(String key) {
+    final packagePrefix = packageTitle.isEmpty ? '' : '$packageTitle - ';
+    if (packagePrefix.isNotEmpty && key.startsWith(packagePrefix)) {
+      return key.substring(packagePrefix.length);
+    }
+    return productNameFromBreakdownKey(key);
+  }
+
+  String get displayName {
+    if (!isProductQuote) return quoteName;
+    return productNames.length == 1 ? productNames.first : 'Selected Products';
+  }
 
   String get formattedCostRange {
     if (estimatedCostMin == estimatedCostMax) {
@@ -350,6 +396,11 @@ class EstimatorQuote {
   }
 
   String get itemsSummary {
+    if (isProductQuote) {
+      return productNames.length == 1
+          ? '1 product added to My Quotes'
+          : '${productNames.length} products added to My Quotes';
+    }
     if (itemsSummaryText != null && itemsSummaryText!.isNotEmpty) {
       return itemsSummaryText!;
     }
@@ -362,5 +413,18 @@ class EstimatorQuote {
 
   static String formatCurrency(double amount) {
     return CurrencyFormatter.inRupees(amount);
+  }
+
+  static String productNameFromBreakdownKey(String key) {
+    final packageSeparator = key.indexOf(' - ');
+    if (packageSeparator < 0) return key;
+
+    final packageName = key.substring(0, packageSeparator);
+    final isPackageTitle =
+        packageName.toLowerCase().endsWith('package') ||
+        PackageConfig.allPackages.any((package) => package.title == packageName);
+    return isPackageTitle
+        ? key.substring(packageSeparator + ' - '.length)
+        : key;
   }
 }

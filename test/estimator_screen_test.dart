@@ -4,7 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:funica/features/cart/views/cart_screen.dart';
 import 'package:funica/features/estimator/models/estimator_model.dart';
 import 'package:funica/features/estimator/repositories/estimator_repository.dart';
+import 'package:funica/features/estimator/viewmodels/estimator_viewmodel.dart';
 import 'package:funica/features/estimator/views/estimator_screen.dart';
+import 'package:funica/shared/models/product.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -56,6 +58,126 @@ void main() {
     expect(quote.packageTitle, package.title);
     expect(quote.ratePerSqFt, package.ratePerSqFt);
   });
+
+  test('product quotes show selected products without package names', () {
+    final quote = EstimatorQuote(
+      id: EstimatorQuote.productQuoteId,
+      quoteName: 'Product Quote',
+      bhk: '1BHK',
+      purpose: 'Renovate',
+      packageTitle: 'Basic Package',
+      estimatedCostMin: 18500,
+      estimatedCostMax: 18500,
+      createdAt: DateTime(2026),
+      roomBreakdown: const {'Basic Package - Wall Mount TV Unit': 18500.0},
+    );
+
+    expect(quote.displayName, 'Wall Mount TV Unit');
+    expect(quote.itemsSummary, '1 product added to My Quotes');
+    expect(quote.productNames, ['Wall Mount TV Unit']);
+  });
+
+  test('each Add to Quote action creates a separate product quote', () async {
+    const firstProduct = Product(
+      id: 'quote-product-one',
+      name: 'Oak Shelf',
+      category: 'Storage',
+      price: 1800,
+      image: '',
+    );
+    const secondProduct = Product(
+      id: 'quote-product-two',
+      name: 'Desk Lamp',
+      category: 'Lighting',
+      price: 2200,
+      image: '',
+    );
+    final container = ProviderContainer(
+      overrides: [
+        estimatorRepositoryProvider.overrideWithValue(
+          _TestEstimatorRepository(),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    final viewModel = container.read(estimatorViewModelProvider.notifier);
+
+    await viewModel.addProductToQuote(firstProduct, 2);
+    await viewModel.addProductToQuote(secondProduct, 1);
+
+    final productQuotes = container
+        .read(estimatorViewModelProvider)
+        .savedQuotes
+        .where((quote) => quote.isProductQuote)
+        .toList();
+    expect(productQuotes, hasLength(2));
+    expect(productQuotes.map((quote) => quote.displayName), [
+      'Oak Shelf',
+      'Desk Lamp',
+    ]);
+    expect(productQuotes[0].roomBreakdown.keys, ['Oak Shelf']);
+    expect(productQuotes[1].roomBreakdown.keys, ['Desk Lamp']);
+    expect(productQuotes[0].id, isNot(productQuotes[1].id));
+    expect(
+      container.read(estimatorViewModelProvider).savedQuotes.last.id,
+      productQuotes.last.id,
+    );
+  });
+
+  test(
+    'splits a previously combined product quote on the next addition',
+    () async {
+      final repository = _TestEstimatorRepository();
+      await repository.saveQuote(
+        EstimatorQuote(
+          id: EstimatorQuote.productQuoteId,
+          quoteName: 'Product Quote',
+          bhk: '1BHK',
+          purpose: 'Renovate',
+          packageTitle: 'Basic Package',
+          estimatedCostMin: 5000,
+          estimatedCostMax: 5000,
+          createdAt: DateTime(2026),
+          roomBreakdown: const {
+            'Basic Package - Wall Mount TV Unit': 3000,
+            'Basic Package - Coffee Table': 2000,
+          },
+        ),
+      );
+      final container = ProviderContainer(
+        overrides: [estimatorRepositoryProvider.overrideWithValue(repository)],
+      );
+      addTearDown(container.dispose);
+
+      await container
+          .read(estimatorViewModelProvider.notifier)
+          .addProductToQuote(
+            const Product(
+              id: 'quote-product-three',
+              name: 'Oak Shelf',
+              category: 'Storage',
+              price: 1800,
+              image: '',
+            ),
+            1,
+          );
+
+      final productQuotes = container
+          .read(estimatorViewModelProvider)
+          .savedQuotes
+          .where((quote) => quote.isProductQuote)
+          .toList();
+      expect(productQuotes.map((quote) => quote.displayName), [
+        'Wall Mount TV Unit',
+        'Coffee Table',
+        'Oak Shelf',
+      ]);
+      expect(
+        productQuotes.every((quote) => quote.roomBreakdown.length == 1),
+        isTrue,
+      );
+    },
+  );
 
   testWidgets('Estimator screen shows selected package and estimate details', (
     tester,
@@ -383,12 +505,16 @@ void main() {
 
     await tester.tap(find.text('MY QUOTES'));
     await _pumpEstimator(tester);
-    expect(find.text('Product Quote'), findsOneWidget);
-    expect(
-      find.textContaining('Basic Package - Wall Mount TV Unit'),
-      findsOneWidget,
-    );
+    expect(find.text('Wall Mount TV Unit'), findsOneWidget);
+    expect(find.text('Selected product'), findsOneWidget);
+    expect(find.text('1 product added to My Quotes'), findsOneWidget);
+    expect(find.text('1BHK • Basic Package'), findsNothing);
     expect(find.text('₹18,500'), findsOneWidget);
+
+    await tester.tap(find.text('Detailed'));
+    await _pumpEstimator(tester);
+    expect(find.text('Products in this quote'), findsOneWidget);
+    expect(find.text('1BHK • Basic Package • Renovate'), findsNothing);
   });
 
   testWidgets('Adding an estimator product opens the cart', (tester) async {

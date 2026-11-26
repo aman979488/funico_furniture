@@ -528,7 +528,7 @@ class _CalculateStep1Content extends StatelessWidget {
 
           // 3D Floor Plan Card
           Container(
-            height: 175,
+            height: 250,
             width: double.infinity,
             decoration: BoxDecoration(
               color: const Color(0xFFF8F9FA),
@@ -539,44 +539,55 @@ class _CalculateStep1Content extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               child: Stack(
                 children: [
-                  Center(
+                  // Full 3D image with BoxFit.contain - no cropping, entire layout fully visible
+                  Positioned.fill(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(40, 12, 40, 22),
-                      child:
-                          bhkConfig.imageAsset.startsWith('http://') ||
-                              bhkConfig.imageAsset.startsWith('https://')
-                          ? CachedNetworkImage(
-                              imageUrl: bhkConfig.imageAsset,
-                              fit: BoxFit.contain,
-                              placeholder: (context, url) => const Center(
-                                child: SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
+                      child: GestureDetector(
+                        onTap: () => _showFullscreen3dImage(
+                          context,
+                          bhkConfig.imageAsset,
+                          bhkConfig.title,
+                        ),
+                        child:
+                            bhkConfig.imageAsset.startsWith('http://') ||
+                                bhkConfig.imageAsset.startsWith('https://')
+                            ? CachedNetworkImage(
+                                imageUrl: bhkConfig.imageAsset,
+                                fit: BoxFit.contain,
+                                placeholder: (context, url) => const Center(
+                                  child: SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              errorWidget: (context, url, error) => Image.asset(
-                                AppAssets.floorplanSample,
+                                errorWidget: (context, url, error) => Image.asset(
+                                  AppAssets.floorplanSample,
+                                  fit: BoxFit.contain,
+                                ),
+                              )
+                            : Image.asset(
+                                bhkConfig.imageAsset,
                                 fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Image.asset(
+                                      AppAssets.floorplanSample,
+                                      fit: BoxFit.contain,
+                                    ),
                               ),
-                            )
-                          : Image.asset(
-                              bhkConfig.imageAsset,
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  Image.asset(
-                                    AppAssets.floorplanSample,
-                                    fit: BoxFit.contain,
-                                  ),
-                            ),
+                      ),
                     ),
                   ),
 
                   // Left arrow
                   Positioned(
-                    left: 10,
+                    left: 8,
                     top: 0,
                     bottom: 0,
                     child: Center(
@@ -589,7 +600,7 @@ class _CalculateStep1Content extends StatelessWidget {
 
                   // Right arrow
                   Positioned(
-                    right: 10,
+                    right: 8,
                     top: 0,
                     bottom: 0,
                     child: Center(
@@ -600,17 +611,59 @@ class _CalculateStep1Content extends StatelessWidget {
                     ),
                   ),
 
-                  // Watermark / Plan text
+                  // Fullscreen zoom button on top right
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: GestureDetector(
+                      onTap: () => _showFullscreen3dImage(
+                        context,
+                        bhkConfig.imageAsset,
+                        bhkConfig.title,
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.all(5),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.1),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.fullscreen_rounded,
+                          size: 18,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Watermark / Plan text badge
                   Positioned(
                     bottom: 8,
-                    right: 12,
-                    child: Text(
-                      bhkConfig.samplePlanText,
-                      style: GoogleFonts.urbanist(
-                        fontSize: 9.5,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF9CA3AF),
-                        letterSpacing: 0.2,
+                    right: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3.5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        bhkConfig.samplePlanText,
+                        style: GoogleFonts.urbanist(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                          letterSpacing: 0.2,
+                        ),
                       ),
                     ),
                   ),
@@ -760,6 +813,68 @@ class _CalculateStep1Content extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  void _showFullscreen3dImage(
+    BuildContext context,
+    String imagePath,
+    String title,
+  ) {
+    showDialog<void>(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (ctx) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Align(
+                alignment: Alignment.topRight,
+                child: IconButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  icon: const Icon(Icons.close, color: Colors.white, size: 28),
+                ),
+              ),
+              Flexible(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: InteractiveViewer(
+                    maxScale: 4.0,
+                    child: imagePath.startsWith('http://') ||
+                            imagePath.startsWith('https://')
+                        ? CachedNetworkImage(
+                            imageUrl: imagePath,
+                            fit: BoxFit.contain,
+                            placeholder: (context, url) => const Center(
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                              ),
+                            ),
+                            errorWidget: (context, url, error) => Image.asset(
+                              AppAssets.floorplanSample,
+                              fit: BoxFit.contain,
+                            ),
+                          )
+                        : Image.asset(imagePath, fit: BoxFit.contain),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                title,
+                style: GoogleFonts.urbanist(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
