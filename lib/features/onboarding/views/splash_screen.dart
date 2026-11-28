@@ -23,7 +23,7 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _goNext() async {
-    await Future.delayed(const Duration(seconds: 3));
+    await Future.delayed(const Duration(milliseconds: 900));
     if (!mounted) return;
     final isSignedIn =
         Firebase.apps.isNotEmpty && FirebaseAuth.instance.currentUser != null;

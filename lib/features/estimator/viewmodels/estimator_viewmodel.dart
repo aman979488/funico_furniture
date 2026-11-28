@@ -26,7 +26,7 @@ class EstimatorState {
     this.quoteName = 'Quote 1',
     this.selectedBhk = '1BHK',
     this.selectedPurpose = 'Renovate',
-    this.selectedPackageId = 'modern',
+    this.selectedPackageId = 'basic',
     this.packageImageIndices = const {
       'basic': 0,
       'modern': 0,
@@ -61,8 +61,8 @@ class EstimatorState {
     return packages.firstWhere(
       (p) => p.id == selectedPackageId,
       orElse: () => packages.isNotEmpty
-          ? packages[1 % packages.length]
-          : PackageConfig.allPackages[1],
+          ? packages.first
+          : PackageConfig.allPackages.first,
     );
   }
 
@@ -186,8 +186,9 @@ class EstimatorViewModel extends Notifier<EstimatorState> {
   }
 
   void nextBhk() {
-    final configs =
-        state.bhkConfigs.isNotEmpty ? state.bhkConfigs : BhkConfig.allConfigs;
+    final configs = state.bhkConfigs.isNotEmpty
+        ? state.bhkConfigs
+        : BhkConfig.allConfigs;
     final currentIndex = configs.indexWhere((c) => c.bhk == state.selectedBhk);
     if (currentIndex != -1 && currentIndex < configs.length - 1) {
       state = state.copyWith(selectedBhk: configs[currentIndex + 1].bhk);
@@ -197,8 +198,9 @@ class EstimatorViewModel extends Notifier<EstimatorState> {
   }
 
   void prevBhk() {
-    final configs =
-        state.bhkConfigs.isNotEmpty ? state.bhkConfigs : BhkConfig.allConfigs;
+    final configs = state.bhkConfigs.isNotEmpty
+        ? state.bhkConfigs
+        : BhkConfig.allConfigs;
     final currentIndex = configs.indexWhere((c) => c.bhk == state.selectedBhk);
     if (currentIndex > 0) {
       state = state.copyWith(selectedBhk: configs[currentIndex - 1].bhk);

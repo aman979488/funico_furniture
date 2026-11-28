@@ -1,9 +1,9 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/router/app_router.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/models/cart_item.dart';
 import '../viewmodels/cart_viewmodel.dart';
@@ -15,7 +15,7 @@ class CartScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cartState = ref.watch(cartViewModelProvider);
-    final items = cartState.items;
+    final items = cartState.selectedCodeItems;
     const deliveryAndFitting = 1200.0;
     final promoDiscount = cartState.subtotal * 0.1;
     final total = cartState.subtotal + deliveryAndFitting - promoDiscount;
@@ -102,7 +102,7 @@ class CartScreen extends ConsumerWidget {
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                     children: [
-                      // "My Cart" Title + Badge + "Review your items"
+                      // Cart title + item count + review label
                       Row(
                         children: [
                           const Text(
@@ -136,9 +136,9 @@ class CartScreen extends ConsumerWidget {
                           const Text(
                             'Review your items',
                             style: TextStyle(
-                              fontSize: 11,
-                              color: Color(0xFF9CA3AF),
-                              fontWeight: FontWeight.w400,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF6B7280),
                             ),
                           ),
                         ],
@@ -251,11 +251,15 @@ class CartScreen extends ConsumerWidget {
                         height: 44,
                         child: ElevatedButton(
                           onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Proceeding to checkout...'),
-                              ),
-                            );
+                            if (items.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Your cart is empty.'),
+                                ),
+                              );
+                              return;
+                            }
+                            context.push(AppRoutes.checkout);
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFFF5722),
@@ -413,10 +417,7 @@ class CartScreen extends ConsumerWidget {
                 ),
                 child: const Text(
                   'Start Shopping',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
                 ),
               ),
             ),
@@ -449,8 +450,8 @@ class _CartItemCard extends StatelessWidget {
     final materialText = product.material.isNotEmpty
         ? product.material
         : (product.category.isNotEmpty
-            ? product.category
-            : 'Commercial Ply • Matte Laminate');
+              ? product.category
+              : 'Commercial Ply • Matte Laminate');
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -652,15 +653,18 @@ class _CartItemCard extends StatelessWidget {
     );
     if (image.isEmpty) return fallback;
     if (image.startsWith('http')) {
-      return Image.network(
-        image,
+      return CachedNetworkImage(
+        imageUrl: image,
         fit: BoxFit.cover,
-        errorBuilder: (_, _, _) => fallback,
+        memCacheWidth: 200,
+        placeholder: (_, _) => fallback,
+        errorWidget: (_, _, _) => fallback,
       );
     }
     return Image.asset(
       image,
       fit: BoxFit.cover,
+      cacheWidth: 200,
       errorBuilder: (_, _, _) => fallback,
     );
   }
@@ -693,7 +697,9 @@ class _CartSummaryRow extends StatelessWidget {
             style: TextStyle(
               fontSize: fontSize,
               fontWeight: labelBold ? FontWeight.w800 : FontWeight.w500,
-              color: labelBold ? const Color(0xFF1E2640) : const Color(0xFF6B7280),
+              color: labelBold
+                  ? const Color(0xFF1E2640)
+                  : const Color(0xFF6B7280),
             ),
           ),
         ),

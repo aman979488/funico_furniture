@@ -12,6 +12,7 @@ import '../../../shared/models/product.dart';
 import '../../cart/viewmodels/cart_viewmodel.dart';
 import '../models/estimator_model.dart';
 import '../viewmodels/estimator_viewmodel.dart';
+import 'product_comparison_screen.dart';
 
 class EstimatorScreen extends ConsumerStatefulWidget {
   const EstimatorScreen({super.key});
@@ -567,10 +568,11 @@ class _CalculateStep1Content extends StatelessWidget {
                                     ),
                                   ),
                                 ),
-                                errorWidget: (context, url, error) => Image.asset(
-                                  AppAssets.floorplanSample,
-                                  fit: BoxFit.contain,
-                                ),
+                                errorWidget: (context, url, error) =>
+                                    Image.asset(
+                                      AppAssets.floorplanSample,
+                                      fit: BoxFit.contain,
+                                    ),
                               )
                             : Image.asset(
                                 bhkConfig.imageAsset,
@@ -843,7 +845,8 @@ class _CalculateStep1Content extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16),
                   child: InteractiveViewer(
                     maxScale: 4.0,
-                    child: imagePath.startsWith('http://') ||
+                    child:
+                        imagePath.startsWith('http://') ||
                             imagePath.startsWith('https://')
                         ? CachedNetworkImage(
                             imageUrl: imagePath,
@@ -1699,29 +1702,6 @@ class _MyQuotesTabContentState extends State<_MyQuotesTabContent> {
     ).showSnackBar(const SnackBar(content: Text('PDF export is coming soon.')));
   }
 
-  Widget _actionButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onPressed,
-  }) {
-    return OutlinedButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon, size: 14),
-      label: Text(label),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: AppColors.primary,
-        side: const BorderSide(color: Color(0xFFF0D7C8)),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        minimumSize: const Size(0, 36),
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        textStyle: GoogleFonts.urbanist(
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-
   Widget _generateAllPackagesButton() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
@@ -2050,6 +2030,17 @@ class _MyQuotesTabContentState extends State<_MyQuotesTabContent> {
                           color: const Color(0xFF64748B),
                         ),
                       ),
+                      if (quote.isProductQuote) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          'Selected product',
+                          style: GoogleFonts.urbanist(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -2388,9 +2379,188 @@ class _ProductsTabContentState extends State<_ProductsTabContent> {
   String _packageFilter = 'All Packages';
   final Map<String, int> _quantities = {};
   final Map<String, int> _quoteQuantities = {};
+  final Map<String, String> _dimensionValues = {};
   final Set<String> _comparedProductIds = {};
 
-  List<Product> get _allProducts => Product.estimatorProducts;
+  List<Product> get _allProducts {
+    final baseProducts = Product.estimatorProducts;
+    final packages = widget.packages.isNotEmpty
+        ? widget.packages
+        : PackageConfig.allPackages;
+
+    final expanded = <Product>[];
+    for (final product in baseProducts) {
+      final pkg = packages.firstWhere(
+        (p) => p.id.toLowerCase() == product.packageId.toLowerCase(),
+        orElse: () => packages.firstWhere(
+          (p) => p.id.toLowerCase() == widget.selectedPackageId.toLowerCase(),
+          orElse: () => packages.first,
+        ),
+      );
+
+      final matchingImages = _extractDistinctCategoryImages(product, pkg);
+
+      if (matchingImages.length <= 1) {
+        expanded.add(
+          matchingImages.isNotEmpty
+              ? product.copyWith(
+                  image: matchingImages.first,
+                  images: matchingImages,
+                )
+              : product,
+        );
+      } else {
+        for (var i = 0; i < matchingImages.length; i++) {
+          final imgUrl = matchingImages[i];
+          final label = _extractImageLabel(imgUrl, i);
+          final variantName = '${product.name} - $label';
+          final variantId = i == 0 ? product.id : '${product.id}-${i + 1}';
+          final variantPrice = _tvUnitVariantPrice(product, label);
+
+          expanded.add(
+            product.copyWith(
+              id: variantId,
+              name: variantName,
+              price: variantPrice,
+              image: imgUrl,
+              images: [imgUrl],
+            ),
+          );
+        }
+      }
+    }
+    return expanded;
+  }
+
+  static double _tvUnitVariantPrice(Product product, String label) {
+    if (product.category != 'TV Unit') return product.price;
+
+    switch (product.packageId.toLowerCase()) {
+      case 'basic':
+        if (label == '2BHK') return 19000;
+        if (label == '3BHK') return 21000;
+        return product.price;
+      case 'modern':
+        if (label == '2BHK') return 29000;
+        if (label == '3BHK') return 30000;
+        return product.price;
+      default:
+        if (label == '2BHK') return product.price + 2000;
+        if (label == '3BHK') return product.price + 3000;
+    }
+
+    return product.price;
+  }
+
+  static String _extractImageLabel(String url, int index) {
+    try {
+      final decoded = Uri.decodeFull(url).split('?').first;
+      final fileName = decoded.split('/').last.split('.').first;
+      final match = RegExp(
+        r'(\d\s*BHK)',
+        caseSensitive: false,
+      ).firstMatch(fileName);
+      if (match != null) {
+        return match.group(1)!.toUpperCase().replaceAll(' ', '');
+      }
+      if (fileName.toLowerCase().contains('in all') ||
+          fileName.toLowerCase().contains('in_all')) {
+        return 'All Designs';
+      }
+    } catch (_) {}
+    return 'Design ${index + 1}';
+  }
+
+  static List<String> _extractDistinctCategoryImages(
+    Product product,
+    PackageConfig package,
+  ) {
+    final urls = <String>[];
+    final seenKeys = <String>{};
+
+    void addUrl(String url) {
+      if (url.trim().isEmpty) return;
+      final cleanKey = _normalizeStorageUrlKey(url);
+      if (seenKeys.add(cleanKey)) {
+        urls.add(url);
+      }
+    }
+
+    if (product.image.isNotEmpty) {
+      addUrl(product.image);
+    }
+    for (final img in product.images) {
+      addUrl(img);
+    }
+
+    final categoryLower = product.category.toLowerCase().trim();
+    for (final img in package.images) {
+      final decoded = Uri.decodeFull(img).toLowerCase();
+      final isMatch = _isCategoryMatch(decoded, categoryLower);
+      if (isMatch) {
+        addUrl(img);
+      }
+    }
+
+    return urls;
+  }
+
+  static String _normalizeStorageUrlKey(String url) {
+    try {
+      final decoded = Uri.decodeFull(url);
+      final withoutQuery = decoded.split('?').first.trim().toLowerCase();
+      if (withoutQuery.contains('/o/')) {
+        return withoutQuery.split('/o/').last;
+      }
+      return withoutQuery;
+    } catch (_) {
+      return url.toLowerCase().trim();
+    }
+  }
+
+  static bool _isCategoryMatch(String decodedUrlPath, String categoryLower) {
+    if (categoryLower == 'tv unit') {
+      return decodedUrlPath.contains('tv unit') ||
+          decodedUrlPath.contains('tv%20unit') ||
+          decodedUrlPath.contains('/tv ');
+    }
+    if (categoryLower == 'sofa') {
+      return decodedUrlPath.contains('/sofa/') ||
+          decodedUrlPath.contains('sofa');
+    }
+    if (categoryLower == 'bed') {
+      return decodedUrlPath.contains('/bed/') || decodedUrlPath.contains('bed');
+    }
+    if (categoryLower == 'kitchen cabinet') {
+      return decodedUrlPath.contains('kitchen');
+    }
+    if (categoryLower == 'dinning table' || categoryLower == 'dining table') {
+      return decodedUrlPath.contains('dinn') || decodedUrlPath.contains('din');
+    }
+    if (categoryLower == 'wardrobe') {
+      return decodedUrlPath.contains('wardrobe');
+    }
+    if (categoryLower == 'temple') {
+      return decodedUrlPath.contains('temple');
+    }
+    if (categoryLower == 'center table') {
+      return decodedUrlPath.contains('center table') ||
+          decodedUrlPath.contains('center%20table');
+    }
+    if (categoryLower == 'dressing table') {
+      return decodedUrlPath.contains('dressing table') ||
+          decodedUrlPath.contains('dressing%20table');
+    }
+    if (categoryLower == 'side table') {
+      return decodedUrlPath.contains('side table') ||
+          decodedUrlPath.contains('side%20table');
+    }
+    if (categoryLower == 'study table') {
+      return decodedUrlPath.contains('study table') ||
+          decodedUrlPath.contains('study%20table');
+    }
+    return decodedUrlPath.contains(categoryLower);
+  }
 
   List<Product> get _products => _allProducts.where((product) {
     final matchesQuery =
@@ -2410,9 +2580,23 @@ class _ProductsTabContentState extends State<_ProductsTabContent> {
     var total = 0.0;
     for (final product in _allProducts) {
       final qty = _quoteQuantities[product.id] ?? 0;
+      if (qty == 0) continue;
       total += product.price * qty;
     }
     return total;
+  }
+
+  PackageConfig _packageForProduct(Product product) {
+    final packages = widget.packages.isNotEmpty
+        ? widget.packages
+        : PackageConfig.allPackages;
+    return packages.firstWhere(
+      (package) => package.id == product.packageId,
+      orElse: () => packages.firstWhere(
+        (package) => package.id == widget.selectedPackageId,
+        orElse: () => packages.first,
+      ),
+    );
   }
 
   void _showComparison() {
@@ -2420,29 +2604,54 @@ class _ProductsTabContentState extends State<_ProductsTabContent> {
         .where((product) => _comparedProductIds.contains(product.id))
         .toList();
     if (products.length < 2) return;
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Compare products'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: products
-              .map(
-                (product) => ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(product.name),
-                  subtitle: Text(product.category),
-                  trailing: Text(EstimatorQuote.formatCurrency(product.price)),
-                ),
-              )
-              .toList(),
+    final packages = widget.packages.isNotEmpty
+        ? widget.packages
+        : PackageConfig.allPackages;
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ProductComparisonScreen(
+          products: products,
+          packages: packages,
+          categoryTitle: products.first.category,
+          onAddToQuote: widget.onAddToQuote,
+          onAddToCart: widget.onAddToCart,
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
-          ),
-        ],
+      ),
+    );
+  }
+
+  void _openProductPackageComparison(Product product) {
+    final packages = widget.packages.isNotEmpty
+        ? widget.packages
+        : PackageConfig.allPackages;
+
+    final comparisonProducts = <Product>[];
+    final catLower = product.category.toLowerCase().trim();
+
+    for (final pkg in packages) {
+      final match = Product.estimatorProducts.firstWhere(
+        (p) =>
+            p.packageId.toLowerCase() == pkg.id.toLowerCase() &&
+            p.category.toLowerCase().trim() == catLower,
+        orElse: () => product.copyWith(
+          id: '${pkg.id}-${product.id}',
+          packageId: pkg.id,
+          packageTitle: pkg.title,
+        ),
+      );
+      comparisonProducts.add(match);
+    }
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ProductComparisonScreen(
+          products: comparisonProducts,
+          packages: packages,
+          categoryTitle: product.name,
+          onAddToQuote: widget.onAddToQuote,
+          onAddToCart: widget.onAddToCart,
+        ),
       ),
     );
   }
@@ -2461,6 +2670,8 @@ class _ProductsTabContentState extends State<_ProductsTabContent> {
       'Temple',
       'Center Table',
       'Dressing Table',
+      'Side Table',
+      'Study Table',
     ];
     final packages = widget.packages.isNotEmpty
         ? widget.packages
@@ -2674,26 +2885,53 @@ class _ProductsTabContentState extends State<_ProductsTabContent> {
                     ),
                     child: _EstimatorProductCard(
                       product: product,
-                      package: selectedPackage,
+                      package: _packageForProduct(product),
                       quantity: quantity,
                       quoteQuantity: quoteQuantity,
+                      dimensionValue:
+                          _dimensionValues[product.id] ??
+                          _dimensionValue(product.dimensions),
                       isCompared: isCompared,
                       onTap: () => widget.onProductTap(product),
-                      onQuantityChanged: (value) =>
-                          setState(() => _quantities[product.id] = value),
-                      onCompare: () => setState(() {
-                        if (!_comparedProductIds.add(product.id)) {
-                          _comparedProductIds.remove(product.id);
+                      onQuantityChanged: (value) => setState(() {
+                        _quantities[product.id] = value;
+                        if (_quoteQuantities[product.id] != null &&
+                            _quoteQuantities[product.id]! > 0) {
+                          _quoteQuantities[product.id] = value;
                         }
                       }),
+                      onDimensionChanged: (value) => setState(() {
+                        _dimensionValues[product.id] = value;
+                      }),
+                      onCompare: () => _openProductPackageComparison(product),
                       onAddToQuote: () {
+                        final dimensionValue =
+                            _dimensionValues[product.id] ??
+                            _dimensionValue(product.dimensions);
                         setState(() {
                           _quoteQuantities[product.id] =
                               quoteQuantity + quantity;
                         });
-                        widget.onAddToQuote(product, quantity);
+                        widget.onAddToQuote(
+                          product.copyWith(
+                            dimensions:
+                                '(${_dimensionLabel(product.dimensions)}) $dimensionValue',
+                          ),
+                          quantity,
+                        );
                       },
-                      onAddToCart: () => widget.onAddToCart(product, quantity),
+                      onAddToCart: () {
+                        final dimensionValue =
+                            _dimensionValues[product.id] ??
+                            _dimensionValue(product.dimensions);
+                        widget.onAddToCart(
+                          product.copyWith(
+                            dimensions:
+                                '(${_dimensionLabel(product.dimensions)}) $dimensionValue',
+                          ),
+                          quantity,
+                        );
+                      },
                     ),
                   );
                 }),
@@ -2843,9 +3081,11 @@ class _EstimatorProductCard extends StatefulWidget {
     required this.package,
     required this.quantity,
     required this.quoteQuantity,
+    required this.dimensionValue,
     required this.isCompared,
     required this.onTap,
     required this.onQuantityChanged,
+    required this.onDimensionChanged,
     required this.onCompare,
     required this.onAddToQuote,
     required this.onAddToCart,
@@ -2855,9 +3095,11 @@ class _EstimatorProductCard extends StatefulWidget {
   final PackageConfig package;
   final int quantity;
   final int quoteQuantity;
+  final String dimensionValue;
   final bool isCompared;
   final VoidCallback onTap;
   final ValueChanged<int> onQuantityChanged;
+  final ValueChanged<String> onDimensionChanged;
   final VoidCallback onCompare;
   final VoidCallback onAddToQuote;
   final VoidCallback onAddToCart;
@@ -2878,17 +3120,19 @@ class _EstimatorProductCardState extends State<_EstimatorProductCard> {
   @override
   void initState() {
     super.initState();
-    _dimensionController = TextEditingController(
-      text: _dimensionValue(_productDimensions),
-    );
+    _dimensionController = TextEditingController(text: widget.dimensionValue);
   }
 
   @override
   void didUpdateWidget(covariant _EstimatorProductCard oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.product.id != widget.product.id) {
+      _imageIndex = 0;
       _dimensionsSwapped = false;
       _dimensionController.text = _dimensionValue(_productDimensions);
+    } else if (oldWidget.dimensionValue != widget.dimensionValue &&
+        _dimensionController.text != widget.dimensionValue) {
+      _dimensionController.text = widget.dimensionValue;
     }
   }
 
@@ -2899,10 +3143,13 @@ class _EstimatorProductCardState extends State<_EstimatorProductCard> {
   }
 
   List<String> get _images {
-    if (widget.product.images.isNotEmpty) {
-      return widget.product.images;
+    if (widget.product.image.isNotEmpty) {
+      return [widget.product.image];
     }
-    return [widget.product.image];
+    if (widget.product.images.isNotEmpty) {
+      return [widget.product.images.first];
+    }
+    return [AppAssets.livingRoomImage];
   }
 
   void _nextImage() {
@@ -2912,6 +3159,176 @@ class _EstimatorProductCardState extends State<_EstimatorProductCard> {
     });
   }
 
+  void _prevImage() {
+    if (_images.length <= 1) return;
+    setState(() {
+      _imageIndex = (_imageIndex - 1 + _images.length) % _images.length;
+    });
+  }
+
+  void _showGalleryDialog(
+    BuildContext context,
+    List<String> images,
+    int initialIndex,
+  ) {
+    var currentIndex = initialIndex;
+    final pageController = PageController(initialPage: initialIndex);
+    showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.85),
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return Dialog(
+              backgroundColor: Colors.transparent,
+              insetPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 24,
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  PageView.builder(
+                    controller: pageController,
+                    itemCount: images.length,
+                    onPageChanged: (index) {
+                      setDialogState(() => currentIndex = index);
+                      setState(() => _imageIndex = index);
+                    },
+                    itemBuilder: (context, index) {
+                      final url = images[index];
+                      final isRemote =
+                          url.startsWith('http://') ||
+                          url.startsWith('https://');
+                      return Center(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: InteractiveViewer(
+                            minScale: 1.0,
+                            maxScale: 3.5,
+                            child: isRemote
+                                ? CachedNetworkImage(
+                                    imageUrl: url,
+                                    fit: BoxFit.contain,
+                                    placeholder: (_, _) => const Center(
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    errorWidget: (_, _, _) => Image.asset(
+                                      AppAssets.livingRoomImage,
+                                      fit: BoxFit.contain,
+                                    ),
+                                  )
+                                : Image.asset(url, fit: BoxFit.contain),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  Positioned(
+                    top: 10,
+                    left: 10,
+                    right: 10,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Flexible(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.6),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              '${widget.product.name} (${currentIndex + 1}/${images.length})',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.urbanist(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(
+                            Icons.close_rounded,
+                            color: Colors.white,
+                            size: 26,
+                          ),
+                          onPressed: () => Navigator.of(dialogContext).pop(),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (images.length > 1) ...[
+                    Positioned(
+                      left: 6,
+                      child: GestureDetector(
+                        onTap: () {
+                          if (currentIndex > 0) {
+                            pageController.previousPage(
+                              duration: const Duration(milliseconds: 250),
+                              curve: Curves.easeInOut,
+                            );
+                          }
+                        },
+                        child: Container(
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.5),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.chevron_left_rounded,
+                            size: 26,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      right: 6,
+                      child: GestureDetector(
+                        onTap: () {
+                          if (currentIndex < images.length - 1) {
+                            pageController.nextPage(
+                              duration: const Duration(milliseconds: 250),
+                              curve: Curves.easeInOut,
+                            );
+                          }
+                        },
+                        child: Container(
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.5),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.chevron_right_rounded,
+                            size: 26,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final product = widget.product;
@@ -2919,12 +3336,11 @@ class _EstimatorProductCardState extends State<_EstimatorProductCard> {
     final quantity = widget.quantity;
     final quoteQuantity = widget.quoteQuantity;
     final isCompared = widget.isCompared;
+    final unitPrice = product.price;
 
-    final materialText = product.material.isNotEmpty
-        ? product.material
-        : (product.description.isNotEmpty
-              ? product.description
-              : product.category);
+    final productDescription = product.description.isNotEmpty
+        ? product.description
+        : (product.material.isNotEmpty ? product.material : product.category);
     final dimensionLabel = _dimensionLabel(_productDimensions);
     final displayedDimensionLabel = _dimensionsSwapped
         ? _swapDimensionParts(dimensionLabel)
@@ -2952,52 +3368,170 @@ class _EstimatorProductCardState extends State<_EstimatorProductCard> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Product Thumbnail Image
-              InkWell(
-                onTap: images.length > 1 ? _nextImage : widget.onTap,
-                borderRadius: BorderRadius.circular(12),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: SizedBox(
-                    width: 86,
-                    height: 86,
-                    child:
-                        currentImageUrl.startsWith('http://') ||
-                            currentImageUrl.startsWith('https://')
-                        ? CachedNetworkImage(
-                            imageUrl: currentImageUrl,
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => const ColoredBox(
-                              color: Color(0xFFF1F5F9),
-                              child: Center(
-                                child: SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
+              // Product Thumbnail Image Column
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: SizedBox(
+                      width: 90,
+                      height: 90,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          GestureDetector(
+                            onTap: () => _showGalleryDialog(
+                              context,
+                              images,
+                              _imageIndex % images.length,
+                            ),
+                            child:
+                                currentImageUrl.startsWith('http://') ||
+                                    currentImageUrl.startsWith('https://')
+                                ? CachedNetworkImage(
+                                    imageUrl: currentImageUrl,
+                                    fit: BoxFit.cover,
+                                    placeholder: (context, url) =>
+                                        const ColoredBox(
+                                          color: Color(0xFFF1F5F9),
+                                          child: Center(
+                                            child: SizedBox(
+                                              width: 18,
+                                              height: 18,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                    errorWidget: (context, url, error) =>
+                                        Image.asset(
+                                          AppAssets.livingRoomImage,
+                                          fit: BoxFit.cover,
+                                        ),
+                                  )
+                                : Image.asset(
+                                    currentImageUrl,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, _, _) => const ColoredBox(
+                                      color: Color(0xFFF1F5F9),
+                                      child: Icon(
+                                        Icons.chair_alt_outlined,
+                                        size: 34,
+                                        color: Color(0xFF94A3B8),
+                                      ),
+                                    ),
+                                  ),
+                          ),
+                          if (images.length > 1) ...[
+                            // Top Counter Badge
+                            Positioned(
+                              top: 4,
+                              left: 4,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4.5,
+                                  vertical: 1.5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.65),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  '${(_imageIndex % images.length) + 1}/${images.length}',
+                                  style: GoogleFonts.urbanist(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
                                   ),
                                 ),
                               ),
                             ),
-                            errorWidget: (context, url, error) => Image.asset(
-                              AppAssets.livingRoomImage,
-                              fit: BoxFit.cover,
-                            ),
-                          )
-                        : Image.asset(
-                            currentImageUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => const ColoredBox(
-                              color: Color(0xFFF1F5F9),
-                              child: Icon(
-                                Icons.chair_alt_outlined,
-                                size: 34,
-                                color: Color(0xFF94A3B8),
+                            // Left navigation arrow
+                            Positioned(
+                              left: 2,
+                              top: 0,
+                              bottom: 0,
+                              child: Center(
+                                child: GestureDetector(
+                                  onTap: _prevImage,
+                                  child: Container(
+                                    width: 20,
+                                    height: 20,
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.55,
+                                      ),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.chevron_left_rounded,
+                                      size: 16,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
+                            // Right navigation arrow
+                            Positioned(
+                              right: 2,
+                              top: 0,
+                              bottom: 0,
+                              child: Center(
+                                child: GestureDetector(
+                                  onTap: _nextImage,
+                                  child: Container(
+                                    width: 20,
+                                    height: 20,
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.55,
+                                      ),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.chevron_right_rounded,
+                                      size: 16,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // Bottom dots indicator
+                            Positioned(
+                              bottom: 4,
+                              left: 0,
+                              right: 0,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: List.generate(images.length, (idx) {
+                                  final isCurrent =
+                                      idx == (_imageIndex % images.length);
+                                  return Container(
+                                    margin: const EdgeInsets.symmetric(
+                                      horizontal: 1.5,
+                                    ),
+                                    width: isCurrent ? 8 : 3.5,
+                                    height: 3.5,
+                                    decoration: BoxDecoration(
+                                      color: isCurrent
+                                          ? Colors.white
+                                          : Colors.white.withValues(alpha: 0.5),
+                                      borderRadius: BorderRadius.circular(2),
+                                    ),
+                                  );
+                                }),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
               const SizedBox(width: 10),
               // Details
@@ -3028,7 +3562,7 @@ class _EstimatorProductCardState extends State<_EstimatorProductCard> {
                           children: [
                             Text(
                               EstimatorQuote.formatCurrency(
-                                product.price * quantity,
+                                unitPrice * quantity,
                               ),
                               style: GoogleFonts.urbanist(
                                 fontSize: 15,
@@ -3038,7 +3572,7 @@ class _EstimatorProductCardState extends State<_EstimatorProductCard> {
                             ),
                             if (quantity > 1)
                               Text(
-                                '${EstimatorQuote.formatCurrency(product.price)} each',
+                                '${EstimatorQuote.formatCurrency(unitPrice)} each',
                                 style: GoogleFonts.urbanist(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w600,
@@ -3052,7 +3586,7 @@ class _EstimatorProductCardState extends State<_EstimatorProductCard> {
                     const SizedBox(height: 2),
                     // Material / Subtitle
                     Text(
-                      materialText,
+                      productDescription,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.urbanist(
@@ -3085,6 +3619,7 @@ class _EstimatorProductCardState extends State<_EstimatorProductCard> {
                             ),
                             label: displayedDimensionLabel,
                             controller: _dimensionController,
+                            onChanged: widget.onDimensionChanged,
                             onSwap: () {
                               setState(() {
                                 _dimensionsSwapped = !_dimensionsSwapped;
@@ -3097,6 +3632,7 @@ class _EstimatorProductCardState extends State<_EstimatorProductCard> {
                                     offset: swappedValue.length,
                                   ),
                                 );
+                                widget.onDimensionChanged(swappedValue);
                               });
                             },
                           ),
@@ -3252,11 +3788,13 @@ class _DimensionControl extends StatelessWidget {
     required this.label,
     required this.controller,
     required this.onSwap,
+    required this.onChanged,
   });
 
   final String label;
   final TextEditingController controller;
   final VoidCallback onSwap;
+  final ValueChanged<String> onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -3282,6 +3820,7 @@ class _DimensionControl extends StatelessWidget {
                   Expanded(
                     child: TextField(
                       controller: controller,
+                      onChanged: onChanged,
                       maxLines: 1,
                       textAlignVertical: TextAlignVertical.center,
                       style: GoogleFonts.urbanist(
@@ -3443,55 +3982,6 @@ class _QuantityButton extends StatelessWidget {
   }
 }
 
-class _ProductActionButton extends StatelessWidget {
-  const _ProductActionButton({
-    required this.label,
-    required this.onPressed,
-    this.primary = false,
-    this.selected = false,
-  });
-
-  final String label;
-  final VoidCallback onPressed;
-  final bool primary;
-  final bool selected;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 38,
-      child: OutlinedButton(
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          minimumSize: Size.zero,
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          foregroundColor: primary || selected
-              ? Colors.white
-              : const Color(0xFF334155),
-          backgroundColor: primary || selected
-              ? AppColors.primary
-              : const Color(0xFFF8FAFC),
-          side: BorderSide(
-            color: primary || selected
-                ? AppColors.primary
-                : const Color(0xFFE2E8F0),
-            width: 1.2,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          textStyle: GoogleFonts.urbanist(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        child: FittedBox(child: Text(label, maxLines: 1)),
-      ),
-    );
-  }
-}
-
 // -----------------------------------------------------------------------------
 // Interactive Estimate Result Bottom Sheet
 // -----------------------------------------------------------------------------
@@ -3565,6 +4055,18 @@ class _EstimateResultBottomSheet extends StatelessWidget {
           ),
 
           const SizedBox(height: 16),
+
+          if (quote.isProductQuote) ...[
+            Text(
+              'Products in this quote',
+              style: GoogleFonts.urbanist(
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF1E293B),
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
 
           // Total Estimated Cost Card
           Container(

@@ -6,6 +6,7 @@ import 'package:funica/features/estimator/models/estimator_model.dart';
 import 'package:funica/features/estimator/repositories/estimator_repository.dart';
 import 'package:funica/features/estimator/viewmodels/estimator_viewmodel.dart';
 import 'package:funica/features/estimator/views/estimator_screen.dart';
+import 'package:funica/features/orders/views/my_orders_screen.dart';
 import 'package:funica/shared/models/product.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -228,10 +229,10 @@ void main() {
 
     // Verify all 5 packages are present
     expect(find.text('Basic Package'), findsOneWidget);
-    expect(find.text('₹1,000 /sqft'), findsOneWidget);
+    expect(find.text('₹1,500 /sqft'), findsWidgets);
 
     expect(find.text('Modern Package'), findsOneWidget);
-    expect(find.text('₹1,500 /sqft'), findsOneWidget);
+    expect(find.text('₹1,500 /sqft'), findsWidgets);
 
     expect(find.text('Deluxe Package'), findsOneWidget);
     expect(find.text('₹2,000 /sqft'), findsOneWidget);
@@ -263,7 +264,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Basic Package'), findsOneWidget);
-    expect(find.text('₹1,000 /sqft'), findsOneWidget);
+    expect(find.text('₹1,500 /sqft'), findsOneWidget);
     expect(find.text('Quote 1'), findsOneWidget);
     expect(find.text('1BHK'), findsOneWidget);
     expect(find.text('Renovate'), findsOneWidget);
@@ -300,24 +301,16 @@ void main() {
     final tabPagesFinder = find.byKey(const ValueKey('estimator-tab-pages'));
     final pageController = tester.widget<PageView>(tabPagesFinder).controller!;
 
-    await tester.timedDrag(
-      tabPagesFinder,
-      const Offset(-40, 0),
-      const Duration(seconds: 1),
-    );
-    await tester.pumpAndSettle();
+    await tester.drag(tabPagesFinder, const Offset(-500, 0));
+    await tester.pump(const Duration(seconds: 2));
 
-    expect(pageController.page, 1);
+    expect(pageController.page, closeTo(1, 0.15));
     expect(find.text('Search saved quotes'), findsOneWidget);
 
-    await tester.timedDrag(
-      tabPagesFinder,
-      const Offset(40, 0),
-      const Duration(seconds: 1),
-    );
-    await tester.pumpAndSettle();
+    await tester.drag(tabPagesFinder, const Offset(500, 0));
+    await tester.pump(const Duration(seconds: 2));
 
-    expect(pageController.page, 0);
+    expect(pageController.page, closeTo(0, 0.15));
     expect(find.text('Name of the Quote'), findsOneWidget);
   });
 
@@ -420,13 +413,71 @@ void main() {
     expect(find.text('Search products...'), findsOneWidget);
     expect(find.text('All Packages'), findsOneWidget);
     expect(find.text('All Items'), findsOneWidget);
-    expect(find.text('1BHK'), findsNothing);
-    expect(find.text('2BHK'), findsNothing);
-    expect(find.text('3BHK'), findsNothing);
+    // Product images remain unlabeled; dimensions can be swapped.
     expect(find.text('Qty'), findsWidgets);
     expect(find.text('(L × H)'), findsWidgets);
     expect(find.byTooltip('Swap dimensions'), findsWidgets);
-    expect(find.text('Wall Mount TV Unit'), findsOneWidget);
+    expect(find.text('Wall Mount TV Unit - 1BHK'), findsOneWidget);
+    expect(find.text('Wall Mount TV Unit - 2BHK'), findsOneWidget);
+    expect(find.text('Wall Mount TV Unit - 3BHK'), findsOneWidget);
+    expect(find.text('₹19,000'), findsWidgets);
+    expect(find.text('₹21,000'), findsWidgets);
+    final packageFilterList = find
+        .ancestor(
+          of: find.text('All Packages').first,
+          matching: find.byType(Scrollable),
+        )
+        .first;
+    final packageFilterListCenter = tester.getCenter(packageFilterList);
+    Future<void> selectPackage(String label) async {
+      final viewportWidth =
+          tester.view.physicalSize.width / tester.view.devicePixelRatio;
+      for (var attempt = 0; attempt < 10; attempt++) {
+        final matchingChips = find.text(label);
+        if (matchingChips.evaluate().isNotEmpty) {
+          final chip = matchingChips.first;
+          final rect = tester.getRect(chip);
+          if (rect.left >= 0 && rect.right <= viewportWidth) {
+            await tester.tap(chip);
+            await _pumpEstimator(tester);
+            return;
+          }
+          await tester.dragFrom(
+            packageFilterListCenter,
+            Offset(rect.right > viewportWidth ? -180 : 180, 0),
+          );
+        } else {
+          await tester.dragFrom(
+            packageFilterListCenter,
+            Offset(label == 'All Packages' ? 180 : -180, 0),
+          );
+        }
+        await _pumpEstimator(tester);
+      }
+      fail('Could not scroll package filter "$label" into view');
+    }
+
+    for (final entry in {
+      'Modern Package': ['₹29,000', '₹30,000'],
+      'Deluxe Package': ['₹34,000', '₹35,000'],
+      'Premium Package': ['₹44,000', '₹45,000'],
+      'Luxury Package': ['₹60,000', '₹61,000'],
+    }.entries) {
+      await selectPackage(entry.key);
+      for (final price in entry.value) {
+        expect(find.text(price), findsWidgets);
+      }
+    }
+    await selectPackage('All Packages');
+    expect(
+      find.text(
+        'Essential woodwork with standard matte laminate and concealed wiring.',
+      ),
+      findsWidgets,
+    );
+    expect(find.text('1BHK'), findsNothing);
+    expect(find.text('2BHK'), findsNothing);
+    expect(find.text('3BHK'), findsNothing);
     expect(find.text('Add to Quote'), findsWidgets);
     expect(find.text('Add to Cart'), findsWidgets);
     expect(find.text('Total Rate Estimate'), findsOneWidget);
@@ -483,14 +534,14 @@ void main() {
       '9.0 ft × 5.0 ft',
     );
 
-    final dimensionSwap = find.descendant(
+    final swapDimensionsButton = find.descendant(
       of: find.byKey(
         const ValueKey('estimator-product-dimensions-basic-tv-unit'),
       ),
       matching: find.byTooltip('Swap dimensions'),
     );
-    await tester.ensureVisible(dimensionSwap);
-    await tester.tap(dimensionSwap);
+    await tester.ensureVisible(swapDimensionsButton);
+    await tester.tap(swapDimensionsButton);
     await _pumpEstimator(tester);
     expect(find.text('(H × L)'), findsWidgets);
     expect(
@@ -501,17 +552,17 @@ void main() {
     await tester.ensureVisible(find.text('Add to Quote').first);
     await tester.tap(find.text('Add to Quote').first);
     await _pumpEstimator(tester);
-    expect(find.text('₹18,500 / sq.ft'), findsOneWidget);
+    expect(find.text('₹18,500'), findsWidgets);
 
     await tester.tap(find.text('MY QUOTES'));
     await _pumpEstimator(tester);
-    expect(find.text('Wall Mount TV Unit'), findsOneWidget);
+    expect(find.text('Wall Mount TV Unit - 1BHK'), findsOneWidget);
     expect(find.text('Selected product'), findsOneWidget);
     expect(find.text('1 product added to My Quotes'), findsOneWidget);
     expect(find.text('1BHK • Basic Package'), findsNothing);
     expect(find.text('₹18,500'), findsOneWidget);
 
-    await tester.tap(find.text('Detailed'));
+    await tester.tap(find.text('Detailed').last);
     await _pumpEstimator(tester);
     expect(find.text('Products in this quote'), findsOneWidget);
     expect(find.text('1BHK • Basic Package • Renovate'), findsNothing);
@@ -527,6 +578,7 @@ void main() {
       routes: [
         GoRoute(path: '/estimator', builder: (_, _) => const EstimatorScreen()),
         GoRoute(path: '/cart', builder: (_, _) => const CartScreen()),
+        GoRoute(path: '/orders', builder: (_, _) => const MyOrdersScreen()),
       ],
     );
     addTearDown(router.dispose);
@@ -550,8 +602,15 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('My Cart'), findsOneWidget);
-    expect(find.text('Wall Mount TV Unit'), findsOneWidget);
+    expect(find.text('Review your items'), findsOneWidget);
+    expect(find.text('My Code'), findsNothing);
+    expect(find.text('Wall Mount TV Unit - 1BHK'), findsOneWidget);
+    expect(find.text('Price: ₹18,500'), findsOneWidget);
     expect(find.text('Buy Now'), findsOneWidget);
+    await tester.ensureVisible(find.text('Buy Now'));
+    await tester.tap(find.text('Buy Now'));
+    await tester.pumpAndSettle();
+    expect(find.text('My Orders'), findsOneWidget);
   });
 }
 

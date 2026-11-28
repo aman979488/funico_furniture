@@ -42,7 +42,9 @@ class _FillProfileScreenState extends ConsumerState<FillProfileScreen> {
 
   static const _genders = ['Male', 'Female', 'Other'];
 
-  Future<DocumentReference<Map<String, dynamic>>> _getUserDocRef(String uid) async {
+  Future<DocumentReference<Map<String, dynamic>>> _getUserDocRef(
+    String uid,
+  ) async {
     final collections = [
       FirestoreCollections.customers,
       FirestoreCollections.vendors,
@@ -225,7 +227,7 @@ class _FillProfileScreenState extends ConsumerState<FillProfileScreen> {
       }, SetOptions(merge: true));
 
       if (!mounted) return;
-      context.go(AppRoutes.createPin, extra: true);
+      context.go(AppRoutes.home);
     } on FirebaseException catch (error) {
       if (!mounted) return;
       debugPrint('Profile submission failed (${error.code}): ${error.message}');

@@ -35,6 +35,11 @@ import '../../features/profile/views/profile_screen.dart';
 import '../../features/profile/views/security_screen.dart';
 import '../../features/search/views/search_screen.dart';
 import '../../features/wishlist/views/wishlist_screen.dart';
+import '../../features/checkout/views/checkout_screen.dart';
+import '../../features/checkout/views/shipping_address_screen.dart';
+import '../../features/checkout/views/choose_shipping_screen.dart';
+import '../../features/checkout/views/payment_methods_screen.dart';
+import '../../features/checkout/views/enter_pin_screen.dart';
 import '../../shared/models/address.dart';
 import '../../shared/models/product.dart';
 import '../services/pin_session.dart';
@@ -76,8 +81,12 @@ class AppRoutes {
   static const helpCenter = '/help-center';
   static const inviteFriends = '/invite-friends';
   static const notifications = '/notifications';
+  static const checkout = '/checkout';
+  static const shippingAddress = '/shipping-address';
+  static const chooseShipping = '/choose-shipping';
+  static const paymentMethods = '/payment-methods';
+  static const checkoutPin = '/checkout-pin';
 }
-
 
 final GoRouter appRouter = GoRouter(
   initialLocation: AppRoutes.splash,
@@ -98,22 +107,16 @@ final GoRouter appRouter = GoRouter(
     final setupRoutes = {AppRoutes.fillProfile};
 
     if (isSignedIn && user != null) {
-      // 1. Agar user Enter PIN screen par hai, wahi rehne do
-      if (state.matchedLocation == AppRoutes.enterPin) return null;
-
-      if (state.matchedLocation == AppRoutes.createPin) {
-        return state.extra == true ? null : AppRoutes.enterPin;
-      }
-
-      // 2. Agar new user signup ke steps complete kar raha hai, uninterrupted aage badhne do
+      // Agar new user signup ke steps complete kar raha hai, uninterrupted aage badhne do
       if (setupRoutes.contains(state.matchedLocation)) return null;
 
-      // 3. Har locked session ko PIN verification se guzarna hoga.
-      if (!PinSession.isUnlockedFor(user.uid)) {
-        return AppRoutes.enterPin;
+      // PIN verification login ke baad required nahi hai.
+      if (state.matchedLocation == AppRoutes.enterPin ||
+          state.matchedLocation == AppRoutes.createPin) {
+        return AppRoutes.home;
       }
 
-      // 4. Session unlocked hai aur user login/signup par wapas ja raha hai, toh Home bhejo
+      // User login/signup par wapas ja raha hai, toh Home bhejo
       if (authRoutes.contains(state.matchedLocation)) {
         return AppRoutes.home;
       }
@@ -217,33 +220,59 @@ final GoRouter appRouter = GoRouter(
         );
       },
     ),
-    ShellRoute(
-      builder: (context, state, child) =>
-          MainShellScreen(currentLocation: state.matchedLocation, child: child),
-      routes: [
-        GoRoute(
-          path: AppRoutes.home,
-          builder: (context, state) => const HomeScreen(),
+    StatefulShellRoute.indexedStack(
+      builder: (context, state, navigationShell) => MainShellScreen(
+        currentLocation: state.matchedLocation,
+        child: navigationShell,
+      ),
+      branches: [
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: AppRoutes.home,
+              builder: (context, state) => const HomeScreen(),
+            ),
+          ],
         ),
-        GoRoute(
-          path: AppRoutes.estimator,
-          builder: (context, state) => const EstimatorScreen(),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: AppRoutes.estimator,
+              builder: (context, state) => const EstimatorScreen(),
+            ),
+          ],
         ),
-        GoRoute(
-          path: AppRoutes.wishlist,
-          builder: (context, state) => const WishlistScreen(),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: AppRoutes.wishlist,
+              builder: (context, state) => const WishlistScreen(),
+            ),
+          ],
         ),
-        GoRoute(
-          path: AppRoutes.cart,
-          builder: (context, state) => const CartScreen(),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: AppRoutes.cart,
+              builder: (context, state) => const CartScreen(),
+            ),
+          ],
         ),
-        GoRoute(
-          path: AppRoutes.orders,
-          builder: (context, state) => const MyOrdersScreen(),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: AppRoutes.orders,
+              builder: (context, state) => const MyOrdersScreen(),
+            ),
+          ],
         ),
-        GoRoute(
-          path: AppRoutes.profile,
-          builder: (context, state) => const ProfileScreen(),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: AppRoutes.profile,
+              builder: (context, state) => const ProfileScreen(),
+            ),
+          ],
         ),
       ],
     ),
@@ -295,6 +324,26 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.notifications,
       builder: (context, state) => const NotificationScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.checkout,
+      builder: (context, state) => const CheckoutScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.shippingAddress,
+      builder: (context, state) => const ShippingAddressScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.chooseShipping,
+      builder: (context, state) => const ChooseShippingScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.paymentMethods,
+      builder: (context, state) => const PaymentMethodsScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.checkoutPin,
+      builder: (context, state) => const CheckoutEnterPinScreen(),
     ),
   ],
 );

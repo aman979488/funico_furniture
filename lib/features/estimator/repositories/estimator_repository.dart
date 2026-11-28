@@ -63,31 +63,38 @@ class EstimatorRepository {
         }
 
         if (results.isNotEmpty) {
-          if (results.any((package) => package.images.length <= 1)) {
-            final storagePackages = await _fetchPackagesFromStorageDirectly();
-            final storagePackagesById = {
-              for (final package in storagePackages)
-                if (package.images.any(_isRemoteImage)) package.id: package,
-            };
+          // If Firestore has partial images (e.g. only 1BHK per category), fetch all images from Storage
+          if (results.any((package) => package.images.length < 20)) {
+            try {
+              final storagePackages = await _fetchPackagesFromStorageDirectly();
+              final storagePackagesById = {
+                for (final package in storagePackages)
+                  if (package.images.any(_isRemoteImage)) package.id: package,
+              };
 
-            return results.map((package) {
-              final storagePackage = storagePackagesById[package.id];
-              if (storagePackage == null) return package;
+              return results.map((package) {
+                final storagePackage = storagePackagesById[package.id];
+                if (storagePackage == null) return package;
 
-              final images = <String>{
-                ...storagePackage.images,
-                ...package.images.where(_isRemoteImage),
-              }.toList();
-              return PackageConfig(
-                id: package.id,
-                title: package.title,
-                ratePerSqFt: package.ratePerSqFt,
-                imageAsset: images.first,
-                images: images,
-                description: package.description,
-                order: package.order,
-              );
-            }).toList();
+                final images = <String>{
+                  ...storagePackage.images,
+                  ...package.images.where(_isRemoteImage),
+                }.toList();
+                final updatedPackage = PackageConfig(
+                  id: package.id,
+                  title: package.title,
+                  ratePerSqFt: package.ratePerSqFt,
+                  imageAsset: images.first,
+                  images: images,
+                  description: package.description,
+                  order: package.order,
+                );
+                _seedPackageToFirestore(updatedPackage);
+                return updatedPackage;
+              }).toList();
+            } catch (e) {
+              debugPrint('Storage package merge failed: $e');
+            }
           }
           return results;
         }

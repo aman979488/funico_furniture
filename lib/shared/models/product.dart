@@ -36,6 +36,40 @@ class Product {
   final String packageId;
   final String packageTitle;
 
+  Product copyWith({
+    String? id,
+    String? name,
+    String? category,
+    double? price,
+    String? image,
+    List<String>? images,
+    double? rating,
+    int? soldCount,
+    String? description,
+    List<int>? colors,
+    String? material,
+    String? dimensions,
+    String? packageId,
+    String? packageTitle,
+  }) {
+    return Product(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      category: category ?? this.category,
+      price: price ?? this.price,
+      image: image ?? this.image,
+      images: images ?? this.images,
+      rating: rating ?? this.rating,
+      soldCount: soldCount ?? this.soldCount,
+      description: description ?? this.description,
+      colors: colors ?? this.colors,
+      material: material ?? this.material,
+      dimensions: dimensions ?? this.dimensions,
+      packageId: packageId ?? this.packageId,
+      packageTitle: packageTitle ?? this.packageTitle,
+    );
+  }
+
   /// Firestore document se Product banane ke liye.
   factory Product.fromMap(Map<String, dynamic> map, {String? id}) {
     final price = (map['price'] as num?)?.toDouble() ?? 0;
@@ -88,7 +122,7 @@ class Product {
       id: 'sofa-3-seater',
       name: '3 Seater Sofa',
       category: 'Sofa',
-      price: 1200,
+      price: 1800,
       image: AppAssets.threeSeaterSofa,
       images: [AppAssets.neutralSofaRoom],
       description: 'Medium living room',
@@ -105,7 +139,7 @@ class Product {
       id: 'sofa-sectional',
       name: 'Sectional Sofa',
       category: 'Sofa',
-      price: 1000,
+      price: 1600,
       image: AppAssets.recliningSectionalSofa,
       description: 'Multiple seating sections',
     ),
@@ -204,14 +238,16 @@ class Product {
       packageTitle: 'Basic Package',
       material: 'Commercial Ply • Hydraulic Storage',
       dimensions: '(L × W) 6.5 ft × 5.0 ft',
-      description: 'Ergonomic bedroom unit with easy lift-up hydraulic storage.',
+      description:
+          'Ergonomic bedroom unit with easy lift-up hydraulic storage.',
     ),
     Product(
       id: 'basic-kitchen',
       name: 'Modular Kitchen Cabinet',
       category: 'Kitchen Cabinet',
       price: 45000.00,
-      image: '${_storageBase}packages%2Fbasic%2Fkitchen%20cabinet%2F1BHK.jpg?alt=media',
+      image:
+          '${_storageBase}packages%2Fbasic%2Fkitchen%20cabinet%2F1BHK.jpg?alt=media',
       images: [
         '${_storageBase}packages%2Fbasic%2Fkitchen%20cabinet%2F1BHK.jpg?alt=media',
         '${_storageBase}packages%2Fbasic%2Fkitchen%20cabinet%2F2BHK.jpg?alt=media',
@@ -230,7 +266,8 @@ class Product {
       name: '4-Seater Dining Table',
       category: 'Dinning Table',
       price: 22000.00,
-      image: '${_storageBase}packages%2Fbasic%2Fdinning%20table%2F1BHK.jpg?alt=media',
+      image:
+          '${_storageBase}packages%2Fbasic%2Fdinning%20table%2F1BHK.jpg?alt=media',
       images: [
         '${_storageBase}packages%2Fbasic%2Fdinning%20table%2F1BHK.jpg?alt=media',
         '${_storageBase}packages%2Fbasic%2Fdinning%20table%2F2BHK.jpg?alt=media',
@@ -242,7 +279,8 @@ class Product {
       packageTitle: 'Basic Package',
       material: 'Hardwood • Tempered Glass Top',
       dimensions: '(L × W) 4.5 ft × 3.0 ft',
-      description: 'Compact family dining table with 4 cushioned high-back chairs.',
+      description:
+          'Compact family dining table with 4 cushioned high-back chairs.',
     ),
     Product(
       id: 'basic-wardrobe',
@@ -280,14 +318,16 @@ class Product {
       packageTitle: 'Basic Package',
       material: 'Teak Finish • CNC Jali Back',
       dimensions: '(W × H) 2.5 ft × 4.0 ft',
-      description: 'Serene prayer altar with storage drawer and brass fittings.',
+      description:
+          'Serene prayer altar with storage drawer and brass fittings.',
     ),
     Product(
       id: 'basic-center-table',
       name: 'Minimalist Center Table',
       category: 'Center Table',
       price: 8500.00,
-      image: '${_storageBase}packages%2Fbasic%2Fcenter%20table%2F1BHK.jpg?alt=media',
+      image:
+          '${_storageBase}packages%2Fbasic%2Fcenter%20table%2F1BHK.jpg?alt=media',
       images: [
         '${_storageBase}packages%2Fbasic%2Fcenter%20table%2F1BHK.jpg?alt=media',
         '${_storageBase}packages%2Fbasic%2Fcenter%20table%2F2BHK.jpg?alt=media',
@@ -306,7 +346,8 @@ class Product {
       name: 'Dressing Table with Mirror',
       category: 'Dressing Table',
       price: 14000.00,
-      image: '${_storageBase}packages%2Fbasic%2Fdressing%20table%2F1BHK.jpg?alt=media',
+      image:
+          '${_storageBase}packages%2Fbasic%2Fdressing%20table%2F1BHK.jpg?alt=media',
       images: [
         '${_storageBase}packages%2Fbasic%2Fdressing%20table%2F1BHK.jpg?alt=media',
         '${_storageBase}packages%2Fbasic%2Fdressing%20table%2F2BHK.jpg?alt=media',
@@ -320,14 +361,56 @@ class Product {
       dimensions: '(W × H) 2.5 ft × 6.0 ft',
       description: 'Full-length dressing mirror with cosmetic drawers and warm lighting.',
     ),
+    Product(
+      id: 'basic-side-table',
+      name: 'Bedside Nightstand',
+      category: 'Side Table',
+      price: 6500.00,
+      image:
+          '${_storageBase}packages%2Fbasic%2Fside%20table%2F1BHK.jpg?alt=media',
+      images: [
+        '${_storageBase}packages%2Fbasic%2Fside%20table%2F1BHK.jpg?alt=media',
+        '${_storageBase}packages%2Fbasic%2Fside%20table%2F2BHK.jpg?alt=media',
+        '${_storageBase}packages%2Fbasic%2Fside%20table%2F3BHK.jpg?alt=media',
+      ],
+      rating: 4.6,
+      soldCount: 150,
+      packageId: 'basic',
+      packageTitle: 'Basic Package',
+      material: 'Engineered Wood • Single Drawer',
+      dimensions: '(W × H) 1.5 ft × 1.8 ft',
+      description:
+          'Compact bedside drawer table for night lamp and accessories.',
+    ),
+    Product(
+      id: 'basic-study-table',
+      name: 'Ergonomic Study Desk',
+      category: 'Study Table',
+      price: 11500.00,
+      image:
+          '${_storageBase}packages%2Fbasic%2Fstudy%20table%2F2BHK.jpg?alt=media',
+      images: [
+        '${_storageBase}packages%2Fbasic%2Fstudy%20table%2F2BHK.jpg?alt=media',
+        '${_storageBase}packages%2Fbasic%2Fstudy%20table%2F3BHK.jpg?alt=media',
+      ],
+      rating: 4.7,
+      soldCount: 170,
+      packageId: 'basic',
+      packageTitle: 'Basic Package',
+      material: 'Matte Laminate • Cable Grommet',
+      dimensions: '(L × W) 4.0 ft × 2.0 ft',
+      description:
+          'Spacious work desk with organizer shelves and wire management.',
+    ),
 
     // ==================== MODERN PACKAGE ====================
     Product(
       id: 'modern-tv-unit',
-      name: 'Wall Mount TV Unit',
+      name: 'Fluted Wall Mount TV Unit',
       category: 'TV Unit',
       price: 24500.00,
-      image: '${_storageBase}packages%2Fmodern%2FTV%20Unit%2F1BHK.jpg?alt=media',
+      image:
+          '${_storageBase}packages%2Fmodern%2FTV%20Unit%2F1BHK.jpg?alt=media',
       images: [
         '${_storageBase}packages%2Fmodern%2FTV%20Unit%2F1BHK.jpg?alt=media',
         '${_storageBase}packages%2Fmodern%2FTV%20Unit%2F2BHK.jpg?alt=media',
@@ -384,7 +467,8 @@ class Product {
       name: 'High Gloss Acrylic Kitchen',
       category: 'Kitchen Cabinet',
       price: 62000.00,
-      image: '${_storageBase}packages%2Fmodern%2FKitchen%20Cabinet%2F1BHK.jpg?alt=media',
+      image:
+          '${_storageBase}packages%2Fmodern%2FKitchen%20Cabinet%2F1BHK.jpg?alt=media',
       images: [
         '${_storageBase}packages%2Fmodern%2FKitchen%20Cabinet%2F1BHK.jpg?alt=media',
         '${_storageBase}packages%2Fmodern%2FKitchen%20Cabinet%2F2BHK.jpg?alt=media',
@@ -436,6 +520,66 @@ class Product {
       dimensions: '(W × H) 3.0 ft × 4.5 ft',
       description: 'Architectural backlit sacred mandir with CNC Om pattern and brass bells.',
     ),
+    Product(
+      id: 'modern-dressing',
+      name: 'Illuminated Vanity Dresser',
+      category: 'Dressing Table',
+      price: 18500.00,
+      image:
+          '${_storageBase}packages%2Fmodern%2FDressing%20Table%2F1BHK.jpg?alt=media',
+      images: [
+        '${_storageBase}packages%2Fmodern%2FDressing%20Table%2F1BHK.jpg?alt=media',
+        '${_storageBase}packages%2Fmodern%2FDressing%20Table%2F2BHK.jpg?alt=media',
+        '${_storageBase}packages%2Fmodern%2FDressing%20Table%2F3BHK.jpg?alt=media',
+      ],
+      rating: 4.8,
+      soldCount: 260,
+      packageId: 'modern',
+      packageTitle: 'Modern Package',
+      material: 'Fluted Panel • Ring LED Mirror',
+      dimensions: '(W × H) 3.0 ft × 6.5 ft',
+      description: 'Touch-sensor vanity dresser with cushioned stool and velvet organizer.',
+    ),
+    Product(
+      id: 'modern-side-table',
+      name: 'Floating Bedside Unit',
+      category: 'Side Table',
+      price: 9000.00,
+      image:
+          '${_storageBase}packages%2Fmodern%2FSide%20Table%2F1BHK.jpg?alt=media',
+      images: [
+        '${_storageBase}packages%2Fmodern%2FSide%20Table%2F1BHK.jpg?alt=media',
+        '${_storageBase}packages%2Fmodern%2FSide%20Table%2F2BHK.jpg?alt=media',
+        '${_storageBase}packages%2Fmodern%2FSide%20Table%2F3BHK.jpg?alt=media',
+      ],
+      rating: 4.7,
+      soldCount: 220,
+      packageId: 'modern',
+      packageTitle: 'Modern Package',
+      material: 'Charcoal Finish • Soft-close Drawer',
+      dimensions: '(W × H) 1.8 ft × 1.8 ft',
+      description: 'Wall-mounted nightstand with warm undertone LED strip.',
+    ),
+    Product(
+      id: 'modern-study-table',
+      name: 'Modern Executive Desk',
+      category: 'Study Table',
+      price: 16500.00,
+      image:
+          '${_storageBase}packages%2Fmodern%2FStudy%20Table%2F2BHK.jpg?alt=media',
+      images: [
+        '${_storageBase}packages%2Fmodern%2FStudy%20Table%2F2BHK.jpg?alt=media',
+        '${_storageBase}packages%2Fmodern%2FStudy%20Table%2F3BHK.jpg?alt=media',
+      ],
+      rating: 4.9,
+      soldCount: 290,
+      packageId: 'modern',
+      packageTitle: 'Modern Package',
+      material: 'HDMR • Overhead Storage Cabinets',
+      dimensions: '(L × W) 4.5 ft × 2.0 ft',
+      description:
+          'Contemporary study corner with overhead bookshelf and pin-up board.',
+    ),
 
     // ==================== DELUXE PACKAGE ====================
     Product(
@@ -443,7 +587,8 @@ class Product {
       name: 'Marble Backdrop TV Wall',
       category: 'TV Unit',
       price: 32000.00,
-      image: '${_storageBase}packages%2Fdeluxe%2FTV%20Unit%2F1BHK.webp?alt=media',
+      image:
+          '${_storageBase}packages%2Fdeluxe%2FTV%20Unit%2F1BHK.webp?alt=media',
       images: [
         '${_storageBase}packages%2Fdeluxe%2FTV%20Unit%2F1BHK.webp?alt=media',
         '${_storageBase}packages%2Fdeluxe%2FTV%20Unit%2F2BHK.jpg?alt=media',
@@ -500,7 +645,8 @@ class Product {
       name: 'Island Modular Kitchen',
       category: 'Kitchen Cabinet',
       price: 78000.00,
-      image: '${_storageBase}packages%2Fdeluxe%2FKitchen%20Cabinet%2F1BHK.jpg?alt=media',
+      image:
+          '${_storageBase}packages%2Fdeluxe%2FKitchen%20Cabinet%2F1BHK.jpg?alt=media',
       images: [
         '${_storageBase}packages%2Fdeluxe%2FKitchen%20Cabinet%2F1BHK.jpg?alt=media',
         '${_storageBase}packages%2Fdeluxe%2FKitchen%20Cabinet%2F2BHK.jpg?alt=media',
@@ -533,6 +679,84 @@ class Product {
       dimensions: '(W × H) 7.0 ft × 8.5 ft',
       description: 'Floor-to-ceiling wardrobe with vertical LED strip lights and black aluminum profiles.',
     ),
+    Product(
+      id: 'deluxe-temple',
+      name: 'Royal Teak Mandir',
+      category: 'Temple',
+      price: 26000.00,
+      image: '${_storageBase}packages%2Fdeluxe%2FTemple%2F1BHK.jpg?alt=media',
+      images: [
+        '${_storageBase}packages%2Fdeluxe%2FTemple%2F1BHK.jpg?alt=media',
+        '${_storageBase}packages%2Fdeluxe%2FTemple%2F2BHK.jpg?alt=media',
+        '${_storageBase}packages%2Fdeluxe%2FTemple%2F3BHK.jpg?alt=media',
+      ],
+      rating: 4.9,
+      soldCount: 310,
+      packageId: 'deluxe',
+      packageTitle: 'Deluxe Package',
+      material: 'Teak Wood • CNC Brass Work',
+      dimensions: '(W × H) 3.5 ft × 5.5 ft',
+      description: 'Grand home altar with brass pillar detailing and deep pooja drawers.',
+    ),
+    Product(
+      id: 'deluxe-dressing',
+      name: 'Luxury Hollywood Dresser',
+      category: 'Dressing Table',
+      price: 24000.00,
+      image:
+          '${_storageBase}packages%2Fdeluxe%2FDressing%20Table%2F1BHK.jpg?alt=media',
+      images: [
+        '${_storageBase}packages%2Fdeluxe%2FDressing%20Table%2F1BHK.jpg?alt=media',
+        '${_storageBase}packages%2Fdeluxe%2FDressing%20Table%2F2BHK.jpg?alt=media',
+        '${_storageBase}packages%2Fdeluxe%2FDressing%20Table%2F3BHK.jpg?alt=media',
+      ],
+      rating: 4.9,
+      soldCount: 240,
+      packageId: 'deluxe',
+      packageTitle: 'Deluxe Package',
+      material: 'Marble Counter • Gold Accent Trim',
+      dimensions: '(W × H) 3.5 ft × 6.5 ft',
+      description: 'Salon-style makeup station with integrated tri-color backlight and gold accents.',
+    ),
+    Product(
+      id: 'deluxe-side-table',
+      name: 'Sculptural Marble Nightstand',
+      category: 'Side Table',
+      price: 12500.00,
+      image:
+          '${_storageBase}packages%2Fdeluxe%2FSide%20Table%2F1BHK.jpg?alt=media',
+      images: [
+        '${_storageBase}packages%2Fdeluxe%2FSide%20Table%2F1BHK.jpg?alt=media',
+        '${_storageBase}packages%2Fdeluxe%2FSide%20Table%2F2BHK.jpg?alt=media',
+        '${_storageBase}packages%2Fdeluxe%2FSide%20Table%2F3BHK.jpg?alt=media',
+      ],
+      rating: 4.8,
+      soldCount: 190,
+      packageId: 'deluxe',
+      packageTitle: 'Deluxe Package',
+      material: 'Carrara Marble Top • Fluted Body',
+      dimensions: '(W × H) 1.8 ft × 2.0 ft',
+      description: 'Sculptural rounded bedside table with Italian marble top.',
+    ),
+    Product(
+      id: 'deluxe-study-table',
+      name: 'Architect Studio Desk',
+      category: 'Study Table',
+      price: 22000.00,
+      image:
+          '${_storageBase}packages%2Fdeluxe%2FStudy%20Table%2F2BHK.jpg?alt=media',
+      images: [
+        '${_storageBase}packages%2Fdeluxe%2FStudy%20Table%2F2BHK.jpg?alt=media',
+        '${_storageBase}packages%2Fdeluxe%2FStudy%20Table%2F3BHK.jpg?alt=media',
+      ],
+      rating: 5.0,
+      soldCount: 215,
+      packageId: 'deluxe',
+      packageTitle: 'Deluxe Package',
+      material: 'Veneer Finish • Concealed LED Bar',
+      dimensions: '(L × W) 5.0 ft × 2.2 ft',
+      description: 'Expansive studio study station with fluted panel back and soft book display.',
+    ),
 
     // ==================== PREMIUM PACKAGE ====================
     Product(
@@ -540,7 +764,8 @@ class Product {
       name: 'Onyx Marble TV Feature Wall',
       category: 'TV Unit',
       price: 42000.00,
-      image: '${_storageBase}packages%2Fpremium%2FTv%20unit%2F1BHK.jpg?alt=media',
+      image:
+          '${_storageBase}packages%2Fpremium%2FTv%20unit%2F1BHK.jpg?alt=media',
       images: [
         '${_storageBase}packages%2Fpremium%2FTv%20unit%2F1BHK.jpg?alt=media',
         '${_storageBase}packages%2Fpremium%2FTv%20unit%2F2BHK.jpg?alt=media',
@@ -578,7 +803,8 @@ class Product {
       name: 'Chef Gourmet Kitchen',
       category: 'Kitchen Cabinet',
       price: 98000.00,
-      image: '${_storageBase}packages%2Fpremium%2Fkitchen%20cabinet%2F1BHK.jpg?alt=media',
+      image:
+          '${_storageBase}packages%2Fpremium%2Fkitchen%20cabinet%2F1BHK.jpg?alt=media',
       images: [
         '${_storageBase}packages%2Fpremium%2Fkitchen%20cabinet%2F1BHK.jpg?alt=media',
         '${_storageBase}packages%2Fpremium%2Fkitchen%20cabinet%2F2BHK.jpg?alt=media',
@@ -597,7 +823,8 @@ class Product {
       name: 'Italian Marble 6-Seater Dining',
       category: 'Dinning Table',
       price: 48000.00,
-      image: '${_storageBase}packages%2Fpremium%2Fdinning%20table%2F1BHK.jpg?alt=media',
+      image:
+          '${_storageBase}packages%2Fpremium%2Fdinning%20table%2F1BHK.jpg?alt=media',
       images: [
         '${_storageBase}packages%2Fpremium%2Fdinning%20table%2F1BHK.jpg?alt=media',
         '${_storageBase}packages%2Fpremium%2Fdinning%20table%2F2BHK.png?alt=media',
@@ -609,7 +836,146 @@ class Product {
       packageTitle: 'Premium Package',
       material: 'Italian Statuario Marble • Brass Pedestal',
       dimensions: '(L × W) 6.0 ft × 3.5 ft',
-      description: 'Bespoke marble dining table with 6 velvet-lined curved back chairs.',
+      description:
+          'Bespoke marble dining table with 6 velvet-lined curved back chairs.',
+    ),
+    Product(
+      id: 'premium-bed',
+      name: 'Royal Chesterfield Bed',
+      category: 'Bed',
+      price: 72000.00,
+      image: '${_storageBase}packages%2Fpremium%2Fbed%2F1BHK.jpg?alt=media',
+      images: [
+        '${_storageBase}packages%2Fpremium%2Fbed%2F1BHK.jpg?alt=media',
+        '${_storageBase}packages%2Fpremium%2Fbed%2F2BHK.jpg?alt=media',
+        '${_storageBase}packages%2Fpremium%2Fbed%2F3BHK.jpg?alt=media',
+      ],
+      rating: 5.0,
+      soldCount: 270,
+      packageId: 'premium',
+      packageTitle: 'Premium Package',
+      material: 'Tufted Leatherette • Pneumatic Storage',
+      dimensions: '(L × W) 6.8 ft × 6.5 ft',
+      description: 'Opulent deep-buttoned chesterfield bed with high headboard and remote lifting.',
+    ),
+    Product(
+      id: 'premium-wardrobe',
+      name: 'Tinted Glass Walk-in Wardrobe',
+      category: 'Wardrobe',
+      price: 88000.00,
+      image:
+          '${_storageBase}packages%2Fpremium%2Fwardrobe%2F1BHK.jpg?alt=media',
+      images: [
+        '${_storageBase}packages%2Fpremium%2Fwardrobe%2F1BHK.jpg?alt=media',
+        '${_storageBase}packages%2Fpremium%2Fwardrobe%2F2BHK.jpg?alt=media',
+        '${_storageBase}packages%2Fpremium%2Fwardrobe%2F3BHK.jpg?alt=media',
+      ],
+      rating: 5.0,
+      soldCount: 230,
+      packageId: 'premium',
+      packageTitle: 'Premium Package',
+      material: 'Brown Tinted Glass • Champagne Metal',
+      dimensions: '(W × H) 8.0 ft × 9.0 ft',
+      description: 'Boutique wardrobe with integrated sensor spotlighting and watch winders.',
+    ),
+    Product(
+      id: 'premium-temple',
+      name: 'Marble & Onyx Temple',
+      category: 'Temple',
+      price: 35000.00,
+      image: '${_storageBase}packages%2Fpremium%2Ftemple%2F1BHK.jpg?alt=media',
+      images: [
+        '${_storageBase}packages%2Fpremium%2Ftemple%2F1BHK.jpg?alt=media',
+        '${_storageBase}packages%2Fpremium%2Ftemple%2F2BHK.jpg?alt=media',
+        '${_storageBase}packages%2Fpremium%2Ftemple%2F3BHK.png?alt=media',
+      ],
+      rating: 5.0,
+      soldCount: 195,
+      packageId: 'premium',
+      packageTitle: 'Premium Package',
+      material: 'Italian Statuario • Backlit Onyx',
+      dimensions: '(W × H) 3.5 ft × 5.0 ft',
+      description: 'Divine prayer sanctuary with backlit onyx halo and brass bell canopies.',
+    ),
+    Product(
+      id: 'premium-center-table',
+      name: 'Onyx Tiered Center Table',
+      category: 'Center Table',
+      price: 22000.00,
+      image:
+          '${_storageBase}packages%2Fpremium%2Fcenter%20table%2F1BHK.jpg?alt=media',
+      images: [
+        '${_storageBase}packages%2Fpremium%2Fcenter%20table%2F1BHK.jpg?alt=media',
+        '${_storageBase}packages%2Fpremium%2Fcenter%20table%2F2BHK.jpg?alt=media',
+        '${_storageBase}packages%2Fpremium%2Fcenter%20table%2F3BHK.jpg?alt=media',
+      ],
+      rating: 4.9,
+      soldCount: 180,
+      packageId: 'premium',
+      packageTitle: 'Premium Package',
+      material: 'Natural Onyx • Brushed Titanium',
+      dimensions: '(L × W) 4.0 ft × 2.5 ft',
+      description:
+          'Dual-tier statement coffee table with illuminated onyx top.',
+    ),
+    Product(
+      id: 'premium-dressing',
+      name: 'Boutique Glamour Vanity',
+      category: 'Dressing Table',
+      price: 32000.00,
+      image:
+          '${_storageBase}packages%2Fpremium%2Fdressing%20table%2F1BHK.jpg?alt=media',
+      images: [
+        '${_storageBase}packages%2Fpremium%2Fdressing%20table%2F1BHK.jpg?alt=media',
+        '${_storageBase}packages%2Fpremium%2Fdressing%20table%2F2BHK.jpg?alt=media',
+        '${_storageBase}packages%2Fpremium%2Fdressing%20table%2F3BHK.jpg?alt=media',
+      ],
+      rating: 5.0,
+      soldCount: 165,
+      packageId: 'premium',
+      packageTitle: 'Premium Package',
+      material: 'Italian PU • Fluted Rose Gold',
+      dimensions: '(W × H) 4.0 ft × 7.0 ft',
+      description: 'Haute couture dressing console with velvet trays and floor-to-ceiling mirror.',
+    ),
+    Product(
+      id: 'premium-side-table',
+      name: 'Brass Accent Nightstand',
+      category: 'Side Table',
+      price: 16000.00,
+      image:
+          '${_storageBase}packages%2Fpremium%2Fside%20table%2F1BHK.jpg?alt=media',
+      images: [
+        '${_storageBase}packages%2Fpremium%2Fside%20table%2F1BHK.jpg?alt=media',
+        '${_storageBase}packages%2Fpremium%2Fside%20table%2F2BHK.jpg?alt=media',
+        '${_storageBase}packages%2Fpremium%2Fside%20table%2F3BHK.jpg?alt=media',
+      ],
+      rating: 4.9,
+      soldCount: 175,
+      packageId: 'premium',
+      packageTitle: 'Premium Package',
+      material: 'Solid Brass Frame • Smoked Mirror',
+      dimensions: '(W × H) 2.0 ft × 2.0 ft',
+      description: 'Luxurious bedside cube with wireless fast charging built into the top.',
+    ),
+    Product(
+      id: 'premium-study-table',
+      name: 'Presidential Study Suite',
+      category: 'Study Table',
+      price: 28000.00,
+      image:
+          '${_storageBase}packages%2Fpremium%2Fstudy%20table%2F2BHK.jpg?alt=media',
+      images: [
+        '${_storageBase}packages%2Fpremium%2Fstudy%20table%2F2BHK.jpg?alt=media',
+        '${_storageBase}packages%2Fpremium%2Fstudy%20table%2F3BHK.jpg?alt=media',
+      ],
+      rating: 5.0,
+      soldCount: 190,
+      packageId: 'premium',
+      packageTitle: 'Premium Package',
+      material: 'Smoked Oak Veneer • Leather Pad',
+      dimensions: '(L × W) 5.5 ft × 2.5 ft',
+      description: 'Executive workstation with integrated leather desktop insert and concealed safe.',
     ),
 
     // ==================== LUXURY PACKAGE ====================
@@ -618,7 +984,8 @@ class Product {
       name: 'Bookmatched Marble TV Wall',
       category: 'TV Unit',
       price: 58000.00,
-      image: '${_storageBase}packages%2Fluxury%2FTV%20Unit%2F1BHK.jpg?alt=media',
+      image:
+          '${_storageBase}packages%2Fluxury%2FTV%20Unit%2F1BHK.jpg?alt=media',
       images: [
         '${_storageBase}packages%2Fluxury%2FTV%20Unit%2F1BHK.jpg?alt=media',
         '${_storageBase}packages%2Fluxury%2FTV%20Unit%2F2BHK.jpg?alt=media',
@@ -675,7 +1042,8 @@ class Product {
       name: 'Onyx Stone 8-Seater Dining',
       category: 'Dinning Table',
       price: 68000.00,
-      image: '${_storageBase}packages%2Fluxury%2FDining%20Table%2F1BHK.jpg?alt=media',
+      image:
+          '${_storageBase}packages%2Fluxury%2FDining%20Table%2F1BHK.jpg?alt=media',
       images: [
         '${_storageBase}packages%2Fluxury%2FDining%20Table%2F1BHK.jpg?alt=media',
         '${_storageBase}packages%2Fluxury%2FDining%20Table%2F2BHK.jpg?alt=media',
@@ -707,6 +1075,123 @@ class Product {
       material: 'Leather Lined Shelves • Smoked Glass',
       dimensions: '(W × H) 10.0 ft × 9.5 ft',
       description: 'High fashion walk-in closet with velvet jewelry drawers and automatic biometric vault.',
+    ),
+    Product(
+      id: 'luxury-kitchen',
+      name: 'Motorized Villa Chef Kitchen',
+      category: 'Kitchen Cabinet',
+      price: 145000.00,
+      image:
+          '${_storageBase}packages%2Fluxury%2FKitchen%20Cabinet%2F1BHK.jpg?alt=media',
+      images: [
+        '${_storageBase}packages%2Fluxury%2FKitchen%20Cabinet%2F1BHK.jpg?alt=media',
+        '${_storageBase}packages%2Fluxury%2FKitchen%20Cabinet%2F2BHK.jpg?alt=media',
+        '${_storageBase}packages%2Fluxury%2FKitchen%20Cabinet%2F3BHK.jpg?alt=media',
+      ],
+      rating: 5.0,
+      soldCount: 95,
+      packageId: 'luxury',
+      packageTitle: 'Luxury Package',
+      material: 'Bookmatched Ceramic • Blum Servo-Drive',
+      dimensions: '(L × H) 18.0 ft × 9.0 ft',
+      description: 'Fully motorized touchless cabinetry with integrated wine cooler and island teppanyaki.',
+    ),
+    Product(
+      id: 'luxury-temple',
+      name: 'Imperial White Marble Mandir',
+      category: 'Temple',
+      price: 48000.00,
+      image:
+          '${_storageBase}packages%2Fluxury%2FTemple%2FIN%20ALL.jpg?alt=media',
+      images: [
+        '${_storageBase}packages%2Fluxury%2FTemple%2FIN%20ALL.jpg?alt=media',
+      ],
+      rating: 5.0,
+      soldCount: 120,
+      packageId: 'luxury',
+      packageTitle: 'Luxury Package',
+      material: 'Single Block White Makrana Marble',
+      dimensions: '(W × H) 4.0 ft × 6.5 ft',
+      description: 'Heirloom hand-carved marble mandir with gold-leaf ceiling and sacred sanctuary niches.',
+    ),
+    Product(
+      id: 'luxury-center-table',
+      name: 'Bespoke Monolith Center Table',
+      category: 'Center Table',
+      price: 36000.00,
+      image:
+          '${_storageBase}packages%2Fluxury%2FCenter%20Table%2F1BHK.jpg?alt=media',
+      images: [
+        '${_storageBase}packages%2Fluxury%2FCenter%20Table%2F1BHK.jpg?alt=media',
+        '${_storageBase}packages%2Fluxury%2FCenter%20Table%2F2BHK.jpg?alt=media',
+        '${_storageBase}packages%2Fluxury%2FCenter%20Table%2F3BHK.jpg?alt=media',
+      ],
+      rating: 5.0,
+      soldCount: 110,
+      packageId: 'luxury',
+      packageTitle: 'Luxury Package',
+      material: 'Italian Arabescato • Solid Brass',
+      dimensions: '(L × W) 4.5 ft × 3.0 ft',
+      description: 'Architectural monolithic stone coffee table with brushed 24k gold leaf plinth.',
+    ),
+    Product(
+      id: 'luxury-dressing',
+      name: 'Presidential Dressing Salon',
+      category: 'Dressing Table',
+      price: 45000.00,
+      image:
+          '${_storageBase}packages%2Fluxury%2FDressing%20Table%2F1BHK.jpg?alt=media',
+      images: [
+        '${_storageBase}packages%2Fluxury%2FDressing%20Table%2F1BHK.jpg?alt=media',
+        '${_storageBase}packages%2Fluxury%2FDressing%20Table%2F2BHK.jpg?alt=media',
+        '${_storageBase}packages%2Fluxury%2FDressing%20Table%2F3BHK.jpg?alt=media',
+      ],
+      rating: 5.0,
+      soldCount: 85,
+      packageId: 'luxury',
+      packageTitle: 'Luxury Package',
+      material: 'Calacatta Gold • Leather Inlays',
+      dimensions: '(W × H) 5.0 ft × 7.5 ft',
+      description: 'Master suite vanity suite with refrigerated cosmetic drawer and smart magnifying mirror.',
+    ),
+    Product(
+      id: 'luxury-side-table',
+      name: 'Penthouse Artisan Nightstand',
+      category: 'Side Table',
+      price: 22000.00,
+      image:
+          '${_storageBase}packages%2Fluxury%2FSide%20Table%2F1BHK.jpg?alt=media',
+      images: [
+        '${_storageBase}packages%2Fluxury%2FSide%20Table%2F1BHK.jpg?alt=media',
+        '${_storageBase}packages%2Fluxury%2FSide%20Table%2F2BHK.jpg?alt=media',
+        '${_storageBase}packages%2Fluxury%2FSide%20Table%2F3BHK.jpg?alt=media',
+      ],
+      rating: 5.0,
+      soldCount: 105,
+      packageId: 'luxury',
+      packageTitle: 'Luxury Package',
+      material: 'Exotic Ziricote Veneer • Polished Brass',
+      dimensions: '(W × H) 2.2 ft × 2.0 ft',
+      description: 'Bespoke bedside unit with hidden push-touch compartment and velvet lining.',
+    ),
+    Product(
+      id: 'luxury-study-table',
+      name: 'Penthouse Library Desk',
+      category: 'Study Table',
+      price: 38000.00,
+      image:
+          '${_storageBase}packages%2Fluxury%2FStudy%20Table%2F2BHK.jpg?alt=media',
+      images: [
+        '${_storageBase}packages%2Fluxury%2FStudy%20Table%2F2BHK.jpg?alt=media',
+        '${_storageBase}packages%2Fluxury%2FStudy%20Table%2F3BHK.jpg?alt=media',
+      ],
+      rating: 5.0,
+      soldCount: 90,
+      packageId: 'luxury',
+      packageTitle: 'Luxury Package',
+      material: 'Smoked Walnut • Italian Saddle Leather',
+      dimensions: '(L × W) 6.0 ft × 2.8 ft',
+      description: 'Handcrafted luxury study desk with cable concealing mechanisms and drawer biometric locks.',
     ),
   ];
 
@@ -804,16 +1289,12 @@ class Product {
       category: 'Cupboard',
       price: 1600,
       image: AppAssets.cupboard,
-      images: [
-        AppAssets.cupboard,
-        AppAssets.table,
-      ],
+      images: [AppAssets.cupboard, AppAssets.table],
       rating: 4.7,
       soldCount: 1520,
       material: 'MDF • Melamine Coating',
       dimensions: '(L × H) 3.5 ft × 5.0 ft',
-      description:
-          'Compact modular bookshelf for study and living spaces.',
+      description: 'Compact modular bookshelf for study and living spaces.',
       colors: [
         0xFFA0624A,
         0xFF5C6F84,

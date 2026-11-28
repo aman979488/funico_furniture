@@ -17,9 +17,10 @@ void main() {
 
   test('keeps catalog product prices above the minimum', () {
     expect(
-      [...Product.sofaOptions, ...Product.sampleProducts].every(
-        (product) => product.price >= Product.minimumPrice,
-      ),
+      [
+        ...Product.sofaOptions,
+        ...Product.sampleProducts,
+      ].every((product) => product.price >= Product.minimumPrice),
       isTrue,
     );
 
@@ -42,6 +43,7 @@ void main() {
 
       // Initial state
       expect(container.read(cartViewModelProvider).items, isEmpty);
+      expect(container.read(cartViewModelProvider).codes, hasLength(3));
       expect(container.read(cartViewModelProvider).total, 0.0);
 
       // Add to cart with quantity 2
@@ -71,6 +73,38 @@ void main() {
       expect(state.items, isEmpty);
       expect(state.total, 0.0);
     });
+
+    test(
+      'keeps products in separate codes and supports creating more codes',
+      () {
+        final repository = CartRepositoryImpl();
+        final container = ProviderContainer(
+          overrides: [cartRepositoryProvider.overrideWithValue(repository)],
+        );
+        addTearDown(container.dispose);
+        final viewModel = container.read(cartViewModelProvider.notifier);
+        final product = Product.sampleProducts.first;
+
+        viewModel.addToCart(product, quantity: 2);
+        viewModel.selectCode('code_2');
+        viewModel.addToCart(product, quantity: 1);
+        viewModel.selectCode('code_1');
+
+        var state = container.read(cartViewModelProvider);
+        expect(state.items, hasLength(2));
+        expect(state.selectedCodeItems.single.quantity, 2);
+        expect(state.subtotal, product.price * 2);
+
+        final customCode = viewModel.createCode('Bedroom');
+        expect(customCode.name, 'Bedroom');
+        expect(container.read(cartViewModelProvider).codes, hasLength(4));
+        viewModel.addToCart(product, codeId: customCode.id);
+        state = container.read(cartViewModelProvider);
+        expect(state.selectedCodeId, customCode.id);
+        expect(state.selectedCodeItems.single.codeId, customCode.id);
+        expect(state.selectedCodeItems.single.quantity, 1);
+      },
+    );
   });
 
   group('ProductDetailScreen Add to Cart UI', () {
@@ -93,7 +127,7 @@ void main() {
         expect(find.text('Quantity'), findsOneWidget);
         expect(find.text('Color'), findsOneWidget);
         expect(find.text('Description'), findsOneWidget);
-        expect(find.text('₹1,600'), findsOneWidget);
+        expect(find.text('₹1,600'), findsWidgets);
 
         // Initial quantity is 1
         expect(find.text('1'), findsOneWidget);

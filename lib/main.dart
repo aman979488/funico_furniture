@@ -22,20 +22,21 @@ Future<void> main() async {
       debugPrint('Firebase initialization warning: $e');
     }
 
-    try {
-      const googleClientId = String.fromEnvironment(
-        'GOOGLE_WEB_CLIENT_ID',
-        defaultValue:
-            '655147824865-a7grii2oo0ra9ia0q7ef2glq0tpl1h7q.apps.googleusercontent.com',
-      );
-      await GoogleSignIn.instance.initialize(
-        clientId: kIsWeb && googleClientId.isNotEmpty ? googleClientId : null,
-        serverClientId:
-            !kIsWeb && googleClientId.isNotEmpty ? googleClientId : null,
-      );
-    } catch (e) {
+    const googleClientId = String.fromEnvironment(
+      'GOOGLE_WEB_CLIENT_ID',
+      defaultValue:
+          '655147824865-a7grii2oo0ra9ia0q7ef2glq0tpl1h7q.apps.googleusercontent.com',
+    );
+    // Initialize GoogleSignIn without blocking first frame render
+    GoogleSignIn.instance
+        .initialize(
+          clientId: kIsWeb && googleClientId.isNotEmpty ? googleClientId : null,
+          serverClientId:
+              !kIsWeb && googleClientId.isNotEmpty ? googleClientId : null,
+        )
+        .catchError((Object e) {
       debugPrint('GoogleSignIn initialization warning: $e');
-    }
+    });
   }
   runApp(const ProviderScope(child: FunicaApp()));
 }

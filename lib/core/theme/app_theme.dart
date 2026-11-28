@@ -4,8 +4,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
 class AppTheme {
-  static ThemeData get light {
+  static final ThemeData light = _buildLightTheme();
+
+  static ThemeData _buildLightTheme() {
     final base = ThemeData.light(useMaterial3: true);
+    final urbanistFamily = GoogleFonts.urbanist().fontFamily;
 
     OutlineInputBorder border(Color color, [double width = 0]) {
       return OutlineInputBorder(
@@ -25,7 +28,7 @@ class AppTheme {
         error: AppColors.error,
       ),
       textTheme: base.textTheme.apply(
-        fontFamily: GoogleFonts.urbanist().fontFamily,
+        fontFamily: urbanistFamily,
         bodyColor: AppColors.textPrimary,
         displayColor: AppColors.textPrimary,
       ),

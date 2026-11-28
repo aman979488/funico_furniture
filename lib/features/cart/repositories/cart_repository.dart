@@ -21,6 +21,7 @@ class CartRepositoryImpl implements CartRepository {
     final existingIndex = _items.indexWhere(
       (element) =>
           element.product.id == item.product.id &&
+          element.codeId == item.codeId &&
           element.selectedColor == item.selectedColor,
     );
 

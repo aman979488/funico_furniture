@@ -177,11 +177,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final user = Firebase.apps.isNotEmpty
         ? FirebaseAuth.instance.currentUser
         : null;
-    final profileState = ref.watch(profileViewModelProvider);
-    final userName = profileState.userProfile?.name.isNotEmpty == true
-        ? profileState.userProfile!.name
+    final userProfile = ref.watch(
+      profileViewModelProvider.select((s) => s.userProfile),
+    );
+    final userName = userProfile?.name.isNotEmpty == true
+        ? userProfile!.name
         : (user?.displayName?.trim() ?? 'Funica User');
-    final userPhoto = profileState.userProfile?.photoUrl ?? user?.photoURL;
+    final userPhoto = userProfile?.photoUrl ?? user?.photoURL;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -802,11 +804,13 @@ class _HeroDesignBannerState extends State<_HeroDesignBanner> {
                 imagePath,
                 fit: BoxFit.cover,
                 alignment: Alignment.centerRight,
+                cacheWidth: 900,
                 errorBuilder: (_, _, _) => fallbackImagePath != null
                     ? Image.asset(
                         fallbackImagePath,
                         fit: BoxFit.cover,
                         alignment: Alignment.centerRight,
+                        cacheWidth: 900,
                       )
                     : const SizedBox.shrink(),
               ),
@@ -1886,6 +1890,7 @@ class _CategoryShortcut extends StatelessWidget {
                 : Image.asset(
                     category.image!,
                     fit: BoxFit.cover,
+                    cacheWidth: 200,
                     errorBuilder: (_, _, _) => Icon(
                       category.icon,
                       color: AppColors.textPrimary,
@@ -1955,6 +1960,7 @@ class _PopularCategoryCard extends StatelessWidget {
                       fit: BoxFit.cover,
                       width: double.infinity,
                       height: double.infinity,
+                      cacheWidth: 260,
                       errorBuilder: (_, _, _) => Center(
                         child: Icon(
                           _icon,

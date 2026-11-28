@@ -1,4 +1,5 @@
 // TODO: product_card.dart
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -149,15 +150,18 @@ class ProductCard extends StatelessWidget {
     );
     if (product.image.isEmpty) return fallback;
     if (product.image.startsWith('http')) {
-      return Image.network(
-        product.image,
+      return CachedNetworkImage(
+        imageUrl: product.image,
         fit: BoxFit.cover,
-        errorBuilder: (_, _, _) => fallback,
+        memCacheWidth: 400,
+        placeholder: (_, _) => fallback,
+        errorWidget: (_, _, _) => fallback,
       );
     }
     return Image.asset(
       product.image,
       fit: BoxFit.cover,
+      cacheWidth: 400,
       errorBuilder: (_, _, _) => fallback,
     );
   }

@@ -7,7 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/constants/firestore_collections.dart';
-import '../../../shared/enums/user_role.dart';
 import '../../../shared/models/address.dart';
 import '../../../shared/models/payment_card.dart';
 import '../../../shared/models/user.dart';
